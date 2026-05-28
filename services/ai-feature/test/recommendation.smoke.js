@@ -4,72 +4,87 @@ const {
   buildRecommendationResponse,
   coerceRecommendationPayload,
 } = require("../src/recommendation");
+const app = require("../src/server");
 
-function run() {
+function request(method, path, body) {
+  return new Promise((resolve, reject) => {
+    const server = app.listen(0, async () => {
+      try {
+        const port = server.address().port;
+        const response = await fetch(`http://127.0.0.1:${port}${path}`, {
+          method,
+          headers: body ? { "Content-Type": "application/json" } : undefined,
+          body: body ? JSON.stringify(body) : undefined,
+        });
+        resolve({ status: response.status, payload: await response.json() });
+      } catch (error) {
+        reject(error);
+      } finally {
+        server.close();
+      }
+    });
+  });
+}
+
+async function run() {
   const payload = coerceRecommendationPayload({
-    text: "Empfehlung für ein sportliches Modell und ein Merch-Produkt.",
-    carRecommendation: { model: "3", color: "Black" },
-    merchItems: [
-      { id: 7, reason: "Passt zu Ihrem urbanen Setup" },
-      { id: 12, reason: "Passt zu Ihrem urbanen Setup" },
-      { id: 7, reason: "Duplicate should be removed" },
+    text: "A concise recommendation explanation.",
+    packageRecommendation: {
+      package: "neck-shoulder-relief",
+      duration: 60,
+      intensity: "medium",
+      addOns: ["aroma-oil"],
+      reason: "Matches shoulder tension and a calming after-work visit.",
+    },
+    aftercareItems: [
+      { id: 1, reason: "Supports warmth after the session." },
+      { id: 1, reason: "Duplicate should be removed." },
     ],
   });
 
   assert.deepEqual(payload, {
-    text: "Empfehlung für ein sportliches Modell und ein Merch-Produkt.",
-    carRecommendation: {
-      model: "3",
-      color: "Black",
-      wheels: null,
-      interior: null,
+    text: "A concise recommendation explanation.",
+    packageRecommendation: {
+      package: "neck-shoulder-relief",
+      duration: 60,
+      intensity: "medium",
+      addOns: ["aroma-oil"],
+      reason: "Matches shoulder tension and a calming after-work visit.",
     },
-    merchItems: [
-      { id: 7, reason: "Passt zu Ihrem urbanen Setup" },
-      { id: 12, reason: "Passt zu Ihrem urbanen Setup" },
+    aftercareItems: [
+      { id: 1, reason: "Supports warmth after the session." },
     ],
   });
 
-  const response = buildRecommendationResponse({
-    text: "Empfehlung",
-    carRecommendation: {
-      model: "X5",
-      color: "Blue",
-      wheels: "M Sport Felgen",
-      interior: "Leder Schwarz",
+  const response = buildRecommendationResponse(payload, [
+    {
+      id: 1,
+      slug: "heated-neck-wrap",
+      name: "Heated Neck Wrap",
+      imageUrl: "/api/aftercare/assets/aftercare-shop/heated-neck-wrap.svg",
+      price: 34.9,
     },
-    merchItems: [{ id: 5, reason: "Passt zum sportlichen Look" }],
-  }, [
-    { id: 5, name: "BMW Sweatshirt", color: "Schwarz", imageUrl: "https://example.com/sweatshirt.jpg" },
   ]);
 
-  assert.deepEqual(response, {
-    text: "Empfehlung",
-    carLink: "/car-configurator?model=X5&color=Blue&wheels=M+Sport+Felgen&interior=Leder+Schwarz",
-    merchLinks: [{
-      id: 5,
-      title: "BMW Sweatshirt",
-      subtitle: "Schwarz",
-      imageUrl: "https://example.com/sweatshirt.jpg",
-      price: null,
-      reason: "Passt zum sportlichen Look",
-      url: "/merch-shop/5",
-    }],
-    carModel: "X5",
-    carColor: "Blue",
-    carWheels: "M Sport Felgen",
-    carInterior: "Leder Schwarz",
-  });
-
-  assert.throws(() => {
-    coerceRecommendationPayload({
-      text: "Empfehlung",
-      carRecommendation: null,
-      merchItems: ["oops"],
-    });
-  }, /merchItems is invalid/);
-
+  assert.equal(response.packageLink, "/package-configurator/neck-shoulder-relief/60/medium/aroma-oil");
+  assert.deepEqual(response.aftercareLinks, [{
+    id: 1,
+    href: "/aftercare-shop/heated-neck-wrap",
+    title: "Heated Neck Wrap",
+    imageUrl: "/api/aftercare/assets/aftercare-shop/heated-neck-wrap.svg",
+    price: 34.9,
+    reason: "Supports warmth after the session.",
+  }]);
+  assert.throws(() => coerceRecommendationPayload({ text: "x", aftercareItems: [] }), /packageRecommendation/);
+  const previousKey = process.env.GEMINI_API_KEY;
+  process.env.GEMINI_API_KEY = "replace_me";
+  const unavailable = await request("POST", "/recommend", { prompt: "My shoulders feel tense." });
+  assert.equal(unavailable.status, 503);
+  process.env.GEMINI_API_KEY = previousKey;
   console.log("recommendation smoke test passed");
 }
 
-run();
+run().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

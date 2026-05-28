@@ -4,8 +4,8 @@ const path = require("node:path");
 const repoRoot = path.resolve(__dirname, "../../..");
 const liveSmokeScript = path.join(__dirname, "recommendation.live-smoke.js");
 const healthUrls = [
-  process.env.WEB_HEALTH_URL || "http://localhost:3000/health",
-  process.env.AI_HEALTH_URL || "http://localhost:3004/health",
+  process.env.WEB_HEALTH_URL || "http://localhost:4100/health",
+  process.env.AI_HEALTH_URL || "http://localhost:4105/health",
 ];
 
 function run(command, args, options = {}) {

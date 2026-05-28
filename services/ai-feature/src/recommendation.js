@@ -3,162 +3,118 @@ const { Type } = require("@google/genai");
 const recommendationSchema = {
   type: Type.OBJECT,
   properties: {
-    text: {
-      type: Type.STRING,
-      description: "Deine Empfehlung als kurzer Text",
-    },
-    carRecommendation: {
+    text: { type: Type.STRING },
+    packageRecommendation: {
       type: Type.OBJECT,
-      nullable: true,
       properties: {
-        model: {
-          type: Type.STRING,
-          description: "Recommended car model code, exactly as listed",
-        },
-        color: {
-          type: Type.STRING,
-          description: "Recommended color name, exactly as listed",
-        },
-        wheels: {
-          type: Type.STRING,
-          nullable: true,
-          description: "Recommended wheels name exactly as listed, or null if no wheels available",
-        },
-        interior: {
-          type: Type.STRING,
-          nullable: true,
-          description: "Recommended interior name exactly as listed, or null if no interiors available",
-        },
+        package: { type: Type.STRING },
+        duration: { type: Type.INTEGER },
+        intensity: { type: Type.STRING },
+        addOns: { type: Type.ARRAY, items: { type: Type.STRING } },
+        reason: { type: Type.STRING },
       },
-      required: ["model", "color"],
+      required: ["package", "duration", "intensity", "addOns", "reason"],
     },
-    merchItems: {
+    aftercareItems: {
       type: Type.ARRAY,
       items: {
         type: Type.OBJECT,
         properties: {
-          id: {
-            type: Type.INTEGER,
-            description: "Merch product id",
-          },
-          reason: {
-            type: Type.STRING,
-            description: "Short recommendation reason in German",
-          },
+          id: { type: Type.INTEGER },
+          reason: { type: Type.STRING },
         },
-        required: ["id"],
+        required: ["id", "reason"],
       },
     },
   },
-  required: ["text", "carRecommendation", "merchItems"],
+  required: ["text", "packageRecommendation", "aftercareItems"],
 };
 
 function coerceRecommendationPayload(payload) {
   if (!payload || typeof payload !== "object") {
     throw new Error("Gemini response is not a JSON object");
   }
-
-  const { text, carRecommendation, merchItems } = payload;
-
-  if (typeof text !== "string" || !text.trim()) {
+  if (typeof payload.text !== "string" || !payload.text.trim()) {
     throw new Error("Gemini response text is missing");
   }
 
-  if (carRecommendation !== null && carRecommendation !== undefined) {
-    if (typeof carRecommendation !== "object") {
-      throw new Error("Gemini carRecommendation is invalid");
-    }
-
-    const { model, color } = carRecommendation;
-    if (typeof model !== "string" || typeof color !== "string") {
-      throw new Error("Gemini carRecommendation is incomplete");
-    }
+  const packageRecommendation = payload.packageRecommendation;
+  if (!packageRecommendation || typeof packageRecommendation !== "object") {
+    throw new Error("Gemini packageRecommendation is invalid");
+  }
+  if (
+    typeof packageRecommendation.package !== "string" ||
+    !Number.isInteger(packageRecommendation.duration) ||
+    typeof packageRecommendation.intensity !== "string" ||
+    !Array.isArray(packageRecommendation.addOns)
+  ) {
+    throw new Error("Gemini packageRecommendation is incomplete");
   }
 
-  const normalizeOptionalString = (v) =>
-    typeof v === "string" && v.trim() ? v.trim() : null;
-
-  if (!Array.isArray(merchItems)) {
-    throw new Error("Gemini merchItems is invalid");
+  const aftercareItems = payload.aftercareItems || payload.aftercareLinks;
+  if (!Array.isArray(aftercareItems)) {
+    throw new Error("Gemini aftercareItems is invalid");
   }
 
-  const normalizedMerchItems = [];
   const seenIds = new Set();
-
-  for (const item of merchItems) {
+  const normalizedAftercareItems = [];
+  for (const item of aftercareItems) {
     if (!item || typeof item !== "object" || !Number.isInteger(item.id)) {
-      throw new Error("Gemini merchItems is invalid");
+      throw new Error("Gemini aftercareItems is invalid");
     }
-
     if (seenIds.has(item.id)) continue;
     seenIds.add(item.id);
-
-    normalizedMerchItems.push({
+    normalizedAftercareItems.push({
       id: item.id,
-      reason: typeof item.reason === "string" ? item.reason.trim() : "",
+      reason: typeof item.reason === "string" && item.reason.trim()
+        ? item.reason.trim()
+        : "Supports your visit goals.",
     });
   }
 
-  const normalizedCar = carRecommendation
-    ? {
-        model:    carRecommendation.model.trim(),
-        color:    carRecommendation.color.trim(),
-        wheels:   normalizeOptionalString(carRecommendation.wheels),
-        interior: normalizeOptionalString(carRecommendation.interior),
-      }
-    : null;
-
   return {
-    text: text.trim(),
-    carRecommendation: normalizedCar,
-    merchItems: normalizedMerchItems,
+    text: payload.text.trim(),
+    packageRecommendation: {
+      package: packageRecommendation.package.trim(),
+      duration: packageRecommendation.duration,
+      intensity: packageRecommendation.intensity.trim(),
+      addOns: packageRecommendation.addOns
+        .filter((addOn) => typeof addOn === "string" && addOn.trim())
+        .map((addOn) => addOn.trim()),
+      reason: typeof packageRecommendation.reason === "string"
+        ? packageRecommendation.reason.trim()
+        : "",
+    },
+    aftercareItems: normalizedAftercareItems,
   };
+}
+
+function buildPackageLink(packageRecommendation) {
+  if (!packageRecommendation) return null;
+  const addOnPath = packageRecommendation.addOns.length > 0
+    ? `/${packageRecommendation.addOns.map(encodeURIComponent).join(",")}`
+    : "/none";
+  return `/package-configurator/${encodeURIComponent(packageRecommendation.package)}/${encodeURIComponent(packageRecommendation.duration)}/${encodeURIComponent(packageRecommendation.intensity)}${addOnPath}`;
 }
 
 function buildRecommendationResponse(recommendation, products = []) {
   const productById = new Map(products.map((product) => [product.id, product]));
-  const response = {
+  return {
     text: recommendation.text,
-    carLink: null,
-    merchLinks: [],
-  };
-
-  if (recommendation.carRecommendation?.model && recommendation.carRecommendation?.color) {
-    const { model, color, wheels, interior } = recommendation.carRecommendation;
-    const params = new URLSearchParams({ model, color });
-    if (wheels)   params.set("wheels", wheels);
-    if (interior) params.set("interior", interior);
-    response.carLink = `/car-configurator?${params.toString()}`;
-  }
-
-  if (Array.isArray(recommendation.merchItems)) {
-    response.merchLinks = recommendation.merchItems.map((item) => {
+    packageLink: buildPackageLink(recommendation.packageRecommendation),
+    packageRecommendation: recommendation.packageRecommendation,
+    aftercareLinks: recommendation.aftercareItems.map((item) => {
       const product = productById.get(item.id);
-      const title = product ? product.name : `Produkt #${item.id}`;
-      const subtitle = product?.color || "";
-      const imageUrl = product?.imageUrl || "";
-      const reason = item.reason || "Empfohlen auf Basis Ihrer Anfrage";
-
       return {
         id: item.id,
-        title,
-        subtitle,
-        imageUrl,
+        href: `/aftercare-shop/${product?.slug || item.id}`,
+        title: product?.name || `Aftercare product #${item.id}`,
+        imageUrl: product?.imageUrl || "",
         price: product?.price ?? null,
-        reason,
-        url: `/merch-shop/${item.id}`,
+        reason: item.reason,
       };
-    });
-  }
-
-  if (recommendation.carRecommendation?.model) {
-    response.carModel    = recommendation.carRecommendation.model;
-    response.carColor    = recommendation.carRecommendation.color;
-    response.carWheels   = recommendation.carRecommendation.wheels   ?? null;
-    response.carInterior = recommendation.carRecommendation.interior ?? null;
-  }
-
-  return response;
+    }),
+  };
 }
 
 module.exports = {
