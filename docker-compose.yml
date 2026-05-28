@@ -4,59 +4,59 @@ services:
       context: .
       dockerfile: api-gateway/Dockerfile
     expose:
-      - "3000"
+      - "4101"
     environment:
-      PORT: 3000
-      CONFIGURATOR_URL: http://car-configurator:3001
-      MERCH_URL: http://merch-shop:3002
-      CART_URL: http://shopping-cart:3005
-      AI_URL: http://ai-feature:3004
-      ROUTE_URL: http://route-service:3007
+      PORT: 4101
+      CONFIGURATOR_URL: http://package-configurator:4103
+      AFTERCARE_URL: http://aftercare-shop:4104
+      CART_URL: http://shopping-cart:4106
+      AI_URL: http://ai-feature:4105
+      VISIT_CONTEXT_URL: http://visit-context-service:4107
     depends_on:
-      - car-configurator
-      - merch-shop
+      - package-configurator
+      - aftercare-shop
       - shopping-cart
       - ai-feature
-      - route-service
+      - visit-context-service
     volumes:
       - ./api-gateway/src:/app/api-gateway/src
 
-  web-shop-frontend:
+  web-frontend:
     build:
       context: .
-      dockerfile: services/web-shop-frontend/Dockerfile
+      dockerfile: services/web-frontend/Dockerfile
     ports:
-      - "3000:3000"
+      - "4100:4100"
     environment:
-      PORT: 3000
-      WEB_SHOP_BACKEND_URL: http://web-shop-backend:3006
+      PORT: 4100
+      WEB_BACKEND_URL: http://web-backend:4102
     depends_on:
-      - web-shop-backend
+      - web-backend
     volumes:
       - ./web:/app/web
 
-  web-shop-backend:
+  web-backend:
     build:
       context: .
-      dockerfile: services/web-shop-backend/Dockerfile
+      dockerfile: services/web-backend/Dockerfile
     expose:
-      - "3006"
+      - "4102"
     environment:
-      PORT: 3006
-      API_GATEWAY_URL: http://api-gateway:3000
+      PORT: 4102
+      API_GATEWAY_URL: http://api-gateway:4101
       GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
     depends_on:
       - api-gateway
     volumes:
       - ./web:/app/web
 
-  car-configurator:
+  package-configurator:
     build:
-      context: ./services/car-configurator
+      context: ./services/package-configurator
     expose:
-      - "3001"
+      - "4103"
     environment:
-      PORT: 3001
+      PORT: 4103
       MYSQL_HOST: mysql-configurator
       MYSQL_PORT: ${MYSQL_PORT}
       MYSQL_USER: ${DBE_CLOUDDEV_CONFIGURATOR}
@@ -68,31 +68,31 @@ services:
       mysql-configurator-seed:
         condition: service_completed_successfully
 
-  merch-shop:
+  aftercare-shop:
     build:
-      context: ./services/merch-shop
+      context: ./services/aftercare-shop
     expose:
-      - "3002"
+      - "4104"
     environment:
-      PORT: 3002
-      MYSQL_HOST: mysql-merch
+      PORT: 4104
+      MYSQL_HOST: mysql-aftercare
       MYSQL_PORT: ${MYSQL_PORT}
-      MYSQL_USER: ${DBE_CLOUDDEV_MERCH}
-      MYSQL_PASSWORD: ${DBE_CLOUDDEV_MERCH_PASSWORD}
+      MYSQL_USER: ${DBE_CLOUDDEV_AFTERCARE}
+      MYSQL_PASSWORD: ${DBE_CLOUDDEV_AFTERCARE_PASSWORD}
       MINIO_ENDPOINT: ${MINIO_ENDPOINT}
       MINIO_PORT: ${MINIO_PORT}
       MINIO_BUCKET: ${MINIO_BUCKET}
     depends_on:
-      mysql-merch-seed:
+      mysql-aftercare-seed:
         condition: service_completed_successfully
 
   shopping-cart:
     build:
       context: ./services/shopping-cart
     expose:
-      - "3005"
+      - "4106"
     environment:
-      PORT: 3005
+      PORT: 4106
       REDIS_HOST: ${REDIS_HOST}
       REDIS_PORT: ${REDIS_PORT}
     depends_on:
@@ -102,31 +102,32 @@ services:
     build:
       context: ./services/ai-feature
     expose:
-      - "3004"
+      - "4105"
     environment:
-      PORT: 3004
-      CONFIGURATOR_URL: http://car-configurator:3001
-      MERCH_URL: http://merch-shop:3002
+      PORT: 4105
+      CONFIGURATOR_URL: http://package-configurator:4103
+      AFTERCARE_URL: http://aftercare-shop:4104
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
       GEMINI_FALLBACK_MODEL: ${GEMINI_FALLBACK_MODEL:-gemini-2.5-flash-lite}
     depends_on:
-      - car-configurator
-      - merch-shop
+      - package-configurator
+      - aftercare-shop
 
-  route-service:
+  visit-context-service:
     build:
-      context: ./services/route-service
+      context: ./services/visit-context-service
     expose:
-      - "3007"
+      - "4107"
     environment:
-      PORT: 3007
-      MYSQL_HOST: mysql-route
+      PORT: 4107
+      MYSQL_HOST: mysql-visit-context
       MYSQL_PORT: ${MYSQL_PORT}
-      MYSQL_USER: ${DBE_CLOUDDEV_ROUTE}
-      MYSQL_PASSWORD: ${DBE_CLOUDDEV_ROUTE_PASSWORD}
+      MYSQL_USER: ${DBE_CLOUDDEV_VISIT_CONTEXT}
+      MYSQL_PASSWORD: ${DBE_CLOUDDEV_VISIT_CONTEXT_PASSWORD}
+      GOOGLE_WEATHER_API_KEY: ${GOOGLE_WEATHER_API_KEY}
     depends_on:
-      mysql-route-seed:
+      mysql-visit-context-seed:
         condition: service_completed_successfully
 
   mysql-configurator:
@@ -152,68 +153,68 @@ services:
       ROOT_PASSWORD: ${DBE_CLOUDDEV_CONFIGURATOR_ROOT_PASSWORD}
       APP_USER: ${DBE_CLOUDDEV_CONFIGURATOR}
       APP_PASSWORD: ${DBE_CLOUDDEV_CONFIGURATOR_PASSWORD}
-      APP_DATABASE: bmw_car_configurator
-      SEED_FILE: /seed/02_car_configurator.sql
+      APP_DATABASE: wellness_package_configurator
+      SEED_FILE: /seed/02_package_configurator.sql
     volumes:
       - ./infrastructure/mysql/init:/seed:ro
       - ./infrastructure/mysql/seed-service.sh:/seed-service.sh:ro
     entrypoint: ["/bin/sh", "/seed-service.sh"]
 
-  mysql-merch:
+  mysql-aftercare:
     image: mysql:8.4
     environment:
-      MYSQL_ROOT_PASSWORD: ${DBE_CLOUDDEV_MERCH_ROOT_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DBE_CLOUDDEV_AFTERCARE_ROOT_PASSWORD}
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${DBE_CLOUDDEV_MERCH_ROOT_PASSWORD}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${DBE_CLOUDDEV_AFTERCARE_ROOT_PASSWORD}"]
       interval: 5s
       timeout: 5s
       retries: 20
       start_period: 10s
     volumes:
-      - mysql_merch_data:/var/lib/mysql
+      - mysql_aftercare_data:/var/lib/mysql
 
-  mysql-merch-seed:
+  mysql-aftercare-seed:
     image: mysql:8.4
     depends_on:
-      mysql-merch:
+      mysql-aftercare:
         condition: service_healthy
     environment:
-      MYSQL_HOST: mysql-merch
-      ROOT_PASSWORD: ${DBE_CLOUDDEV_MERCH_ROOT_PASSWORD}
-      APP_USER: ${DBE_CLOUDDEV_MERCH}
-      APP_PASSWORD: ${DBE_CLOUDDEV_MERCH_PASSWORD}
-      APP_DATABASE: bmw_merch_shop
-      SEED_FILE: /seed/01_merch_shop.sql
+      MYSQL_HOST: mysql-aftercare
+      ROOT_PASSWORD: ${DBE_CLOUDDEV_AFTERCARE_ROOT_PASSWORD}
+      APP_USER: ${DBE_CLOUDDEV_AFTERCARE}
+      APP_PASSWORD: ${DBE_CLOUDDEV_AFTERCARE_PASSWORD}
+      APP_DATABASE: wellness_aftercare_shop
+      SEED_FILE: /seed/01_aftercare_shop.sql
     volumes:
       - ./infrastructure/mysql/init:/seed:ro
       - ./infrastructure/mysql/seed-service.sh:/seed-service.sh:ro
     entrypoint: ["/bin/sh", "/seed-service.sh"]
 
-  mysql-route:
+  mysql-visit-context:
     image: mysql:8.4
     environment:
-      MYSQL_ROOT_PASSWORD: ${DBE_CLOUDDEV_ROUTE_ROOT_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DBE_CLOUDDEV_VISIT_CONTEXT_ROOT_PASSWORD}
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${DBE_CLOUDDEV_ROUTE_ROOT_PASSWORD}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${DBE_CLOUDDEV_VISIT_CONTEXT_ROOT_PASSWORD}"]
       interval: 5s
       timeout: 5s
       retries: 20
       start_period: 10s
     volumes:
-      - mysql_route_data:/var/lib/mysql
+      - mysql_visit_context_data:/var/lib/mysql
 
-  mysql-route-seed:
+  mysql-visit-context-seed:
     image: mysql:8.4
     depends_on:
-      mysql-route:
+      mysql-visit-context:
         condition: service_healthy
     environment:
-      MYSQL_HOST: mysql-route
-      ROOT_PASSWORD: ${DBE_CLOUDDEV_ROUTE_ROOT_PASSWORD}
-      APP_USER: ${DBE_CLOUDDEV_ROUTE}
-      APP_PASSWORD: ${DBE_CLOUDDEV_ROUTE_PASSWORD}
-      APP_DATABASE: bmw_route_service
-      SEED_FILE: /seed/03_route_service.sql
+      MYSQL_HOST: mysql-visit-context
+      ROOT_PASSWORD: ${DBE_CLOUDDEV_VISIT_CONTEXT_ROOT_PASSWORD}
+      APP_USER: ${DBE_CLOUDDEV_VISIT_CONTEXT}
+      APP_PASSWORD: ${DBE_CLOUDDEV_VISIT_CONTEXT_PASSWORD}
+      APP_DATABASE: wellness_visit_context
+      SEED_FILE: /seed/03_visit_context.sql
     volumes:
       - ./infrastructure/mysql/init:/seed:ro
       - ./infrastructure/mysql/seed-service.sh:/seed-service.sh:ro
@@ -245,8 +246,9 @@ services:
       minio:
         condition: service_healthy
     volumes:
-      - ./assets/configurator:/seed/configurator:ro
-      - ./assets/merch-shop:/seed/merch-shop:ro
+      - ./assets/package-configurator:/seed/package-configurator:ro
+      - ./assets/aftercare-shop:/seed/aftercare-shop:ro
+      - ./assets/center:/seed/center:ro
       - ./web/public/images:/seed/home-images:ro
     entrypoint: >
       /bin/sh -c "
@@ -255,13 +257,14 @@ services:
       done;
       mc mb --ignore-existing local/${MINIO_BUCKET};
       mc anonymous set download local/${MINIO_BUCKET};
-      mc mirror --overwrite /seed/configurator local/${MINIO_BUCKET}/configurator;
-      mc mirror --overwrite /seed/merch-shop local/${MINIO_BUCKET}/merch-shop;
+      mc mirror --overwrite /seed/package-configurator local/${MINIO_BUCKET}/package-configurator;
+      mc mirror --overwrite /seed/aftercare-shop local/${MINIO_BUCKET}/aftercare-shop;
+      mc mirror --overwrite /seed/center local/${MINIO_BUCKET}/center;
       mc mirror --overwrite /seed/home-images local/${MINIO_BUCKET}/home;
       echo 'Done.';
       "
 
 volumes:
   mysql_configurator_data:
-  mysql_merch_data:
-  mysql_route_data:
+  mysql_aftercare_data:
+  mysql_visit_context_data:
