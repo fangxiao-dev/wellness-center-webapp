@@ -3,196 +3,333 @@
 ## Project Summary
 
 - **Name:** AI-assisted Wellness Center Web Application
-- **Project type:** Course project for a cloud-based web application class
-- **One-sentence purpose:** Build a Wellness Center web app that demonstrates a complete multi-service cloud architecture through package configuration, AI consultation, aftercare shop, visit context, cart, and media flows.
+- **Project type:** Solo course project for a Cloud-based Web Application class
+- **Purpose:** Build a Wellness Center web application that demonstrates a complete multi-service cloud architecture through guided package configuration, AI consultation, aftercare shopping, visit context, cart/session state, and media delivery.
 - **Primary audience:** Course evaluator, project author, and demo users acting as wellness center customers
-- **Current phase:** Foundation and implementation planning complete; project initialization implementation has not started yet
+- **Current phase:** Project foundation, design, and implementation plan are prepared; code initialization is the next step.
 
-## Background
+## Course Context
 
-This repository is the solo project counterpart to a completed group project in `D:\CodeSpace\dbe-cloud-groupproject`.
+The instructor requires two related deliverables:
 
-The instructor requirement is:
+- a group project
+- a solo project
 
-- one project is completed by a group
-- one project is completed individually
-- the individual project should reuse the group project's architecture as much as possible
-- the individual project must use a different theme
+The solo project should reuse the group project's architecture as much as possible while using a different product theme. The reference group project is located at:
 
-The solo project theme is **Wellness Center**, not Wellness Resort. It should feel like a professional massage and body-relief center, not a hotel, tourism platform, clinic, or medical system.
+```text
+D:\CodeSpace\dbe-cloud-groupproject
+```
+
+The solo project lives at:
+
+```text
+D:\CodeSpace\dbe-cloud-soloproject
+```
+
+The main grading priority for this project is architectural completeness and demonstrable cloud-style service decomposition.
+
+## Product Positioning
+
+This project is not a clinic system, medical diagnosis tool, hotel platform, or tourism resort website.
+
+It is a professional **Wellness Center / Massage Center** web application centered on massage-focused, goal-oriented wellness packages.
+
+The product concept:
+
+```text
+A user describes body tension, stress, or relaxation goals.
+The system guides the user toward a suitable massage package.
+The user can configure the package, add it to a cart, and extend the visit with aftercare products.
+```
+
+The AI feature is a guided recommendation helper, not a medical authority. It should recommend suitable package options and aftercare products without diagnosing disease or replacing a clinical professional.
 
 ## Product Theme
 
-The product is a massage-focused Wellness Center application. Its core object is a goal-oriented wellness package.
+The product should feel like a specialized wellness and massage center:
 
-Example packages:
+- massage
+- relaxation
+- body relief
+- recovery support
+- aftercare products
+- visit preparation
+
+It should not feel like:
+
+- a hotel booking site
+- a travel resort platform
+- a medical clinic
+- a generic webshop
+
+## Core Business Objects
+
+### Treatment
+
+A treatment is a low-level wellness or massage service capability.
+
+Examples:
+
+- Deep Tissue Massage
+- Swedish Relaxation Massage
+- Hot Stone Massage
+- Aroma Massage
+- Stretching Add-on
+
+Treatments support package composition but are not the primary object sold in the P0 frontend.
+
+### Package
+
+A package is the core product object. Users browse, configure, receive recommendations for, and add packages to the cart.
+
+Examples:
 
 - Neck & Shoulder Relief
 - Stress Reset Massage
 - Warm Recovery Massage
 
-The product's main business loop is:
+Each package has:
+
+- a goal
+- a description
+- a duration
+- an intensity
+- optional add-ons
+- price information
+- media references
+
+### Journey
+
+A journey is the user-facing narrative wrapper around a recommendation. It is not required to be a separate transactional database entity in P0.
+
+Examples:
+
+- Shoulder & Neck Reset Session
+- Stress Relief Massage Journey
+
+### Product
+
+A product is an aftercare or lifestyle item sold through the shop.
+
+Examples:
+
+- heated neck wrap
+- neck pillow
+- essential oil
+- stretching band
+- recovery accessory
+
+### Cart Item
+
+The cart stores session-scoped snapshots of:
+
+- configured package items
+- aftercare product items
+
+## Primary User Groups
+
+### Wellness-oriented massage clients
+
+These users are interested in relaxation or body relief but may not know which massage package fits their needs.
+
+Common intentions:
+
+- "My shoulders are tense. What should I book?"
+- "I want a calming after-work session."
+- "I do not understand the package differences."
+
+### Direct browsers and package shoppers
+
+These users prefer to browse packages or products directly instead of starting with AI consultation.
+
+They may:
+
+- browse wellness packages
+- view center impressions
+- check products
+- add aftercare items to cart
+
+## User Problems
+
+### Wellness selection is difficult
+
+Users may not understand treatment names or know which package fits their discomfort, time, or intensity preference.
+
+### Standard massage center websites lack guidance
+
+Many sites list services and prices but do not help users translate goals into a suitable package.
+
+### Services feel fragmented
+
+Individual services such as hot stone massage, aroma oil, or stretching can feel disconnected unless packaged into a coherent experience.
+
+### Course modules can become disconnected
+
+Configurator, webshop, media, weather, AI, cart, and storage features should serve one product flow rather than appearing as unrelated course requirements.
+
+## Product Goals
+
+### Goal 1: Guide users toward suitable packages
+
+The system should help users find a suitable massage package instead of forcing them to interpret all service options alone.
+
+### Goal 2: Make the Wellness Center theme distinct
+
+The application should highlight massage, relaxation, body relief, visit context, and aftercare instead of hotel or resort features.
+
+### Goal 3: Demonstrate a coherent business loop
+
+The core loop is:
 
 ```text
 Discover -> Consult -> Recommend -> Configure -> Cart -> Extend with Aftercare
 ```
 
-## Key User Scenarios
+### Goal 4: Give technical architecture a business reason
 
-### Scenario 1: Configure A Package
+Each infrastructure component should have a clear product role:
 
-A user opens the package configurator, selects a package, duration, intensity, and add-ons, then receives a configured result with price and media. The user can add that configured package snapshot to the cart.
+- MySQL stores structured domain data.
+- Redis stores session/cart state.
+- MinIO stores package, product, and center media.
+- AI recommends packages and products.
+- Visit context connects map/weather data to the center visit.
 
-### Scenario 2: Get AI Consultation
+## Current Milestone
 
-A user describes tension or relaxation goals. The AI feature recommends both a package configuration and relevant aftercare products. The user can open the configurator or product detail pages from the recommendation.
+Initialize the full architecture-compliant scaffold.
 
-### Scenario 3: Prepare For A Visit
+The initialized project should include:
 
-A user checks the center location, arrival notes, map context, and weather/visit preparation summary before going to the center.
+- complete directory structure
+- Docker Compose runtime
+- all service containers
+- service-owned MySQL containers and seeds
+- Redis
+- MinIO
+- EJS frontend pages
+- basic API-backed interactions
+- smoke test
+- documentation
 
-## Goals And Scope
+The content can be scaffold-quality and replaceable. The architecture and runtime chain must be real.
 
-### Current Milestone
+## Required Runtime Architecture
 
-Initialize a full architecture-compliant scaffold of the solo project.
-
-### Success Condition
-
-The project can run locally with Docker Compose and demonstrate this chain:
+The solo project must preserve this architecture shape:
 
 ```text
-web frontend -> web backend -> api gateway -> domain services -> MySQL / Redis / MinIO
+Browser
+  -> web-frontend
+  -> web-backend
+  -> api-gateway
+  -> services:
+       package-configurator
+       aftercare-shop
+       ai-feature
+       visit-context-service
+       shopping-cart
+  -> infrastructure:
+       MySQL + Redis + MinIO
 ```
 
-### Minimum Usable Closed Loop
+## Required Pages
 
-The minimum closed loop is:
+P0 pages:
 
-```text
-Home
-  -> Package Configurator
-  -> calculate configured package
-  -> add to cart
-  -> view persisted cart item
-```
+- `/`
+- `/package-configurator`
+- `/package-configurator/:package/:duration/:intensity/:addon`
+- `/ai-feature`
+- `/aftercare-shop`
+- `/aftercare-shop/:productId`
+- `/shopping-cart`
+- `/visit-context`
+- `/impressum`
 
-AI, aftercare shop, visit context, and media routes must also be wired enough for smoke-test validation.
+Each primary page should be reachable and backed by real API calls where relevant.
 
-### Required Deliverables
+## User Flows
 
-- Docker Compose full stack
-- `web-frontend`
-- `web-backend`
-- `api-gateway`
-- `package-configurator`
-- `aftercare-shop`
-- `ai-feature`
-- `visit-context-service`
-- `shopping-cart`
-- service-owned MySQL containers
-- Redis cart/session storage
-- MinIO media storage
-- EJS page skeletons with basic interactions
-- seed data and replaceable scaffold media
-- Windows smoke test
-- README and architecture documentation
+### Flow 1: AI-assisted recommendation
 
-### In Scope
+1. User opens the AI consultation page.
+2. User describes body discomfort, stress, intensity, or time preference.
+3. AI returns a recommended package configuration and aftercare products.
+4. User opens the configurator or product detail page from the recommendation.
 
-- full architecture reuse from the group project
-- Wellness Center retheme
+### Flow 2: Configure package
+
+1. User opens the package configurator.
+2. User chooses package, duration, intensity, and add-ons.
+3. Backend calculates a configured result.
+4. User adds the configured package snapshot to the cart.
+
+### Flow 3: Shop extension
+
+1. User browses aftercare products.
+2. User opens product detail.
+3. User adds a product to the cart.
+
+### Flow 4: Visit preparation
+
+1. User opens visit context.
+2. System displays center location, arrival note, map context, and weather/visit summary.
+
+## In Scope
+
+- Wellness Center product framing
+- massage-focused package catalog
 - package variant configurator
-- aftercare product catalog
 - AI recommendation for package plus aftercare products
-- visit context with map/weather preparation
-- Redis-backed shopping cart
-- MinIO-backed media routes through owning services
-- complete page skeletons with basic API-backed interactions
+- aftercare product catalog and product detail
+- cart backed by Redis
+- service-owned MySQL containers
+- MinIO-backed media
+- visit context with map/weather support
+- complete page skeletons with basic interactions
+- Docker Compose and smoke-test validation
 
-### Out Of Scope
+## Out Of Scope
 
+- medical diagnosis
+- treatment prescriptions
 - real payment
 - authentication
-- medical diagnosis
-- treatment prescription
+- complex appointment availability
 - therapist scheduling optimization
-- production CMS
-- real appointment availability engine
-- final visual polish
+- staff portal
+- CMS
+- user reviews or community
+- production-grade frontend polish
+- arbitrary build-your-own treatment engine
 
-## Constraints
+## Success Criteria
 
-- P0 priority is architecture compliance, not feature novelty.
-- The service topology must match the group project's architecture shape.
-- Browser traffic should enter through `web-frontend`.
-- `web-backend`, `api-gateway`, and AI must not query databases directly.
-- DB-backed services use separate MySQL containers.
-- MinIO should not be exposed as a browser-facing media source.
-- Existing user changes to `prd.md` must not be reverted or casually committed.
+The project is successful for the current milestone when:
+
+- the application starts with Docker Compose
+- `http://localhost:3000` serves the Wellness Center app
+- the gateway routes to all domain services
+- MySQL, Redis, and MinIO are all used in the running stack
+- smoke test passes without AI
+- AI smoke test can run when Gemini credentials are configured
+- no BMW runtime identity remains in pages, routes, seed data, or README examples
 
 ## Repository Facts
 
-### Current Root Files
+Current durable docs:
 
-- `prd.md` contains the product PRD and has uncommitted user edits.
-- `techstack-draft.md` contains an earlier conceptual architecture and technical direction draft.
-- `docs/superpowers/specs/2026-05-28-wellness-center-initialization-design.md` contains the approved design.
-- `docs/superpowers/plans/2026-05-28-wellness-center-initialization.md` contains the approved implementation plan.
+- [Technology stack](./tech-stack.md)
+- [Initialization epic](../epic-plans/wellness-center-initialization-epic.md)
+- [Service boundaries](../func-design/wellness-center-service-boundaries.md)
+- [Initialization design](../impl-plans/2026-05-28-wellness-center-initialization-design.md)
+- [Implementation plan](../impl-plans/2026-05-28-wellness-center-initialization.md)
 
-### Planned Runtime Entrypoints
-
-- `docker-compose.yml`
-- `services/web-frontend/src/server.js`
-- `services/web-backend/src/server.js`
-- `api-gateway/src/server.js`
-- service `src/server.js` files under `services/*`
-
-### Planned Test Entrypoints
-
-- `npm test --prefix api-gateway`
-- `npm test --prefix services/web-frontend`
-- `npm test --prefix services/web-backend`
-- `npm test --prefix services/package-configurator`
-- `npm test --prefix services/aftercare-shop`
-- `npm test --prefix services/visit-context-service`
-- `npm test --prefix services/ai-feature`
-- `.\scripts\smoke-test.ps1 -SkipAi`
-
-## Candidate Technical Direction
-
-The technical direction is fixed by architecture reuse:
-
-- Node.js and Express services
-- EJS server-side rendered pages
-- Docker Compose local runtime
-- MySQL 8.4 service-owned relational stores
-- Redis 8 for cart/session state
-- MinIO for media object storage
-- Gemini for AI consultation
-- Google Maps Platform for map/weather context
-
-See [tech-stack.md](./tech-stack.md).
-
-## Confirmed Facts
-
-- The project is a solo course project.
-- The theme is Wellness Center.
-- The architecture must follow the group project structure closely.
-- The configured product is a package variant, not an appointment booking.
-- AI recommends package configuration plus aftercare products.
-- The cart remains `shopping-cart`.
-- MySQL uses separate service-owned containers.
-- Frontend P0 requires complete page skeletons with basic interactions.
-
-## Reasonable Inferences
-
-- Implementation should start from the group project skeleton and retheme it.
-- Final demo quality depends more on end-to-end architecture proof than polished content.
-- Placeholder media and seed data are acceptable if they are replaceable and wired through real MinIO/API paths.
+The former root-level `prd.md` content has been merged into this file.
 
 ## Open Questions
 
-- Whether the user wants a canonical agent entry file such as `AGENTS.md` after project foundation is complete.
-- Whether `GOOGLE_WEATHER_API_KEY` should be separate from `GOOGLE_MAPS_API_KEY` or treated as the same Maps Platform key in implementation.
+- Whether Google Weather API should use the same key variable as Google Maps or remain separate as `GOOGLE_WEATHER_API_KEY`.
 - Whether the stack should be left running after implementation verification.

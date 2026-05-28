@@ -42,5 +42,5 @@ The milestone is accepted when:
 
 - [Project context](../top-level-knowledge/project-context.md)
 - [Technology stack](../top-level-knowledge/tech-stack.md)
-- Approved design: `docs/superpowers/specs/2026-05-28-wellness-center-initialization-design.md`
-- Detailed implementation plan: `docs/superpowers/plans/2026-05-28-wellness-center-initialization.md`
+- Approved design: `docs/impl-plans/2026-05-28-wellness-center-initialization-design.md`
+- Detailed implementation plan: `docs/impl-plans/2026-05-28-wellness-center-initialization.md`
