@@ -3,5 +3,5 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY src ./src
-EXPOSE 3002
+EXPOSE 4104
 CMD ["npm", "start"]

@@ -1,124 +1,102 @@
 const express = require("express");
 const mysql = require("mysql2/promise");
-const {
-  buildMerchAssetUrl,
-  encodeObjectKey,
-  normalizeMerchAssetKey,
-} = require("./asset-paths");
+const { normalizeObjectKey, toPublicProductImageUrl } = require("./asset-paths");
 
 const app = express();
-const port = process.env.PORT || 3002;
-
-function requiredEnv(name) {
-  if (!process.env[name]) {
-    throw new Error(`${name} is required`);
-  }
-  return process.env[name];
-}
-
-const dbConfig = {
-  host: requiredEnv("MYSQL_HOST"),
-  port: process.env.MYSQL_PORT || 3306,
-  user: requiredEnv("MYSQL_USER"),
-  password: requiredEnv("MYSQL_PASSWORD"),
-  database: "bmw_merch_shop",
-  charset: "utf8mb4",
-};
-
-const MINIO_BUCKET = process.env.MINIO_BUCKET || "configurator-images";
+const port = process.env.PORT || 4104;
+const MINIO_BUCKET = process.env.MINIO_BUCKET || "wellness-media";
 const MINIO_BASE = `http://${process.env.MINIO_ENDPOINT || "minio"}:${process.env.MINIO_PORT || 9000}`;
 
-function createProductSlug(product) {
-  return `${product.name || ""}-${product.color || ""}`
-    .replace(/ß/g, "ss")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/&/g, "und")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
+let pool;
 
-function normalizeProductKey(value) {
-  return String(value || "")
-    .replace(/ß/g, "ss")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "");
-}
-
-async function loadProducts() {
-  const conn = await mysql.createConnection(dbConfig);
-  const [rows] = await conn.query("SELECT * FROM merch_shop ORDER BY id");
-  await conn.end();
-
-  return rows.map((p) => ({
-    ...p,
-    price: parseFloat(p.price),
-    slug: createProductSlug(p),
-    imageUrl: buildMerchAssetUrl(p.minioObject),
-  }));
-}
-
-app.get("/health", (_req, res) => res.json({ ok: true }));
-
-app.get(/^\/assets\/(.+)$/, async (req, res) => {
-  const objectKey = normalizeMerchAssetKey(req.params[0]);
-
-  if (!objectKey) {
-    return res.status(400).json({ error: "invalid asset key" });
+function getPool() {
+  if (!pool) {
+    pool = mysql.createPool({
+      host: process.env.MYSQL_HOST || "mysql-aftercare",
+      port: process.env.MYSQL_PORT || 3306,
+      user: process.env.MYSQL_USER || "DBE_CLOUDDEV_AFTERCARE",
+      password: process.env.MYSQL_PASSWORD || "DBE_CLOUDDEV_AFTERCARE_PASSWORD",
+      database: "wellness_aftercare_shop",
+      waitForConnections: true,
+      connectionLimit: 10,
+      charset: "utf8mb4",
+    });
   }
+  return pool;
+}
 
-  try {
-    const upstream = await fetch(`${MINIO_BASE}/${encodeURIComponent(MINIO_BUCKET)}/${encodeObjectKey(objectKey)}`);
-    res.status(upstream.status);
+function mapProduct(row) {
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    category: row.category,
+    price: Number.parseFloat(row.price),
+    description: row.description,
+    usageNote: row.usage_note,
+    imageUrl: toPublicProductImageUrl(row.minio_object),
+  };
+}
 
-    const contentType = upstream.headers.get("content-type");
-    if (contentType) {
-      res.setHeader("content-type", contentType);
-    }
+async function query(sql, params = []) {
+  const [rows] = await getPool().query(sql, params);
+  return rows;
+}
 
-    const cacheControl = upstream.headers.get("cache-control");
-    if (cacheControl) {
-      res.setHeader("cache-control", cacheControl);
-    }
+function sendError(res, status, error) {
+  return res.status(status).json({ error });
+}
 
-    res.send(Buffer.from(await upstream.arrayBuffer()));
-  } catch (err) {
-    res.status(502).json({ error: err.message });
-  }
+app.get("/health", (_req, res) => {
+  res.json({ ok: true, service: "aftercare-shop" });
 });
 
 app.get("/products", async (_req, res) => {
   try {
-    const products = await loadProducts();
-    res.json(products);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const rows = await query("SELECT * FROM products ORDER BY id");
+    res.json(rows.map(mapProduct));
+  } catch (error) {
+    sendError(res, 500, error.message);
   }
 });
 
 app.get("/products/:productId", async (req, res) => {
+  const productId = req.params.productId;
+  const numericId = Number.parseInt(productId, 10);
+  const isNumeric = String(numericId) === productId;
   try {
-    const requestedId = String(req.params.productId).toLowerCase();
-    const requestedKey = normalizeProductKey(req.params.productId);
-    const products = await loadProducts();
-    const product = products.find((p) =>
-      String(p.id) === requestedId ||
-      String(p.slug).toLowerCase() === requestedId ||
-      normalizeProductKey(p.slug) === requestedKey ||
-      normalizeProductKey(p.slug).endsWith(requestedKey)
+    const rows = await query(
+      `SELECT * FROM products WHERE ${isNumeric ? "id" : "slug"} = ? LIMIT 1`,
+      [isNumeric ? numericId : productId]
     );
-
-    if (!product) {
-      return res.status(404).json({ error: "product not found" });
-    }
-
-    res.json(product);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    if (!rows[0]) return sendError(res, 404, "product not found");
+    res.json(mapProduct(rows[0]));
+  } catch (error) {
+    sendError(res, 500, error.message);
   }
 });
 
-app.listen(port, () => console.log(`merch-shop listening on port ${port}`));
+app.get(/^\/assets\/(.+)$/, async (req, res) => {
+  let objectKey;
+  try {
+    objectKey = normalizeObjectKey(req.params[0]);
+  } catch (_error) {
+    return sendError(res, 400, "invalid asset key");
+  }
+
+  try {
+    const upstream = await fetch(`${MINIO_BASE}/${encodeURIComponent(MINIO_BUCKET)}/${objectKey}`);
+    res.status(upstream.status);
+    const contentType = upstream.headers.get("content-type");
+    if (contentType) res.setHeader("content-type", contentType);
+    res.send(Buffer.from(await upstream.arrayBuffer()));
+  } catch (error) {
+    sendError(res, 502, error.message);
+  }
+});
+
+if (require.main === module) {
+  app.listen(port, () => console.log(`aftercare-shop listening on port ${port}`));
+}
+
+module.exports = app;
