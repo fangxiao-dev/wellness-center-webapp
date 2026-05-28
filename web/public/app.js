@@ -154,12 +154,29 @@ async function initCart() {
     const items = cart.items || [];
     container.innerHTML = items.map((item) => `
       <div class="cart-row">
-        <span>${item.name} x ${item.quantity}</span>
+        <span>${item.name}</span>
+        <input
+          aria-label="Quantity for ${item.name}"
+          data-quantity="${item.id}"
+          min="1"
+          type="number"
+          value="${item.quantity || 1}"
+        >
         <strong>${money(Number(item.price) * Number(item.quantity || 1))}</strong>
         <button data-remove="${item.id}" type="button">Remove</button>
       </div>
     `).join("") || "<p>Your cart is empty.</p>";
     total.textContent = `Total: ${money(cart.total || items.reduce((sum, item) => sum + Number(item.price) * Number(item.quantity || 1), 0))}`;
+    container.querySelectorAll("[data-quantity]").forEach((input) => {
+      input.addEventListener("change", async () => {
+        const quantity = Math.max(1, Number(input.value || 1));
+        await requestJson(`/api/cart/items/${encodeURIComponent(input.dataset.quantity)}`, {
+          method: "PATCH",
+          body: JSON.stringify({ quantity }),
+        });
+        render();
+      });
+    });
     container.querySelectorAll("[data-remove]").forEach((button) => {
       button.addEventListener("click", async () => {
         await fetch(`/api/cart/items/${encodeURIComponent(button.dataset.remove)}`, { method: "DELETE" });
@@ -175,21 +192,59 @@ async function initCart() {
   render();
 }
 
+function loadGoogleMaps(apiKey) {
+  if (!apiKey || apiKey === "replace_me") return Promise.resolve(false);
+  if (window.google?.maps) return Promise.resolve(true);
+
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector("script[data-google-maps]");
+    if (existing) {
+      existing.addEventListener("load", () => resolve(true), { once: true });
+      existing.addEventListener("error", reject, { once: true });
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.dataset.googleMaps = "true";
+    script.async = true;
+    script.defer = true;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}`;
+    script.addEventListener("load", () => resolve(true), { once: true });
+    script.addEventListener("error", reject, { once: true });
+    document.head.appendChild(script);
+  });
+}
+
 async function initVisitContext() {
   const summary = document.querySelector("#visit-summary");
   if (!summary) return;
+  const map = document.querySelector("#map");
   try {
     const data = await requestJson("/api/visit-context/visit-summary");
     const location = data.location || data.center || {};
+    const lat = Number(location.latitude || location.lat);
+    const lng = Number(location.longitude || location.lng);
     summary.innerHTML = `
       <h2>${location.name || "Serenity Wellness Center"}</h2>
       <p>${location.address || data.address || ""}</p>
       <p>${data.arrivalTip || data.tip || ""}</p>
       <p>${data.weather?.summary || data.weatherSummary || ""}</p>
     `;
-    document.querySelector("#map").textContent = window.SERENITY_MAPS_KEY
-      ? "Map loads with Google Maps when configured."
-      : `${location.address || "Map unavailable until Google Maps key is configured."}`;
+    const hasMaps = await loadGoogleMaps(window.SERENITY_MAPS_KEY);
+    if (hasMaps && Number.isFinite(lat) && Number.isFinite(lng)) {
+      const center = { lat, lng };
+      const googleMap = new window.google.maps.Map(map, {
+        center,
+        zoom: 14,
+      });
+      new window.google.maps.Marker({
+        map: googleMap,
+        position: center,
+        title: location.name || "Serenity Wellness Center",
+      });
+    } else {
+      map.textContent = location.address || "Map unavailable until Google Maps key is configured.";
+    }
   } catch (err) {
     summary.textContent = err.message;
   }
