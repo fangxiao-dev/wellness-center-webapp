@@ -7,6 +7,6 @@ RUN npm ci
 
 COPY api-gateway/src ./src
 
-EXPOSE 3000
+EXPOSE 4101
 
 CMD ["npm", "start"]

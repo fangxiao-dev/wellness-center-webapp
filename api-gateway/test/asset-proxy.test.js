@@ -75,7 +75,7 @@ function closeServer(server) {
   return Promise.resolve();
 }
 
-async function startGateway(configuratorUrl, merchUrl, cartUrl = "http://127.0.0.1:1") {
+async function startGateway(configuratorUrl, aftercareUrl, cartUrl = "http://127.0.0.1:1") {
   const portProbe = http.createServer((_req, res) => res.end());
   const port = await listen(portProbe);
   await new Promise((resolve) => portProbe.close(resolve));
@@ -86,7 +86,7 @@ async function startGateway(configuratorUrl, merchUrl, cartUrl = "http://127.0.0
       ...process.env,
       PORT: String(port),
       CONFIGURATOR_URL: configuratorUrl,
-      MERCH_URL: merchUrl,
+      AFTERCARE_URL: aftercareUrl,
       CART_URL: cartUrl,
     },
     stdio: ["ignore", "ignore", "pipe"],
@@ -144,13 +144,13 @@ test("gateway uses a newly issued session id for first cart write", async () => 
     res.writeHead(404).end();
   });
   const configurator = http.createServer((_req, res) => res.writeHead(404).end());
-  const merch = http.createServer((_req, res) => res.writeHead(404).end());
+  const aftercare = http.createServer((_req, res) => res.writeHead(404).end());
   const cartPort = await listen(cart);
   const configuratorPort = await listen(configurator);
-  const merchPort = await listen(merch);
+  const aftercarePort = await listen(aftercare);
   const gateway = await startGateway(
     `http://127.0.0.1:${configuratorPort}`,
-    `http://127.0.0.1:${merchPort}`,
+    `http://127.0.0.1:${aftercarePort}`,
     `http://127.0.0.1:${cartPort}`
   );
 
@@ -158,7 +158,7 @@ test("gateway uses a newly issued session id for first cart write", async () => 
     const createResponse = await fetch(`${gateway.baseUrl}/api/cart/items`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ type: "merch", name: "BMW Cap", price: 29.9, quantity: 1 }),
+      body: JSON.stringify({ type: "aftercare", name: "Heated Neck Wrap", price: 34.9, quantity: 1 }),
     });
     const sessionId = extractCookieValue(createResponse.headers.get("set-cookie"), "sessionId");
 
@@ -172,7 +172,7 @@ test("gateway uses a newly issued session id for first cart write", async () => 
     const cartBody = await cartResponse.json();
 
     assert.equal(cartResponse.status, 200);
-    assert.equal(cartBody.items[0].name, "BMW Cap");
+    assert.equal(cartBody.items[0].name, "Heated Neck Wrap");
     assert.deepEqual(cartRequests, [
       `/cart/${sessionId}/items`,
       `/cart/${sessionId}`,
@@ -181,7 +181,7 @@ test("gateway uses a newly issued session id for first cart write", async () => 
     await gateway.stop();
     await closeServer(cart);
     await closeServer(configurator);
-    await closeServer(merch);
+    await closeServer(aftercare);
   }
 });
 
@@ -196,13 +196,13 @@ test("gateway streams configurator asset responses without JSON parsing", async 
     });
     res.end(body);
   });
-  const merch = http.createServer((_req, res) => res.writeHead(404).end());
+  const aftercare = http.createServer((_req, res) => res.writeHead(404).end());
   const configuratorPort = await listen(configurator);
-  const merchPort = await listen(merch);
-  const gateway = await startGateway(`http://127.0.0.1:${configuratorPort}`, `http://127.0.0.1:${merchPort}`);
+  const aftercarePort = await listen(aftercare);
+  const gateway = await startGateway(`http://127.0.0.1:${configuratorPort}`, `http://127.0.0.1:${aftercarePort}`);
 
   try {
-    const response = await fetch(`${gateway.baseUrl}/api/configurator/assets/configurator/6_front.jpg`, {
+    const response = await fetch(`${gateway.baseUrl}/api/configurator/assets/package-configurator/neck-shoulder-relief.svg`, {
       signal: AbortSignal.timeout(2000),
     });
 
@@ -210,44 +210,44 @@ test("gateway streams configurator asset responses without JSON parsing", async 
     assert.equal(response.headers.get("content-type"), "image/jpeg");
     assert.equal(response.headers.get("cache-control"), "public, max-age=60");
     assert.deepEqual(Buffer.from(await response.arrayBuffer()), body);
-    assert.deepEqual(requests, ["/assets/configurator/6_front.jpg"]);
+    assert.deepEqual(requests, ["/assets/package-configurator/neck-shoulder-relief.svg"]);
   } finally {
     await gateway.stop();
     await closeServer(configurator);
-    await closeServer(merch);
+    await closeServer(aftercare);
   }
 });
 
-test("gateway streams merch asset responses without JSON parsing", async () => {
-  const body = Buffer.from("avif-bytes");
+test("gateway streams aftercare asset responses without JSON parsing", async () => {
+  const body = Buffer.from("svg-bytes");
   const configurator = http.createServer((_req, res) => res.writeHead(404).end());
   const requests = [];
-  const merch = http.createServer((req, res) => {
+  const aftercare = http.createServer((req, res) => {
     requests.push(req.url);
     res.writeHead(200, {
-      "content-type": "image/avif",
+      "content-type": "image/svg+xml",
       "cache-control": "public, max-age=120",
     });
     res.end(body);
   });
   const configuratorPort = await listen(configurator);
-  const merchPort = await listen(merch);
-  const gateway = await startGateway(`http://127.0.0.1:${configuratorPort}`, `http://127.0.0.1:${merchPort}`);
+  const aftercarePort = await listen(aftercare);
+  const gateway = await startGateway(`http://127.0.0.1:${configuratorPort}`, `http://127.0.0.1:${aftercarePort}`);
 
   try {
-    const response = await fetch(`${gateway.baseUrl}/api/merch/assets/merch-shop/BMW_Merchandise_weiss.avif`, {
+    const response = await fetch(`${gateway.baseUrl}/api/aftercare/assets/aftercare-shop/heated-neck-wrap.svg`, {
       signal: AbortSignal.timeout(2000),
     });
 
     assert.equal(response.status, 200);
-    assert.equal(response.headers.get("content-type"), "image/avif");
+    assert.equal(response.headers.get("content-type"), "image/svg+xml");
     assert.equal(response.headers.get("cache-control"), "public, max-age=120");
     assert.deepEqual(Buffer.from(await response.arrayBuffer()), body);
-    assert.deepEqual(requests, ["/assets/merch-shop/BMW_Merchandise_weiss.avif"]);
+    assert.deepEqual(requests, ["/assets/aftercare-shop/heated-neck-wrap.svg"]);
   } finally {
     await gateway.stop();
     await closeServer(configurator);
-    await closeServer(merch);
+    await closeServer(aftercare);
   }
 });
 
@@ -258,43 +258,43 @@ test("gateway rejects encoded configurator asset traversal before upstream fetch
     res.writeHead(200, { "content-type": "image/jpeg" });
     res.end("should not be fetched");
   });
-  const merch = http.createServer((_req, res) => res.writeHead(404).end());
+  const aftercare = http.createServer((_req, res) => res.writeHead(404).end());
   const configuratorPort = await listen(configurator);
-  const merchPort = await listen(merch);
-  const gateway = await startGateway(`http://127.0.0.1:${configuratorPort}`, `http://127.0.0.1:${merchPort}`);
+  const aftercarePort = await listen(aftercare);
+  const gateway = await startGateway(`http://127.0.0.1:${configuratorPort}`, `http://127.0.0.1:${aftercarePort}`);
 
   try {
-    const response = await rawGet(gateway.baseUrl, "/api/configurator/assets/configurator/sub/%2e%2e/6_front.jpg");
+    const response = await rawGet(gateway.baseUrl, "/api/configurator/assets/package-configurator/sub/%2e%2e/neck-shoulder-relief.svg");
 
     assert.equal(response.status, 400);
     assert.deepEqual(requests, []);
   } finally {
     await gateway.stop();
     await closeServer(configurator);
-    await closeServer(merch);
+    await closeServer(aftercare);
   }
 });
 
-test("gateway rejects encoded merch asset traversal before upstream fetch", async () => {
+test("gateway rejects encoded aftercare asset traversal before upstream fetch", async () => {
   const configurator = http.createServer((_req, res) => res.writeHead(404).end());
   const requests = [];
-  const merch = http.createServer((req, res) => {
+  const aftercare = http.createServer((req, res) => {
     requests.push(req.url);
-    res.writeHead(200, { "content-type": "image/avif" });
+    res.writeHead(200, { "content-type": "image/svg+xml" });
     res.end("should not be fetched");
   });
   const configuratorPort = await listen(configurator);
-  const merchPort = await listen(merch);
-  const gateway = await startGateway(`http://127.0.0.1:${configuratorPort}`, `http://127.0.0.1:${merchPort}`);
+  const aftercarePort = await listen(aftercare);
+  const gateway = await startGateway(`http://127.0.0.1:${configuratorPort}`, `http://127.0.0.1:${aftercarePort}`);
 
   try {
-    const response = await rawGet(gateway.baseUrl, "/api/merch/assets/merch-shop/sub/%2e%2e/cap.avif");
+    const response = await rawGet(gateway.baseUrl, "/api/aftercare/assets/aftercare-shop/sub/%2e%2e/heated-neck-wrap.svg");
 
     assert.equal(response.status, 400);
     assert.deepEqual(requests, []);
   } finally {
     await gateway.stop();
     await closeServer(configurator);
-    await closeServer(merch);
+    await closeServer(aftercare);
   }
 });
