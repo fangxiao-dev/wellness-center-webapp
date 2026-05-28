@@ -88,6 +88,11 @@
   }
 
   @media (max-width: 980px) {
+    :root {
+      --config-nav-height: 144px;
+      --config-summary-top: calc(var(--config-nav-top) + var(--config-nav-height) + 16px);
+    }
+
     .config-layout { grid-template-columns: 1fr; }
     .config-layout {
       width: min(1180px, calc(100% - 32px));
@@ -103,6 +108,14 @@
     }
     .config-background img {
       object-position: center center;
+    }
+  }
+
+  @media (max-width: 720px) {
+    :root {
+      --config-nav-top: 14px;
+      --config-nav-height: 156px;
+      --config-summary-top: calc(var(--config-nav-top) + var(--config-nav-height) + 14px);
     }
   }
 
