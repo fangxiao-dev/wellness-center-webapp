@@ -1,32 +1,23 @@
-const CONFIGURATOR_ASSET_PUBLIC_BASE = "/api/configurator/assets";
-
-function normalizeConfiguratorAssetKey(value) {
-  const objectKey = String(value || "").replace(/\\/g, "/").replace(/^\/+/, "");
-  const segments = objectKey.split("/");
-
-  if (
-    !objectKey ||
-    objectKey.includes("\0") ||
-    segments.some((segment) => !segment || segment === "." || segment === "..") ||
-    !objectKey.startsWith("configurator/")
-  ) {
-    return null;
+function normalizeObjectKey(key) {
+  if (typeof key !== "string" || key.trim() === "") {
+    throw new Error("invalid object key");
   }
 
-  return objectKey;
+  const segments = key.split("/");
+  for (const segment of segments) {
+    if (!segment || segment === "." || segment === ".." || segment.includes("\\")) {
+      throw new Error("invalid object key");
+    }
+  }
+
+  return segments.map(encodeURIComponent).join("/");
 }
 
-function buildConfiguratorAssetUrl(imageKey) {
-  const objectKey = normalizeConfiguratorAssetKey(imageKey);
-  return objectKey ? `${CONFIGURATOR_ASSET_PUBLIC_BASE}/${objectKey}` : null;
-}
-
-function encodeObjectKey(objectKey) {
-  return objectKey.split("/").map((segment) => encodeURIComponent(segment)).join("/");
+function toPublicPackageImageUrl(key) {
+  return `/api/configurator/assets/${normalizeObjectKey(key)}`;
 }
 
 module.exports = {
-  buildConfiguratorAssetUrl,
-  encodeObjectKey,
-  normalizeConfiguratorAssetKey,
+  normalizeObjectKey,
+  toPublicPackageImageUrl,
 };
