@@ -7,6 +7,6 @@ RUN npm ci
 
 COPY src ./src
 
-EXPOSE 3007
+EXPOSE 4107
 
 CMD ["npm", "start"]
