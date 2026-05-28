@@ -1,0 +1,25 @@
+<section class="page-shell page-header">
+  <p class="eyebrow">Package configurator</p>
+  <h1>Configure a wellness package</h1>
+  <p>Match a massage package to time, pressure preference, and recovery add-ons.</p>
+</section>
+
+<section class="page-shell two-column">
+  <form id="configurator-form" class="panel">
+    <label for="package-select">Package</label>
+    <select id="package-select" name="package"></select>
+    <label for="duration-select">Duration</label>
+    <select id="duration-select" name="duration"></select>
+    <label for="intensity-select">Intensity</label>
+    <select id="intensity-select" name="intensity"></select>
+    <fieldset id="addon-options">
+      <legend>Add-ons</legend>
+    </fieldset>
+    <button type="submit">Calculate package</button>
+  </form>
+  <section id="configuration-result" class="panel result-panel">
+    <% if (initialSelection) { %>
+      <p class="muted">Initial selection: <%= initialSelection.package %>, <%= initialSelection.duration %> minutes, <%= initialSelection.intensity %>, <%= initialSelection.addon %></p>
+    <% } %>
+  </section>
+</section>

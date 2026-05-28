@@ -1,0 +1,21 @@
+<section class="page-shell page-header">
+  <p class="eyebrow">Aftercare product</p>
+  <h1><%= product ? product.name : 'Product not found' %></h1>
+</section>
+
+<% if (product) { %>
+  <section class="page-shell two-column">
+    <div class="panel">
+      <% if (product.imageUrl) { %>
+        <img class="detail-image" src="<%= product.imageUrl %>" alt="<%= product.name %>" />
+      <% } %>
+    </div>
+    <article class="panel">
+      <p><%= product.description %></p>
+      <strong><%= Number(product.price).toFixed(2) %> EUR</strong>
+      <button class="add-aftercare-button" data-product='<%- JSON.stringify(product) %>'>Add to cart</button>
+    </article>
+  </section>
+<% } else { %>
+  <section class="page-shell panel"><p>The requested product could not be found.</p></section>
+<% } %>

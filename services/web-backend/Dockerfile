@@ -1,13 +1,13 @@
 FROM node:24-alpine
 
-WORKDIR /app/services/web-shop-backend
+WORKDIR /app/services/web-backend
 
-COPY services/web-shop-backend/package.json services/web-shop-backend/package-lock.json ./
+COPY services/web-backend/package.json services/web-backend/package-lock.json ./
 RUN npm ci
 
-COPY services/web-shop-backend/src /app/services/web-shop-backend/src
+COPY services/web-backend/src /app/services/web-backend/src
 COPY web /app/web
 
-EXPOSE 3006
+EXPOSE 4102
 
 CMD ["npm", "start"]

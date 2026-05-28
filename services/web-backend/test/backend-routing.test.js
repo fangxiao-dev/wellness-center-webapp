@@ -68,6 +68,10 @@ async function stopChild(child) {
   await once(child, "exit").catch(() => {});
 }
 
+function closeServer(server) {
+  return new Promise((resolve) => server.close(resolve));
+}
+
 async function startBackend(apiGatewayUrl) {
   const portProbe = http.createServer((_req, res) => res.end());
   const port = await listen(portProbe);
@@ -103,7 +107,7 @@ async function startBackend(apiGatewayUrl) {
   };
 }
 
-test("health identifies the web shop backend", async () => {
+test("health identifies the web backend", async () => {
   const apiGateway = http.createServer((_req, res) => {
     res.writeHead(404).end();
   });
@@ -116,30 +120,29 @@ test("health identifies the web shop backend", async () => {
     const body = await response.json();
 
     assert.equal(response.status, 200);
-    assert.equal(body.service, "web-shop-backend");
+    assert.equal(body.service, "web-backend");
   } finally {
     if (backend) await backend.stop();
-    apiGateway.close();
+    await closeServer(apiGateway);
   }
 });
 
-test("merch listing SSR fetches products through the API gateway", async () => {
+test("aftercare listing SSR fetches products through the API gateway", async () => {
   const requests = [];
   const apiGateway = http.createServer((req, res) => {
     requests.push(req.url);
 
-    if (req.url === "/api/merch/products") {
+    if (req.url === "/api/aftercare/products") {
       res.setHeader("content-type", "application/json");
       res.end(JSON.stringify([
         {
           id: 1,
-          slug: "bmw-cap",
-          name: "BMW Cap",
-          category: "accessories",
+          slug: "heated-neck-wrap",
+          name: "Heated Neck Wrap",
+          category: "recovery",
           price: 29.9,
-          imageUrl: "/api/merch/assets/merch-shop/cap.avif",
-          description: "Cap",
-          color: "Black",
+          imageUrl: "/api/aftercare/assets/aftercare-shop/heated-neck-wrap.svg",
+          description: "Reusable warmth for neck and shoulder aftercare.",
         },
       ]));
       return;
@@ -151,15 +154,15 @@ test("merch listing SSR fetches products through the API gateway", async () => {
   const backend = await startBackend(`http://127.0.0.1:${apiGatewayPort}`);
 
   try {
-    const response = await fetch(`${backend.baseUrl}/merch-shop`);
+    const response = await fetch(`${backend.baseUrl}/aftercare-shop`);
     const html = await response.text();
 
     assert.equal(response.status, 200);
-    assert.match(html, /BMW Cap/);
-    assert.deepEqual(requests, ["/api/merch/products"]);
+    assert.match(html, /Heated Neck Wrap/);
+    assert.deepEqual(requests, ["/api/aftercare/products"]);
   } finally {
     await backend.stop();
-    apiGateway.close();
+    await closeServer(apiGateway);
   }
 });
 
@@ -176,7 +179,7 @@ test("backend does not expose the legacy minio proxy", async () => {
     assert.equal(response.status, 404);
   } finally {
     await backend.stop();
-    apiGateway.close();
+    await closeServer(apiGateway);
   }
 });
 
@@ -206,16 +209,16 @@ test("api forwarding preserves multiple set-cookie headers from the gateway", as
     ]);
   } finally {
     await backend.stop();
-    apiGateway.close();
+    await closeServer(apiGateway);
   }
 });
 
 test("api forwarding preserves binary asset response metadata and body", async () => {
   const body = Buffer.from([0, 1, 2, 3, 255]);
   const apiGateway = http.createServer((req, res) => {
-    assert.equal(req.url, "/api/merch/assets/merch-shop/cap.avif");
+    assert.equal(req.url, "/api/aftercare/assets/aftercare-shop/heated-neck-wrap.svg");
     res.writeHead(200, {
-      "content-type": "image/avif",
+      "content-type": "image/svg+xml",
       "cache-control": "public, max-age=120",
     });
     res.end(body);
@@ -224,15 +227,15 @@ test("api forwarding preserves binary asset response metadata and body", async (
   const backend = await startBackend(`http://127.0.0.1:${apiGatewayPort}`);
 
   try {
-    const response = await fetch(`${backend.baseUrl}/api/merch/assets/merch-shop/cap.avif`);
+    const response = await fetch(`${backend.baseUrl}/api/aftercare/assets/aftercare-shop/heated-neck-wrap.svg`);
 
     assert.equal(response.status, 200);
-    assert.equal(response.headers.get("content-type"), "image/avif");
+    assert.equal(response.headers.get("content-type"), "image/svg+xml");
     assert.equal(response.headers.get("cache-control"), "public, max-age=120");
     assert.deepEqual(Buffer.from(await response.arrayBuffer()), body);
   } finally {
     await backend.stop();
-    apiGateway.close();
+    await closeServer(apiGateway);
   }
 });
 
@@ -253,6 +256,26 @@ test("backend rejects encoded configurator asset traversal before gateway fetch"
     assert.deepEqual(requests, []);
   } finally {
     await backend.stop();
-    apiGateway.close();
+    await closeServer(apiGateway);
+  }
+});
+
+test("package configurator route renders initial package selection", async () => {
+  const apiGateway = http.createServer((_req, res) => {
+    res.writeHead(404).end();
+  });
+  const apiGatewayPort = await listen(apiGateway);
+  const backend = await startBackend(`http://127.0.0.1:${apiGatewayPort}`);
+
+  try {
+    const response = await fetch(`${backend.baseUrl}/package-configurator/neck-shoulder-relief/60/medium/aroma-oil`);
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(html, /Serenity Wellness Center/);
+    assert.match(html, /neck-shoulder-relief/);
+  } finally {
+    await backend.stop();
+    await closeServer(apiGateway);
   }
 });

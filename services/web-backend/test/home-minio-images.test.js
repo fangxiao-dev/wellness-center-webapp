@@ -37,6 +37,10 @@ async function stopChild(child) {
   await once(child, "exit").catch(() => {});
 }
 
+function closeServer(server) {
+  return new Promise((resolve) => server.close(resolve));
+}
+
 async function startBackend() {
   if (process.env.WEB_SHOP_BACKEND_TEST_BASE) {
     return {
@@ -72,7 +76,7 @@ async function startBackend() {
     await waitForHealth(baseUrl);
   } catch (err) {
     await stopChild(child);
-    apiGateway.close();
+    await closeServer(apiGateway);
     throw err;
   }
 
@@ -80,12 +84,12 @@ async function startBackend() {
     baseUrl,
     async stop() {
       await stopChild(child);
-      apiGateway.close();
+      await closeServer(apiGateway);
     },
   };
 }
 
-test("home page uses static presentation assets and owned merch asset paths", async () => {
+test("home page uses static presentation assets and no direct minio paths", async () => {
   const backend = await startBackend();
 
   try {
@@ -96,8 +100,9 @@ test("home page uses static presentation assets and owned merch asset paths", as
     const html = await response.text();
 
     assert.doesNotMatch(html, /\/minio\//);
-    assert.match(html, /["']\/static\/images\/bmw_ai\.png/);
-    assert.match(html, /["']\/api\/merch\/assets\/merch-shop\/BMW_Merchandise_weiss\.avif/);
+    assert.match(html, /["']\/static\/images\/home-hero\.svg/);
+    assert.doesNotMatch(html, /\/api\/merch\//);
+    assert.doesNotMatch(html, /BMW/);
   } finally {
     await backend.stop();
   }

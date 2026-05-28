@@ -1,0 +1,22 @@
+<section class="page-shell page-header">
+  <p class="eyebrow">Aftercare shop</p>
+  <h1>Recovery products</h1>
+  <p>Support warmth, mobility, and calm after a massage session.</p>
+</section>
+
+<section class="page-shell product-grid">
+  <% (products || []).forEach(function(product) { %>
+    <article class="product-card">
+      <% if (product.imageUrl) { %>
+        <img src="<%= product.imageUrl %>" alt="<%= product.name %>" />
+      <% } %>
+      <h2><a href="/aftercare-shop/<%= product.slug || product.id %>"><%= product.name %></a></h2>
+      <p><%= product.description %></p>
+      <strong><%= Number(product.price).toFixed(2) %> EUR</strong>
+      <button
+        class="add-aftercare-button"
+        data-product='<%- JSON.stringify(product) %>'
+      >Add to cart</button>
+    </article>
+  <% }) %>
+</section>

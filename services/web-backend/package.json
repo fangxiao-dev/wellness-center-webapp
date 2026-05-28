@@ -1,5 +1,5 @@
 {
-  "name": "web-shop-backend",
+  "name": "web-backend",
   "version": "1.0.0",
   "private": true,
   "main": "src/server.js",

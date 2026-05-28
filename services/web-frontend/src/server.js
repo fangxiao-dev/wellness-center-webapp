@@ -4,8 +4,8 @@ const express = require("express");
 const { createProxyMiddleware } = require("http-proxy-middleware");
 
 const app = express();
-const port = process.env.PORT || 3000;
-const backendUrl = process.env.WEB_SHOP_BACKEND_URL || "http://web-shop-backend:3006";
+const port = process.env.PORT || 4100;
+const backendUrl = process.env.WEB_BACKEND_URL || "http://web-backend:4102";
 
 function resolveRepoRoot() {
   const candidates = [
@@ -21,16 +21,16 @@ function resolveRepoRoot() {
   );
 }
 
-const REPO_ROOT = resolveRepoRoot();
+const repoRoot = resolveRepoRoot();
 
-if (!REPO_ROOT) {
+if (!repoRoot) {
   throw new Error("Could not locate shared web/public directory");
 }
 
-app.use("/static", express.static(path.join(REPO_ROOT, "web", "public")));
+app.use("/static", express.static(path.join(repoRoot, "web", "public")));
 
 app.get("/health", (_req, res) => {
-  res.json({ ok: true, service: "web-shop-frontend" });
+  res.json({ ok: true, service: "web-frontend" });
 });
 
 app.use(
@@ -41,4 +41,4 @@ app.use(
   })
 );
 
-app.listen(port, () => console.log(`web-shop-frontend listening on port ${port}`));
+app.listen(port, () => console.log(`web-frontend listening on port ${port}`));

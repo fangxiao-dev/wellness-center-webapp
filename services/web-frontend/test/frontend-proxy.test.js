@@ -37,6 +37,10 @@ async function stopChild(child) {
   await once(child, "exit").catch(() => {});
 }
 
+function closeServer(server) {
+  return new Promise((resolve) => server.close(resolve));
+}
+
 async function startFrontend(backendUrl) {
   const portProbe = http.createServer((_req, res) => res.end());
   const port = await listen(portProbe);
@@ -46,7 +50,7 @@ async function startFrontend(backendUrl) {
     env: {
       ...process.env,
       PORT: String(port),
-      WEB_SHOP_BACKEND_URL: backendUrl,
+      WEB_BACKEND_URL: backendUrl,
       REPO_ROOT: path.resolve(process.cwd(), "..", ".."),
     },
     stdio: ["ignore", "ignore", "pipe"],
@@ -72,7 +76,7 @@ async function startFrontend(backendUrl) {
   };
 }
 
-test("health identifies the web shop frontend", async () => {
+test("health identifies the web frontend", async () => {
   const backend = http.createServer((_req, res) => res.end("backend"));
   let frontend;
 
@@ -83,10 +87,10 @@ test("health identifies the web shop frontend", async () => {
     const body = await response.json();
 
     assert.equal(response.status, 200);
-    assert.deepEqual(body, { ok: true, service: "web-shop-frontend" });
+    assert.deepEqual(body, { ok: true, service: "web-frontend" });
   } finally {
     if (frontend) await frontend.stop();
-    backend.close();
+    await closeServer(backend);
   }
 });
 
@@ -107,11 +111,11 @@ test("serves static assets locally and proxies dynamic requests to backend", asy
   const frontend = await startFrontend(`http://127.0.0.1:${backendPort}`);
 
   try {
-    const staticResponse = await fetch(`${frontend.baseUrl}/static/ci/bmw-ci.css`);
+    const staticResponse = await fetch(`${frontend.baseUrl}/static/styles.css`);
     assert.equal(staticResponse.status, 200);
     assert.match(await staticResponse.text(), /:root/);
 
-    const proxyResponse = await fetch(`${frontend.baseUrl}/merch-shop?x=1`, {
+    const proxyResponse = await fetch(`${frontend.baseUrl}/aftercare-shop?x=1`, {
       method: "POST",
       headers: {
         cookie: "client=1",
@@ -126,13 +130,13 @@ test("serves static assets locally and proxies dynamic requests to backend", asy
     assert.deepEqual(proxiedRequests, [
       {
         method: "POST",
-        url: "/merch-shop?x=1",
+        url: "/aftercare-shop?x=1",
         cookie: "client=1",
         contentType: "application/json",
       },
     ]);
   } finally {
     await frontend.stop();
-    backend.close();
+    await closeServer(backend);
   }
 });
