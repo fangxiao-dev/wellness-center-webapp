@@ -22,6 +22,16 @@ function mergeKey(item) {
   });
 }
 
+function parsePositiveMoney(value) {
+  const number = Number(value);
+  return Number.isFinite(number) && number >= 0 ? number : null;
+}
+
+function parsePositiveQuantity(value) {
+  const number = Number(value);
+  return Number.isInteger(number) && number > 0 ? number : null;
+}
+
 // GET /cart/:sessionId
 router.get("/:sessionId", async (req, res) => {
   try {
@@ -44,13 +54,21 @@ router.post("/:sessionId/items", async (req, res) => {
     if (!allowedTypes.has(type)) {
       return res.status(400).json({ error: "type must be package or aftercare" });
     }
+    const parsedPrice = parsePositiveMoney(price);
+    const parsedQuantity = parsePositiveQuantity(quantity);
+    if (parsedPrice === null) {
+      return res.status(400).json({ error: "price must be a finite non-negative number" });
+    }
+    if (parsedQuantity === null) {
+      return res.status(400).json({ error: "quantity must be a positive integer" });
+    }
     const items = await getCart(req.params.sessionId);
 
     // Merge only identical variants so color-specific products stay separate.
     const candidate = { type, name, details };
     const existing = items.find((i) => mergeKey(i) === mergeKey(candidate));
     if (existing) {
-      existing.quantity += parseInt(quantity);
+      existing.quantity += parsedQuantity;
       await saveCart(req.params.sessionId, items);
       return res.status(200).json(existing);
     }
@@ -59,9 +77,9 @@ router.post("/:sessionId/items", async (req, res) => {
       id: crypto.randomUUID(),
       type,
       name,
-      price: parseFloat(price),
+      price: parsedPrice,
       imageUrl: imageUrl || null,
-      quantity: parseInt(quantity),
+      quantity: parsedQuantity,
       details,
       addedAt: new Date().toISOString(),
     };

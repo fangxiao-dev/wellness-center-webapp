@@ -11,6 +11,26 @@ function money(value) {
   return `${Number(value || 0).toFixed(2)} EUR`;
 }
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function safeHref(value, fallback = "#") {
+  const href = String(value || "");
+  return href.startsWith("/") ? href : fallback;
+}
+
+function packageDisplayName(configured) {
+  if (configured.name) return configured.name;
+  if (typeof configured.package === "string") return configured.package;
+  return configured.package?.name || configured.package?.slug || "Configured package";
+}
+
 function addAftercareItem(product) {
   return requestJson("/api/cart/items", {
     method: "POST",
@@ -47,17 +67,17 @@ async function initConfigurator() {
   ]);
 
   packageSelect.innerHTML = packages.map((item) =>
-    `<option value="${item.slug || item.id}">${item.name}</option>`
+    `<option value="${escapeHtml(item.slug || item.id)}">${escapeHtml(item.name)}</option>`
   ).join("");
   durationSelect.innerHTML = durations.map((item) =>
-    `<option value="${item.minutes || item.duration || item}">${item.label || item.minutes || item}</option>`
+    `<option value="${escapeHtml(item.minutes || item.duration || item)}">${escapeHtml(item.label || item.minutes || item)}</option>`
   ).join("");
   intensitySelect.innerHTML = intensities.map((item) =>
-    `<option value="${item.slug || item.id || item}">${item.label || item.name || item}</option>`
+    `<option value="${escapeHtml(item.slug || item.id || item)}">${escapeHtml(item.label || item.name || item)}</option>`
   ).join("");
   addonOptions.insertAdjacentHTML("beforeend", addOns.map((item) => {
     const value = item.slug || item.id || item;
-    return `<label><input type="checkbox" name="addOns" value="${value}"> ${item.name || item.label || item}</label>`;
+    return `<label><input type="checkbox" name="addOns" value="${escapeHtml(value)}"> ${escapeHtml(item.name || item.label || item)}</label>`;
   }).join(""));
 
   if (initial.package) packageSelect.value = initial.package;
@@ -81,9 +101,10 @@ async function initConfigurator() {
       }),
     });
 
+    const packageName = packageDisplayName(configured);
     result.innerHTML = `
-      <h2>${configured.name || configured.package || "Configured package"}</h2>
-      <p>${configured.description || configured.summary || ""}</p>
+      <h2>${escapeHtml(packageName)}</h2>
+      <p>${escapeHtml(configured.description || configured.summary || "")}</p>
       <strong>${money(configured.price || configured.totalPrice)}</strong>
       <button id="add-package-button" type="button">Add package to cart</button>
     `;
@@ -92,7 +113,7 @@ async function initConfigurator() {
         method: "POST",
         body: JSON.stringify({
           type: "package",
-          name: configured.name || configured.package,
+          name: packageName,
           price: configured.price || configured.totalPrice,
           quantity: 1,
           imageUrl: configured.imageUrl || null,
@@ -128,12 +149,12 @@ async function initAi() {
       });
       result.innerHTML = `
         <h2>Recommendation</h2>
-        <p>${body.text || ""}</p>
-        ${body.packageLink ? `<a class="button" href="${body.packageLink}">Open package</a>` : ""}
+        <p>${escapeHtml(body.text || "")}</p>
+        ${body.packageLink ? `<a class="button" href="${escapeHtml(safeHref(body.packageLink))}">Open package</a>` : ""}
         ${(body.aftercareLinks || []).map((link) => `
           <article>
-            <h3><a href="${link.href}">${link.title}</a></h3>
-            <p>${link.reason || ""}</p>
+            <h3><a href="${escapeHtml(safeHref(link.href))}">${escapeHtml(link.title)}</a></h3>
+            <p>${escapeHtml(link.reason || "")}</p>
           </article>
         `).join("")}
       `;
@@ -154,16 +175,16 @@ async function initCart() {
     const items = cart.items || [];
     container.innerHTML = items.map((item) => `
       <div class="cart-row">
-        <span>${item.name}</span>
+        <span>${escapeHtml(item.name)}</span>
         <input
-          aria-label="Quantity for ${item.name}"
-          data-quantity="${item.id}"
+          aria-label="Quantity for ${escapeHtml(item.name)}"
+          data-quantity="${escapeHtml(item.id)}"
           min="1"
           type="number"
-          value="${item.quantity || 1}"
+          value="${escapeHtml(item.quantity || 1)}"
         >
         <strong>${money(Number(item.price) * Number(item.quantity || 1))}</strong>
-        <button data-remove="${item.id}" type="button">Remove</button>
+        <button data-remove="${escapeHtml(item.id)}" type="button">Remove</button>
       </div>
     `).join("") || "<p>Your cart is empty.</p>";
     total.textContent = `Total: ${money(cart.total || items.reduce((sum, item) => sum + Number(item.price) * Number(item.quantity || 1), 0))}`;
@@ -225,10 +246,10 @@ async function initVisitContext() {
     const lat = Number(location.latitude || location.lat);
     const lng = Number(location.longitude || location.lng);
     summary.innerHTML = `
-      <h2>${location.name || "Serenity Wellness Center"}</h2>
-      <p>${location.address || data.address || ""}</p>
-      <p>${data.arrivalTip || data.tip || ""}</p>
-      <p>${data.weather?.summary || data.weatherSummary || ""}</p>
+      <h2>${escapeHtml(location.name || "Serenity Wellness Center")}</h2>
+      <p>${escapeHtml(location.address || data.address || "")}</p>
+      <p>${escapeHtml(data.arrivalTip || data.tip || "")}</p>
+      <p>${escapeHtml(data.weather?.summary || data.weatherSummary || "")}</p>
     `;
     const hasMaps = await loadGoogleMaps(window.SERENITY_MAPS_KEY);
     if (hasMaps && Number.isFinite(lat) && Number.isFinite(lng)) {
