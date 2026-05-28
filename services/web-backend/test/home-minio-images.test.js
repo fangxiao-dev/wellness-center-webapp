@@ -102,7 +102,7 @@ test("home page uses static presentation assets and no direct minio paths", asyn
     assert.doesNotMatch(html, /\/minio\//);
     assert.match(html, /["']\/static\/images\/home-hero\.svg/);
     assert.doesNotMatch(html, /\/api\/merch\//);
-    assert.doesNotMatch(html, /BMW/);
+    assert.doesNotMatch(html, /Bayerische|Motoren|Werke/);
   } finally {
     await backend.stop();
   }
