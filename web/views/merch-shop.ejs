@@ -1,0 +1,150 @@
+<style>
+  /* Merch-shop-specific layout. BMW CI tokens, fonts, page-shell, site-nav,
+     site-footer, section-*, .btn*, .field/.input, .card* live in
+     /static/ci/bmw-ci.css. */
+
+  .merch-shop-layout {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+  }
+
+  .shop-header { margin-bottom: 48px; }
+  .shop-header h1 {
+    font-size: 2.8rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin: 0 0 8px;
+  }
+  .shop-header p { color: var(--muted); font-size: 1.1rem; }
+
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+  }
+
+  /* ── Merch card: full-bleed image with overlay ── */
+  .merch-card {
+    position: relative;
+    height: clamp(260px, 32vw, 380px);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #f1f5f9;
+    cursor: pointer;
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+  }
+  .merch-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.14);
+  }
+  .merch-card-img {
+    position: absolute;
+    inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease;
+  }
+  .merch-card:hover .merch-card-img { transform: scale(1.06); }
+
+  .merch-card-overlay {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 56px 20px 20px;
+    background: linear-gradient(to top, rgba(5,10,18,0.88) 0%, rgba(5,10,18,0.42) 55%, transparent 100%);
+    color: #fff;
+    transition: padding-bottom 0.25s ease;
+  }
+  .merch-card:hover .merch-card-overlay { padding-bottom: 68px; }
+
+  .merch-card-category {
+    display: block;
+    font-size: 0.68rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.14em;
+    color: rgba(255,255,255,0.62); margin-bottom: 5px;
+  }
+  .merch-card-name {
+    font-size: 1rem; font-weight: 700;
+    margin: 0 0 5px; line-height: 1.2;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .merch-card-name a { color: inherit; text-decoration: none; }
+  .merch-card-price {
+    font-size: 1rem; font-weight: 800; color: rgba(255,255,255,0.9);
+  }
+
+  @media (max-width: 640px) {
+    .shop-header h1 { font-size: 2.2rem; }
+    .product-grid { gap: 14px; }
+    .merch-card { height: clamp(220px, 60vw, 300px); }
+  }
+</style>
+
+<div class="merch-shop-layout">
+  <%
+    function getDisplayDescription(product) {
+      if (!product.description) return "";
+      return String(product.description)
+        .replace(/\s*im Ma[ßÃŸ]+stab\s*1:18\.?/i, ".")
+        .replace(/\s+$/, "");
+    }
+
+    const groupedProducts = [];
+    const groupMap = new Map();
+
+    products.forEach((product) => {
+      const groupKey = product.id;
+      const existingGroup = groupMap.get(groupKey);
+
+      if (existingGroup) {
+        existingGroup.variants.push(product);
+        return;
+      }
+
+      const group = {
+        ...product,
+        displayName: product.color ? `${product.name} ${product.color}` : product.name,
+        variants: [product],
+      };
+
+      groupedProducts.push(group);
+      groupMap.set(groupKey, group);
+    });
+  %>
+  <header class="shop-header">
+    <h1>Lifestyle &amp; Merch</h1>
+    <p>Bringen Sie die Freude am Fahren in Ihren Alltag.</p>
+  </header>
+
+  <div class="product-grid">
+    <% groupedProducts.forEach(function(group) { const primaryProduct = group.variants[0]; const detailUrl = `/merch-shop/${primaryProduct.slug || primaryProduct.id}`; %>
+      <a class="merch-card" id="product-<%= primaryProduct.id %>" href="<%= detailUrl %>">
+        <img
+          class="merch-card-img"
+          src="<%= primaryProduct.imageUrl %>"
+          alt="<%= group.displayName %>"
+          loading="lazy"
+        />
+        <div class="merch-card-overlay">
+          <span class="merch-card-category"><%= primaryProduct.category %></span>
+          <h2 class="merch-card-name"><%= group.displayName %></h2>
+          <span class="merch-card-price"><%= parseFloat(primaryProduct.price).toLocaleString("de-DE", { style: "currency", currency: "EUR" }) %></span>
+        </div>
+      </a>
+    <% }) %>
+  </div>
+</div>
+
+<script>
+  if (location.hash) {
+    const target = document.querySelector(location.hash);
+    if (target) {
+      setTimeout(() => {
+        target.scrollIntoView({ behavior: "smooth", block: "center" });
+        target.style.outline = "3px solid var(--accent)";
+        target.style.borderRadius = "12px";
+        setTimeout(() => { target.style.outline = ""; }, 1800);
+      }, 100);
+    }
+  }
+</script>

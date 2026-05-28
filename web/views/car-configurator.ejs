@@ -1,0 +1,1440 @@
+<style>
+  /* Configurator-specific layout. BMW CI tokens, fonts, page-shell, site-nav,
+     site-footer, section-*, .btn*, .field/.input, .card* live in
+     /static/ci/bmw-ci.css. The page-local --shadow override below intentionally
+     replaces CI's default shadow on this view. */
+
+  :root {
+    --radius-lg: 2px;
+    --radius-md: 2px;
+    --shadow: 0 24px 80px rgba(15, 23, 42, 0.12);
+    --config-rail: rgba(255, 255, 255, 0.92);
+    --config-nav-top: 24px;
+    --config-nav-height: 64px;
+    --config-summary-top: calc(var(--config-nav-top) + var(--config-nav-height) + 16px);
+    --summary-bar-height: 96px;
+    --summary-panel-bg: rgba(255, 255, 255, 0.28);
+    --summary-panel-border: rgba(17, 24, 39, 0.12);
+    --summary-panel-text: #111827;
+    --summary-panel-muted: #4b5563;
+    --summary-panel-divider: rgba(17, 24, 39, 0.12);
+    --summary-panel-text-shadow: 0 1px 12px rgba(255, 255, 255, 0.42);
+  }
+
+  body {
+    background: #f4f4f4;
+  }
+
+  .site-nav--solid {
+    position: fixed;
+    top: var(--config-nav-top);
+    left: 50%;
+    z-index: 10;
+    width: min(1180px, calc(100% - 40px));
+    min-height: var(--config-nav-height);
+    margin: 0;
+    transform: translateX(-50%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius);
+    background: var(--dark);
+    color: #fff;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    transition: transform 0.24s ease;
+  }
+
+  .config-background {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    background:
+      linear-gradient(180deg, #f7f7f7 0%, #eeeeee 54%, #e5e5e5 54%, #f5f5f5 100%);
+  }
+
+  .config-background::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, transparent 58%, rgba(244, 244, 244, 0.24) 100%);
+    pointer-events: none;
+  }
+
+  .config-background img {
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+    display: block;
+    filter: saturate(1.12) contrast(1.04);
+    opacity: 0;
+    transition: opacity 0.35s ease;
+  }
+
+  .config-layout {
+    position: relative;
+    z-index: 1;
+    width: min(1180px, calc(100% - 40px));
+    max-width: none;
+    margin: 0 auto;
+    min-height: calc(100vh - var(--config-summary-top));
+    padding: calc(var(--config-summary-top) + var(--summary-bar-height) + 36px) 0 40px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(390px, 448px);
+    gap: 40px;
+    align-items: start;
+  }
+
+  @media (max-width: 980px) {
+    .config-layout { grid-template-columns: 1fr; }
+    .config-layout {
+      width: min(1180px, calc(100% - 32px));
+      padding: calc(var(--config-summary-top) + var(--summary-bar-height) + 36px) 0 28px;
+    }
+    .config-spacer { min-height: 40vh; }
+    .config-column,
+    .config-spacer { grid-column: 1; }
+    .config-panel-stack {
+      max-height: calc(100vh - var(--config-summary-top) - var(--summary-bar-height) - 40px);
+      margin-top: 0;
+      transform: none;
+    }
+    .config-background img {
+      object-position: center center;
+    }
+  }
+
+  .placeholder {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    color: #6b7280;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .config-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    grid-column: 2;
+  }
+
+  .config-panel-stack {
+    position: relative;
+    height: var(--config-panel-stack-height, auto);
+    max-height: calc(100vh - var(--config-summary-top) - var(--summary-bar-height) - 72px);
+    min-height: 295px;
+    margin-top: 189px;
+    overflow: hidden;
+    transition: height 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .panel {
+    background: var(--config-rail);
+    border-radius: var(--radius-lg);
+    padding: 26px 28px;
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(17, 24, 39, 0.08);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+  }
+
+  .config-options-panel {
+    background: rgba(255, 255, 255, 0.28);
+    border-color: rgba(255, 255, 255, 0.26);
+    box-shadow: 0 18px 60px rgba(15, 23, 42, 0.08);
+    box-sizing: border-box;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    min-height: 295px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+    transform: translateY(100%);
+    transition: transform 0.68s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.5s ease;
+  }
+
+  .config-options-panel.active {
+    border-color: rgba(17, 24, 39, 0.22);
+    position: relative;
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .config-options-panel.is-transitioning {
+    position: absolute;
+    top: 0;
+    left: 0;
+    visibility: visible;
+    pointer-events: none;
+  }
+
+  .config-options-panel.enter-from-bottom {
+    transform: translateY(100%);
+  }
+
+  .config-options-panel.enter-from-top {
+    transform: translateY(-100%);
+  }
+
+  .config-options-panel.exit-to-top {
+    opacity: 0;
+    transform: translateY(-72%);
+  }
+
+  .config-options-panel.exit-to-bottom {
+    opacity: 0;
+    transform: translateY(72%);
+  }
+
+  .config-spacer {
+    min-height: 1px;
+    grid-column: 1;
+    padding-top: 10px;
+  }
+
+  .config-layout h1 {
+    font-size: 1.9rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    margin: 0 0 8px;
+  }
+
+  .section-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #4b5563;
+    margin: 26px 0 12px;
+  }
+
+  .config-btn-group,
+  .option-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .config-btn-group {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .config-btn,
+  .option-btn {
+    width: 100%;
+    min-height: 54px;
+    padding: 15px 18px;
+    border: 1px solid rgba(17, 24, 39, 0.14);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.84);
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    font-family: inherit;
+    color: var(--ink);
+    text-align: center;
+  }
+
+  .config-btn:hover,
+  .option-btn:hover {
+    border-color: #111827;
+    background: #fff;
+    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
+    transform: translateY(-1px);
+  }
+
+  .config-btn.active,
+  .option-btn.active {
+    background: #111827;
+    color: #fff;
+    border-color: #111827;
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.12), 0 14px 32px rgba(15, 23, 42, 0.18);
+  }
+
+  .color-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .swatch-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 54px;
+    padding: 10px 14px 10px 10px;
+    border: 1px solid rgba(17, 24, 39, 0.14);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    background: rgba(255, 255, 255, 0.84);
+  }
+
+  .swatch-wrapper:hover {
+    border-color: #111827;
+    background: #fff;
+    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
+    transform: translateY(-1px);
+  }
+
+  .swatch-wrapper.active {
+    border-color: #111827;
+    background: rgba(17, 24, 39, 0.94);
+    color: #fff;
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.12), 0 14px 32px rgba(15, 23, 42, 0.18);
+  }
+
+  .swatch {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    display: inline-block;
+    flex-shrink: 0;
+  }
+
+  .swatch-label {
+    font-size: 0.92rem;
+    font-weight: 600;
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 1.45fr);
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .summary-row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 7px;
+    min-height: 66px;
+    padding: 12px 14px;
+    border: 1px solid transparent;
+    appearance: none;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    min-width: 0;
+    text-align: left;
+    transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  }
+
+  .summary-row:hover {
+    background: rgba(255, 255, 255, 0.24);
+    border-color: rgba(17, 24, 39, 0.12);
+  }
+
+  .summary-row.active {
+    background: rgba(17, 24, 39, 0.08);
+    color: var(--summary-panel-text);
+    border-color: rgba(17, 24, 39, 0.16);
+    border-radius: var(--radius-md);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.42), 0 10px 24px rgba(15, 23, 42, 0.08);
+  }
+
+  .summary-key {
+    color: inherit;
+    opacity: 0.72;
+    font-size: 0.86rem;
+    font-weight: 800;
+    text-shadow: var(--summary-panel-text-shadow);
+    white-space: nowrap;
+  }
+
+  .summary-value {
+    color: var(--summary-panel-text);
+    font-size: clamp(0.68rem, 0.76vw, 0.84rem);
+    font-weight: 900;
+    max-width: 100%;
+    text-align: left;
+    text-shadow: var(--summary-panel-text-shadow);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .summary-badge {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    min-height: 28px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: rgba(17, 24, 39, 0.1);
+    border: 1px solid rgba(17, 24, 39, 0.12);
+    line-height: 1.1;
+  }
+
+  .summary-badge.is-placeholder {
+    color: var(--summary-panel-muted);
+    background: rgba(255, 255, 255, 0.18);
+    border-style: dashed;
+    font-weight: 800;
+  }
+
+  .summary-row.active .summary-badge {
+    background: rgba(17, 24, 39, 0.1);
+    border-color: rgba(17, 24, 39, 0.16);
+  }
+
+  .summary-row.active .summary-badge.is-placeholder {
+    color: var(--summary-panel-muted);
+  }
+
+  .summary-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 14px;
+    min-width: 260px;
+    padding-left: 20px;
+    border-left: 1px solid var(--summary-panel-divider);
+  }
+
+  .price-tag {
+    display: flex;
+    flex-direction: column;
+    min-width: 104px;
+    text-align: right;
+    gap: 4px;
+  }
+
+  .price-tag span {
+    font-size: 0.86rem;
+    color: var(--summary-panel-muted);
+    font-weight: 800;
+    letter-spacing: 0;
+    text-transform: none;
+    text-shadow: var(--summary-panel-text-shadow);
+  }
+
+  .price-main {
+    color: var(--summary-panel-text);
+    font-size: clamp(0.86rem, 1vw, 1.02rem);
+    font-weight: 800;
+    line-height: 1.35;
+    text-shadow: var(--summary-panel-text-shadow);
+    white-space: nowrap;
+  }
+
+  .add-btn {
+    width: 100%;
+    min-height: 54px;
+    padding: 0 18px;
+    border-radius: var(--radius-md);
+    border: none;
+    background: #2d74d8;
+    color: #fff;
+    font-size: 0.98rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s;
+    margin-top: 18px;
+    font-family: inherit;
+  }
+
+  .summary-add-btn {
+    width: auto;
+    min-width: 128px;
+    min-height: 46px;
+    border-radius: 999px;
+    margin-top: 0;
+    padding: 0 20px;
+    white-space: nowrap;
+    box-shadow: 0 10px 22px rgba(45, 116, 216, 0.18);
+  }
+
+  .summary-action-control {
+    position: relative;
+    display: grid;
+    place-items: center;
+    align-items: center;
+    min-width: 164px;
+  }
+
+  .summary-panel {
+    position: fixed;
+    top: var(--config-summary-top);
+    left: 50%;
+    z-index: 9;
+    width: min(1180px, calc(100% - 40px));
+    min-height: var(--summary-bar-height);
+    margin: 0;
+    padding: 14px 32px;
+    background: var(--summary-panel-bg);
+    color: var(--summary-panel-text);
+    transform: translateX(-50%);
+    border-width: 1px;
+    border-color: var(--summary-panel-border);
+    border-radius: var(--radius);
+    box-shadow: 0 18px 60px rgba(15, 23, 42, 0.08);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, auto);
+    gap: 20px;
+    align-items: center;
+    transition: top 0.24s ease, background 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+  }
+
+  .summary-panel[data-contrast="dark"] {
+    --summary-panel-bg: rgba(11, 18, 32, 0.34);
+    --summary-panel-border: rgba(255, 255, 255, 0.2);
+    --summary-panel-text: #ffffff;
+    --summary-panel-muted: rgba(255, 255, 255, 0.72);
+    --summary-panel-divider: rgba(255, 255, 255, 0.18);
+    --summary-panel-text-shadow: 0 1px 14px rgba(0, 0, 0, 0.72);
+  }
+
+  .summary-panel[data-contrast="light"] {
+    --summary-panel-bg: rgba(255, 255, 255, 0.3);
+    --summary-panel-border: rgba(17, 24, 39, 0.14);
+    --summary-panel-text: #111827;
+    --summary-panel-muted: #4b5563;
+    --summary-panel-divider: rgba(17, 24, 39, 0.12);
+    --summary-panel-text-shadow: 0 1px 12px rgba(255, 255, 255, 0.54);
+  }
+
+  .summary-panel .summary-grid {
+    min-width: 0;
+  }
+
+  .completion-status {
+    position: absolute;
+    top: calc(100% + 14px);
+    left: 50%;
+    min-height: 0;
+    min-width: max-content;
+    transform: translateX(-50%);
+    color: #047857;
+    font-weight: 400;
+    text-align: center;
+    font-size: 0.72rem;
+    line-height: 1.2;
+    max-width: 100%;
+  }
+
+  @media (max-width: 760px) {
+    :root {
+      --config-nav-height: 160px;
+      --summary-bar-height: 286px;
+    }
+
+    .summary-panel {
+      min-height: var(--summary-bar-height);
+      padding: 12px 16px;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .summary-actions {
+      align-items: stretch;
+      min-width: 0;
+      padding-left: 0;
+      padding-top: 10px;
+      border-left: 0;
+      border-top: 1px solid var(--summary-panel-divider);
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .price-tag {
+      min-width: 0;
+      text-align: left;
+    }
+
+    .summary-add-btn {
+      width: 100%;
+      min-width: 0;
+      min-height: 44px;
+      padding: 0 16px;
+    }
+
+    .summary-action-control {
+      position: relative;
+      min-width: 0;
+    }
+
+    .completion-status {
+      grid-column: 1 / -1;
+      max-width: none;
+      text-align: center;
+    }
+
+    .summary-grid {
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+
+    .summary-row {
+      min-height: 40px;
+      padding: 8px 10px;
+      border-right: 0;
+      border-bottom: 0;
+    }
+
+    .summary-badge {
+      min-height: 24px;
+      padding: 4px 8px;
+    }
+
+  }
+
+  .add-btn:hover:not(:disabled) {
+    background: #245fb1;
+    transform: translateY(-1px);
+  }
+
+  .add-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+</style>
+
+<div class="config-background" aria-hidden="true">
+  <img id="carImg" src="" alt="" />
+</div>
+<div class="placeholder" id="placeholder">Lade Vorschau ...</div>
+
+<div class="panel summary-panel">
+  <div class="summary-grid">
+    <button class="summary-row" type="button" data-summary-section="model">
+      <div class="summary-key">Modell</div>
+      <div class="summary-value summary-badge is-placeholder" id="selectedModel">Auswählen</div>
+    </button>
+    <button class="summary-row" type="button" data-summary-section="exterior">
+      <div class="summary-key">Exterieur</div>
+      <div class="summary-value summary-badge is-placeholder" id="selectedColor">Auswählen</div>
+    </button>
+    <button class="summary-row" type="button" data-summary-section="interior">
+      <div class="summary-key">Interieur</div>
+      <div class="summary-value summary-badge is-placeholder" id="selectedInterior">Auswählen</div>
+    </button>
+    <button class="summary-row" type="button" data-summary-section="wheels">
+      <div class="summary-key">Felgen</div>
+      <div class="summary-value summary-badge is-placeholder" id="selectedWheels">Auswählen</div>
+    </button>
+  </div>
+
+  <div class="summary-actions">
+    <div class="price-tag">
+      <span>Preis</span>
+      <div class="price-main" id="price">0,00 EUR</div>
+    </div>
+    <div class="summary-action-control">
+      <button class="add-btn summary-add-btn" type="button" data-add-config disabled>Abschließen</button>
+      <div class="completion-status" data-add-status></div>
+    </div>
+  </div>
+</div>
+
+<div class="config-layout">
+  <div class="config-spacer"></div>
+  <div class="config-column">
+    <div class="config-panel-stack" id="configPanelStack" aria-label="Konfigurationsschritte">
+      <section class="panel config-options-panel" data-view="front" data-summary-target="model">
+        <h1>Modell</h1>
+        <div class="config-btn-group" id="modelBtns"></div>
+      </section>
+
+      <section class="panel config-options-panel" data-view="front" data-summary-target="exterior">
+        <h1>Exterieur-Farbe</h1>
+        <div class="color-group" id="colorBtns"></div>
+      </section>
+
+      <section class="panel config-options-panel" data-view="interior" data-summary-target="interior">
+        <h1>Interieur</h1>
+        <div class="option-group" id="interiorBtns"></div>
+      </section>
+
+      <section class="panel config-options-panel" data-view="wheels" data-summary-target="wheels">
+        <h1>Felgen</h1>
+        <div class="option-group" id="wheelsBtns"></div>
+      </section>
+
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const initialSelection = <%- JSON.stringify(initialSelection || null) %>;
+
+  const state = {
+    models: [],
+    colors: [],
+    interiors: [],
+    wheels: [],
+    selection: {
+      modelId: null,
+      colorId: null,
+      interiorId: null,
+      wheelsId: null,
+      view: "front"
+    },
+    summaryTouched: {
+      model: true,
+      exterior: false,
+      interior: false,
+      wheels: false
+    },
+    config: null
+  };
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const legacySelection = {
+    model: urlParams.get("model"),
+    color: urlParams.get("color"),
+    interior: urlParams.get("interior"),
+    wheels: urlParams.get("wheels")
+  };
+
+  function markSummarySelection(key) {
+    if (!Object.prototype.hasOwnProperty.call(state.summaryTouched, key)) return;
+    state.summaryTouched[key] = true;
+  }
+
+  function formatPrice(value) {
+    return Number(value || 0).toLocaleString("de-DE", {
+      style: "currency",
+      currency: "EUR"
+    });
+  }
+
+  function displayText(value) {
+    return String(value || "")
+      .replace(/Weiss/g, "Weiß")
+      .replace(/weiss/g, "weiß")
+      .replace(/Raeder/g, "Räder")
+      .replace(/raeder/g, "räder")
+      .replace(/Auffaellig/g, "Auffällig")
+      .replace(/auffaellig/g, "auffällig")
+      .replace(/faellig/g, "fällig")
+      .replace(/Praezise/g, "Präzise")
+      .replace(/Praeziser/g, "Präziser")
+      .replace(/praezise/g, "präzise")
+      .replace(/Hoeher/g, "Höher")
+      .replace(/Hoehere/g, "Höhere")
+      .replace(/hoeher/g, "höher")
+      .replace(/Oberflaechen/g, "Oberflächen")
+      .replace(/oberflaechen/g, "oberflächen")
+      .replace(/Luxurioes/g, "Luxuriös")
+      .replace(/luxurioes/g, "luxuriös")
+      .replace(/Weitlaeufig/g, "Weitläufig")
+      .replace(/weitlaeufig/g, "weitläufig")
+      .replace(/Repraesentativ/g, "Repräsentativ")
+      .replace(/repraesentativ/g, "repräsentativ")
+      .replace(/grossflaechig/g, "großflächig")
+      .replace(/Grossflaechig/g, "Großflächig")
+      .replace(/Souveraen/g, "Souverän")
+      .replace(/souveraen/g, "souverän")
+      .replace(/Einpraegsam/g, "Einprägsam")
+      .replace(/einpraegsam/g, "einprägsam")
+      .replace(/moeglich/g, "möglich")
+      .replace(/Moeglich/g, "Möglich");
+  }
+
+  function displayColorName(value) {
+    const key = normalizeText(value).toLowerCase();
+    if (key === "black" || key === "schwarz") return "Schwarz";
+    if (key === "blue" || key === "blau") return "Blau";
+    if (key === "white" || key === "weiss") return "Weiß";
+    if (key === "grey" || key === "gray" || key === "grau") return "Grau";
+    if (key === "red" || key === "rot") return "Rot";
+    if (key === "silver" || key === "silber") return "Silber";
+    return displayText(value);
+  }
+
+  function normalizeText(value) {
+    return String(value || "")
+      .replace(/ä/gi, "ae").replace(/ö/gi, "oe").replace(/ü/gi, "ue")
+      .normalize("NFKD")
+      .replace(/[̀-ͯ]/g, "")
+      .replace(/ß/g, "ss")
+      .trim();
+  }
+
+  function tokenizeSlug(value) {
+    return normalizeText(value)
+      .replace(/[^a-zA-Z0-9]+/g, " ")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+  }
+
+  function toCompactSlug(value) {
+    return tokenizeSlug(value)
+      .map((token) => token.charAt(0).toUpperCase() + token.slice(1))
+      .join("");
+  }
+
+  function inferInteriorSlug(name) {
+    const key = normalizeText(name).toLowerCase();
+    if (key.includes("black") || key.includes("schwarz")) return "Black";
+    if (key.includes("white") || key.includes("weiss") || key.includes("elfenbein")) return "White";
+    if (key.includes("coffee")) return "Coffee";
+    return toCompactSlug(name);
+  }
+
+  function inferWheelsSlug(name) {
+    const key = normalizeText(name).toLowerCase();
+    if (key.includes("bicolor")) return "Bicolor";
+    if (key.includes("jet black")) return "JetBlack";
+    if (key.includes("plus")) return "Plus";
+    if (key.includes("schmiederad")) return "Schmiederad";
+    return toCompactSlug(name);
+  }
+
+  function getModelSlug(model) { return toCompactSlug(model ? model.name : ""); }
+  function getColorSlug(color) { return toCompactSlug(color ? color.name : ""); }
+  function getInteriorSlug(interior) { return inferInteriorSlug(interior ? interior.name : ""); }
+  function getWheelsSlug(wheels) { return inferWheelsSlug(wheels ? wheels.name : ""); }
+
+  function matchesSlug(actualSlug, expectedSlug) {
+    const norm = (s) => normalizeText(s).toLowerCase().replace(/\s+/g, "");
+    return norm(actualSlug) === norm(expectedSlug);
+  }
+
+  function colorFromName(name) {
+    const key = String(name || "").toLowerCase();
+    if (key.includes("black") || key.includes("schwarz")) return "#111111";
+    if (key.includes("blue") || key.includes("blau")) return "#1c69d4";
+    if (key.includes("white") || key.includes("weiss") || key.includes("weiß")) return "#f8fafc";
+    if (key.includes("grey") || key.includes("gray") || key.includes("grau")) return "#6b7280";
+    if (key.includes("red") || key.includes("rot")) return "#b91c1c";
+    if (key.includes("silver") || key.includes("silber")) return "#cbd5e1";
+    return "#d1d5db";
+  }
+
+  function interiorColorFromName(name) {
+    const key = String(name || "").toLowerCase();
+    if (key.includes("black") || key.includes("schwarz")) return "#151515";
+    if (key.includes("coffee") || key.includes("braun") || key.includes("brown")) return "#4a3325";
+    if (key.includes("cognac")) return "#8a5634";
+    if (key.includes("oyster") || key.includes("white") || key.includes("weiss") || key.includes("weiß")) return "#e8e1d6";
+    if (key.includes("grey") || key.includes("gray") || key.includes("grau")) return "#737373";
+    return "#d1d5db";
+  }
+
+  function relativeLuminance(hexColor) {
+    const hex = String(hexColor || "").replace("#", "");
+    if (!/^[0-9a-f]{6}$/i.test(hex)) return 0.8;
+
+    const channels = [0, 2, 4].map((offset) => {
+      const value = parseInt(hex.slice(offset, offset + 2), 16) / 255;
+      return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+    });
+
+    return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+  }
+
+  function updateSummaryContrast(cfg) {
+    const summaryPanel = document.querySelector(".summary-panel");
+    if (!summaryPanel) return;
+
+    if (state.selection.view !== "interior") {
+      summaryPanel.dataset.contrast = "light";
+      return;
+    }
+
+    const referenceColor = interiorColorFromName(cfg && cfg.interior ? cfg.interior.name : "");
+
+    summaryPanel.dataset.contrast = relativeLuminance(referenceColor) > 0.45 ? "dark" : "light";
+  }
+
+  function colorSortRank(name) {
+    const key = String(name || "").toLowerCase();
+    if (key.includes("black") || key.includes("schwarz")) return 1;
+    if (key.includes("blue") || key.includes("blau")) return 2;
+    if (key.includes("white") || key.includes("weiss") || key.includes("weiß")) return 3;
+    if (key.includes("grey") || key.includes("gray") || key.includes("grau")) return 4;
+    if (key.includes("red") || key.includes("rot")) return 5;
+    if (key.includes("silver") || key.includes("silber")) return 6;
+    return 99;
+  }
+
+  async function fetchJson(url, options) {
+    const res = await fetch(url, options);
+    if (!res.ok) throw new Error(`Request failed: ${url}`);
+    return res.json();
+  }
+
+  function pickPreferredOrFirst(options, matcher) {
+    if (!options.length) return null;
+    return options.find(matcher) || options[0];
+  }
+
+  function findOptionBySlug(options, expectedSlug, getSlug) {
+    if (!expectedSlug) return null;
+    const norm = (s) => normalizeText(s).toLowerCase().replace(/\s+/g, "");
+    const normExpected = norm(expectedSlug);
+    return options.find((option) =>
+      norm(getSlug(option)) === normExpected || norm(option.name) === normExpected
+    ) || null;
+  }
+
+  function getCurrentSelectionSlugs() {
+    const model = state.models.find((entry) => entry.id === state.selection.modelId) || null;
+    const color = state.colors.find((entry) => entry.id === state.selection.colorId) || null;
+    const interior = state.interiors.find((entry) => entry.id === state.selection.interiorId) || null;
+    const wheels = state.wheels.find((entry) => entry.id === state.selection.wheelsId) || null;
+
+    return {
+      model: model ? getModelSlug(model) : null,
+      color: color ? getColorSlug(color) : null,
+      interior: interior ? getInteriorSlug(interior) : null,
+      wheels: wheels ? getWheelsSlug(wheels) : null
+    };
+  }
+
+  function buildConfiguratorPath(selectionSlugs) {
+    if (!selectionSlugs.model || !selectionSlugs.color || !selectionSlugs.interior || !selectionSlugs.wheels) {
+      return "/car-configurator";
+    }
+    return `/car-configurator/${encodeURIComponent(selectionSlugs.model)}/${encodeURIComponent(selectionSlugs.color)}/${encodeURIComponent(selectionSlugs.interior)}/${encodeURIComponent(selectionSlugs.wheels)}`;
+  }
+
+  function getInitialRequestedSelection() {
+    if (initialSelection) return initialSelection;
+    if (legacySelection.model || legacySelection.color || legacySelection.interior || legacySelection.wheels) {
+      return legacySelection;
+    }
+    return null;
+  }
+
+  function getInitialView() {
+    const hashView = window.location.hash.replace(/^#/, "");
+    const allowedViews = new Set(["front", "back", "wheels", "interior"]);
+    return allowedViews.has(hashView) ? hashView : "front";
+  }
+
+  function modelMatchesSelection(model, expectedModel) {
+    const requested = normalizeText(expectedModel).toLowerCase();
+    if (!requested) return false;
+    const modelSlug = normalizeText(getModelSlug(model)).toLowerCase();
+    const modelCode = normalizeText(model ? model.code : "").toLowerCase();
+    const modelName = normalizeText(model ? model.name : "").toLowerCase();
+    return (
+      modelSlug === requested ||
+      modelCode === requested ||
+      modelName === requested ||
+      modelSlug.includes(requested) ||
+      modelName.includes(requested)
+    );
+  }
+
+  function setActiveView(view) {
+    state.selection.view = view;
+    if (state.selection.modelId) {
+      window.history.replaceState(null, "", `${window.location.pathname}#${view}`);
+    }
+    updateSummaryContrast(state.config);
+    updateImage();
+  }
+
+  function updateActiveSummarySection(panel) {
+    const target = panel ? panel.dataset.summaryTarget : "";
+    document.querySelectorAll("[data-summary-section]").forEach((row) => {
+      row.classList.toggle("active", Boolean(target) && row.dataset.summarySection === target);
+    });
+  }
+
+  function initializeConfigPanelScroll() {
+    const stack = document.getElementById("configPanelStack");
+    const panels = Array.from(document.querySelectorAll(".config-options-panel"));
+    if (!stack || !panels.length) return;
+
+    let activeIndex = Math.max(0, panels.findIndex((panel) => panel.dataset.view === state.selection.view));
+    let lastSwitchAt = 0;
+    let touchStartY = null;
+    let isAnimating = false;
+    let wheelDeltaBuffer = 0;
+    let wheelResetTimer = 0;
+
+    function setStackHeight(panel) {
+      stack.style.setProperty("--config-panel-stack-height", `${panel.offsetHeight}px`);
+    }
+
+    function activatePanel(index, direction = 0) {
+      const nextIndex = Math.max(0, Math.min(index, panels.length - 1));
+      const nextPanel = panels[nextIndex];
+      const currentPanel = panels[activeIndex];
+      if (!nextPanel) return;
+      if (nextIndex === activeIndex || direction === 0 || !currentPanel) {
+        panels.forEach((entry) => {
+          entry.classList.remove(
+            "active",
+            "is-transitioning",
+            "enter-from-bottom",
+            "enter-from-top",
+            "exit-to-top",
+            "exit-to-bottom"
+          );
+        });
+        nextPanel.classList.add("active");
+        activeIndex = nextIndex;
+        setStackHeight(nextPanel);
+        updateActiveSummarySection(nextPanel);
+        setActiveView(nextPanel.dataset.view || "front");
+        return;
+      }
+
+      isAnimating = true;
+      setStackHeight(nextPanel);
+      currentPanel.classList.add("is-transitioning", direction > 0 ? "exit-to-top" : "exit-to-bottom");
+      nextPanel.classList.add(
+        "active",
+        "is-transitioning",
+        direction > 0 ? "enter-from-bottom" : "enter-from-top"
+      );
+      updateActiveSummarySection(nextPanel);
+      setActiveView(nextPanel.dataset.view || "front");
+
+      window.requestAnimationFrame(() => {
+        nextPanel.classList.remove("enter-from-bottom", "enter-from-top");
+      });
+
+      window.setTimeout(() => {
+        currentPanel.classList.remove("active", "is-transitioning", "exit-to-top", "exit-to-bottom");
+        nextPanel.classList.remove("is-transitioning");
+        activeIndex = nextIndex;
+        isAnimating = false;
+      }, 640);
+    }
+
+    function switchPanel(direction) {
+      if (isAnimating) return;
+      const now = Date.now();
+      if (now - lastSwitchAt < 720) return;
+      const nextIndex = activeIndex + direction;
+      if (nextIndex < 0) return;
+      if (nextIndex >= panels.length) return;
+      lastSwitchAt = now;
+      activatePanel(nextIndex, direction);
+    }
+
+    function jumpToSummaryPanel(target) {
+      if (!target || isAnimating) return;
+      const nextIndex = panels.findIndex((panel) => panel.dataset.summaryTarget === target);
+      if (nextIndex < 0 || nextIndex === activeIndex) return;
+      lastSwitchAt = Date.now();
+      activatePanel(nextIndex, nextIndex > activeIndex ? 1 : -1);
+    }
+
+    function refreshActivePanelHeight() {
+      const panel = panels[activeIndex];
+      if (panel) setStackHeight(panel);
+    }
+
+    window.addEventListener("resize", refreshActivePanelHeight);
+
+    function handlePageWheel(event) {
+      event.preventDefault();
+      wheelDeltaBuffer += event.deltaY;
+      window.clearTimeout(wheelResetTimer);
+      wheelResetTimer = window.setTimeout(() => {
+        wheelDeltaBuffer = 0;
+      }, 140);
+
+      if (Math.abs(wheelDeltaBuffer) < 80) return;
+
+      const direction = wheelDeltaBuffer > 0 ? 1 : -1;
+      wheelDeltaBuffer = 0;
+      switchPanel(direction);
+    }
+
+    function handlePageTouchStart(event) {
+      touchStartY = event.touches[0] ? event.touches[0].clientY : null;
+    }
+
+    function handlePageTouchEnd(event) {
+      if (touchStartY === null) return;
+      const touchEndY = event.changedTouches[0] ? event.changedTouches[0].clientY : touchStartY;
+      const deltaY = touchStartY - touchEndY;
+      touchStartY = null;
+      if (Math.abs(deltaY) < 30) return;
+      switchPanel(deltaY > 0 ? 1 : -1);
+    }
+
+    function cleanupPanelScroll() {
+      window.removeEventListener("resize", refreshActivePanelHeight);
+      window.removeEventListener("wheel", handlePageWheel);
+      window.removeEventListener("touchstart", handlePageTouchStart);
+      window.removeEventListener("touchend", handlePageTouchEnd);
+      window.clearTimeout(wheelResetTimer);
+    }
+
+    stack.addEventListener("panel-scroll-cleanup", cleanupPanelScroll, { once: true });
+
+    document.querySelectorAll("[data-summary-section]").forEach((row) => {
+      row.addEventListener("click", () => {
+        jumpToSummaryPanel(row.dataset.summarySection);
+      });
+    });
+
+    window.addEventListener("wheel", handlePageWheel, { passive: false });
+    window.addEventListener("touchstart", handlePageTouchStart, { passive: true });
+    window.addEventListener("touchend", handlePageTouchEnd, { passive: true });
+
+    activatePanel(activeIndex);
+  }
+
+  async function fetchOptionsForModel(modelId) {
+    const encodedModelId = encodeURIComponent(modelId);
+    const [colors, interiors, wheels] = await Promise.all([
+      fetchJson(`/api/configurator/options/colors?modelId=${encodedModelId}`),
+      fetchJson(`/api/configurator/options/interiors?modelId=${encodedModelId}`),
+      fetchJson(`/api/configurator/options/wheels?modelId=${encodedModelId}`)
+    ]);
+    return {
+      colors: [...colors].sort((left, right) => {
+        const rankDifference = colorSortRank(left.name) - colorSortRank(right.name);
+        if (rankDifference !== 0) return rankDifference;
+        return String(left.name).localeCompare(String(right.name), "de");
+      }),
+      interiors,
+      wheels
+    };
+  }
+
+  async function loadInitialData() {
+    try {
+      state.models = await fetchJson("/api/configurator/models");
+      state.selection.view = getInitialView();
+      const requestedSelection = getInitialRequestedSelection();
+      const initialModel = pickPreferredOrFirst(
+        state.models,
+        (model) => modelMatchesSelection(model, requestedSelection && requestedSelection.model)
+      );
+      if (initialModel) {
+        state.selection.modelId = initialModel.id;
+      }
+      renderModelButtons();
+      await loadOptionsForModel(requestedSelection);
+      await recalculate();
+      setActiveView(state.selection.view);
+      syncBrowserUrl(true);
+      initializeConfigPanelScroll();
+    } catch (err) {
+      console.error(err);
+      document.getElementById("placeholder").textContent = "Fehler beim Laden";
+      document.getElementById("selectedModel").textContent = "";
+      document.getElementById("price").textContent = "Nicht verfügbar";
+    }
+  }
+
+  async function loadOptionsForModel(requestedSelection = null) {
+    if (!state.selection.modelId) return;
+    const optionSet = await fetchOptionsForModel(state.selection.modelId);
+    state.colors = optionSet.colors;
+    state.interiors = optionSet.interiors;
+    state.wheels = optionSet.wheels;
+
+    const selectedColor = pickPreferredOrFirst(
+      state.colors,
+      (color) =>
+        (requestedSelection && matchesSlug(getColorSlug(color), requestedSelection.color)) ||
+        state.selection.colorId === color.id
+    );
+    if (!state.colors.some((color) => color.id === state.selection.colorId)) {
+      state.selection.colorId = selectedColor ? selectedColor.id : null;
+    }
+
+    const selectedInterior =
+      findOptionBySlug(state.interiors, requestedSelection && requestedSelection.interior, getInteriorSlug) ||
+      state.interiors.find((interior) => interior.id === state.selection.interiorId) ||
+      state.interiors[0] ||
+      null;
+    if (!state.interiors.some((interior) => interior.id === state.selection.interiorId)) {
+      state.selection.interiorId = selectedInterior ? selectedInterior.id : null;
+    }
+
+    const selectedWheels =
+      findOptionBySlug(state.wheels, requestedSelection && requestedSelection.wheels, getWheelsSlug) ||
+      state.wheels.find((wheel) => wheel.id === state.selection.wheelsId) ||
+      state.wheels[0] ||
+      null;
+    if (!state.wheels.some((wheel) => wheel.id === state.selection.wheelsId)) {
+      state.selection.wheelsId = selectedWheels ? selectedWheels.id : null;
+    }
+
+    renderColorButtons();
+    renderInteriorButtons();
+    renderWheelsButtons();
+  }
+
+  function syncBrowserUrl(replace) {
+    const targetUrl = `${buildConfiguratorPath(getCurrentSelectionSlugs())}${state.selection.view ? `#${state.selection.view}` : ""}`;
+    const currentUrl = `${window.location.pathname}${window.location.hash}`;
+    if (targetUrl === currentUrl) return;
+    if (replace) {
+      window.history.replaceState(null, "", targetUrl);
+      return;
+    }
+    window.history.pushState(null, "", targetUrl);
+  }
+
+  async function navigateToModel(model) {
+    const currentSlugs = getCurrentSelectionSlugs();
+    const currentView = state.selection.view || "front";
+    const optionSet = await fetchOptionsForModel(model.id);
+    const nextColor = findOptionBySlug(optionSet.colors, currentSlugs.color, getColorSlug) || optionSet.colors[0] || null;
+    const nextInterior = findOptionBySlug(optionSet.interiors, currentSlugs.interior, getInteriorSlug) || optionSet.interiors[0] || null;
+    const nextWheels = findOptionBySlug(optionSet.wheels, currentSlugs.wheels, getWheelsSlug) || optionSet.wheels[0] || null;
+    window.location.assign(
+      `${buildConfiguratorPath({
+        model: getModelSlug(model),
+        color: nextColor ? getColorSlug(nextColor) : null,
+        interior: nextInterior ? getInteriorSlug(nextInterior) : null,
+        wheels: nextWheels ? getWheelsSlug(nextWheels) : null
+      })}#${currentView}`
+    );
+  }
+
+  function renderModelButtons() {
+    const container = document.getElementById("modelBtns");
+    container.innerHTML = "";
+    state.models.forEach((model) => {
+      const btn = document.createElement("button");
+      btn.className = "config-btn" + (state.selection.modelId === model.id ? " active" : "");
+      btn.textContent = displayText(model.name);
+      btn.addEventListener("click", async () => {
+        markSummarySelection("model");
+        if (state.selection.modelId === model.id) {
+          updateUI();
+          return;
+        }
+        await navigateToModel(model);
+      });
+      container.appendChild(btn);
+    });
+  }
+
+  function renderColorButtons() {
+    const container = document.getElementById("colorBtns");
+    container.innerHTML = "";
+    state.colors.forEach((color) => {
+      const wrapper = document.createElement("div");
+      wrapper.className = "swatch-wrapper" + (state.selection.colorId === color.id ? " active" : "");
+      wrapper.innerHTML = `
+        <span class="swatch" style="background:${colorFromName(color.name)}"></span>
+        <span class="swatch-label">${displayColorName(color.name)}</span>
+      `;
+      wrapper.addEventListener("click", () => {
+        markSummarySelection("exterior");
+        if (state.selection.colorId === color.id) {
+          updateUI();
+          return;
+        }
+        state.selection.colorId = color.id;
+        renderColorButtons();
+        setActiveView("front");
+        syncBrowserUrl(false);
+        recalculate();
+      });
+      container.appendChild(wrapper);
+    });
+  }
+
+  function renderInteriorButtons() {
+    const container = document.getElementById("interiorBtns");
+    container.innerHTML = "";
+    state.interiors.forEach((interior) => {
+      const btn = document.createElement("button");
+      btn.className = "option-btn" + (state.selection.interiorId === interior.id ? " active" : "");
+      btn.textContent = `${displayText(interior.name)} (+${formatPrice(interior.price)})`;
+      btn.addEventListener("click", () => {
+        markSummarySelection("interior");
+        if (state.selection.interiorId === interior.id) {
+          updateUI();
+          return;
+        }
+        state.selection.interiorId = interior.id;
+        renderInteriorButtons();
+        setActiveView("interior");
+        syncBrowserUrl(false);
+        recalculate();
+      });
+      container.appendChild(btn);
+    });
+  }
+
+  function renderWheelsButtons() {
+    const container = document.getElementById("wheelsBtns");
+    container.innerHTML = "";
+    state.wheels.forEach((wheel) => {
+      const btn = document.createElement("button");
+      btn.className = "option-btn" + (state.selection.wheelsId === wheel.id ? " active" : "");
+      btn.textContent = `${displayText(wheel.name)} (+${formatPrice(wheel.price)})`;
+      btn.addEventListener("click", () => {
+        markSummarySelection("wheels");
+        if (state.selection.wheelsId === wheel.id) {
+          updateUI();
+          return;
+        }
+        state.selection.wheelsId = wheel.id;
+        renderWheelsButtons();
+        setActiveView("wheels");
+        syncBrowserUrl(false);
+        recalculate();
+      });
+      container.appendChild(btn);
+    });
+  }
+
+  async function recalculate() {
+    if (!state.selection.modelId) return;
+    try {
+      state.config = await fetchJson("/api/configurator/configuration/calculate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          modelId: state.selection.modelId,
+          colorId: state.selection.colorId,
+          interiorId: state.selection.interiorId,
+          wheelsId: state.selection.wheelsId
+        })
+      });
+      updateUI();
+    } catch (err) {
+      console.error(err);
+      state.config = null;
+      updateUI();
+    }
+  }
+
+  function setSummaryBadge(id, value) {
+    const badge = document.getElementById(id);
+    if (!badge) return;
+    const hasValue = Boolean(value);
+    badge.textContent = hasValue ? value : "Auswählen";
+    badge.classList.toggle("is-placeholder", !hasValue);
+  }
+
+  function updateUI() {
+    const cfg = state.config;
+    const img = document.getElementById("carImg");
+    const placeholder = document.getElementById("placeholder");
+    const addButtons = document.querySelectorAll("[data-add-config]");
+
+    if (!cfg) {
+      setSummaryBadge("selectedModel", "");
+      document.getElementById("price").textContent = "Nicht verfügbar";
+      setSummaryBadge("selectedColor", "");
+      setSummaryBadge("selectedInterior", "");
+      setSummaryBadge("selectedWheels", "");
+      addButtons.forEach((button) => { button.disabled = true; });
+      img.style.display = "none";
+      placeholder.style.display = "block";
+      placeholder.textContent = "Keine Vorschau verfügbar";
+      updateSummaryContrast(null);
+      return;
+    }
+
+    document.getElementById("price").textContent = formatPrice(cfg.totalPrice);
+    setSummaryBadge("selectedModel", cfg.model ? displayText(cfg.model.name) : "");
+    setSummaryBadge("selectedColor", cfg.color ? displayColorName(cfg.color.name) : "");
+    setSummaryBadge("selectedInterior", cfg.interior ? displayText(cfg.interior.name) : "");
+    setSummaryBadge("selectedWheels", cfg.wheels ? displayText(cfg.wheels.name) : "");
+
+    addButtons.forEach((button) => { button.disabled = false; });
+    updateSummaryContrast(cfg);
+    updateImage();
+  }
+
+  function updateImage() {
+    const cfg = state.config;
+    const img = document.getElementById("carImg");
+    const placeholder = document.getElementById("placeholder");
+
+    if (!cfg || !cfg.previewImages) {
+      img.style.display = "none";
+      placeholder.style.display = "block";
+      placeholder.textContent = "Keine Vorschau verfügbar";
+      return;
+    }
+
+    const activeUrl = cfg.previewImages[state.selection.view] || cfg.previewImages.front;
+    if (!activeUrl) {
+      img.style.display = "none";
+      placeholder.style.display = "block";
+      placeholder.textContent = "Kein Bild für diese Ansicht vorhanden";
+      return;
+    }
+
+    placeholder.style.display = "none";
+    img.style.display = "block";
+    img.style.opacity = "0.4";
+    img.src = activeUrl;
+    img.onload = () => { img.style.opacity = "1"; };
+  }
+
+  async function addConfigurationToCart() {
+    const cfg = state.config;
+    const addButtons = document.querySelectorAll("[data-add-config]");
+    const statusMessages = document.querySelectorAll("[data-add-status]");
+    const setStatus = (message) => {
+      statusMessages.forEach((status) => { status.textContent = message; });
+    };
+
+    if (!cfg) return;
+
+    addButtons.forEach((button) => { button.disabled = true; });
+    setStatus("Speichere...");
+
+    try {
+      const res = await fetch("/api/cart/items", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "car",
+          name: displayText(cfg.model.name),
+          price: cfg.totalPrice,
+          imageUrl: cfg.previewImages.front,
+          quantity: 1,
+          details: {
+            modelId: cfg.model.id,
+            color: cfg.color ? displayColorName(cfg.color.name) : null,
+            interior: cfg.interior ? displayText(cfg.interior.name) : null,
+            wheels: cfg.wheels ? displayText(cfg.wheels.name) : null
+          }
+        })
+      });
+
+      setStatus(res.ok ? "Erfolgreich hinzugefügt" : "Fehler beim Hinzufügen");
+    } catch (err) {
+      console.error(err);
+      setStatus("Fehler beim Hinzufügen");
+    } finally {
+      addButtons.forEach((button) => { button.disabled = false; });
+      setTimeout(() => { setStatus(""); }, 3000);
+    }
+  }
+
+  document.querySelectorAll("[data-add-config]").forEach((button) => {
+    button.addEventListener("click", addConfigurationToCart);
+  });
+
+  loadInitialData();
+</script>
