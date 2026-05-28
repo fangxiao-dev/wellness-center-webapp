@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" role="img" aria-label="Aftercare product placeholder">
+  <rect width="1200" height="720" fill="#eef2f7"/>
+  <rect x="150" y="160" width="900" height="400" rx="8" fill="#ffffff"/>
+  <circle cx="390" cy="360" r="120" fill="#1c69d4" opacity=".18"/>
+  <rect x="560" y="265" width="330" height="42" rx="4" fill="#111827" opacity=".82"/>
+  <rect x="560" y="335" width="420" height="26" rx="4" fill="#394150" opacity=".55"/>
+  <rect x="560" y="385" width="260" height="26" rx="4" fill="#394150" opacity=".35"/>
+  <text x="390" y="370" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700" fill="#1c69d4">Aftercare</text>
+</svg>

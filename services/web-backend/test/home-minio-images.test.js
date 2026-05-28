@@ -89,7 +89,7 @@ async function startBackend() {
   };
 }
 
-test("home page uses static presentation assets and no direct minio paths", async () => {
+test("home page preserves group-style presentation structure with scaffold assets", async () => {
   const backend = await startBackend();
 
   try {
@@ -100,7 +100,12 @@ test("home page uses static presentation assets and no direct minio paths", asyn
     const html = await response.text();
 
     assert.doesNotMatch(html, /\/minio\//);
-    assert.match(html, /["']\/static\/images\/home-hero\.svg/);
+    assert.match(html, /href="\/static\/ci\/wellness-ci\.css"/);
+    assert.match(html, /class="hero-video"/);
+    assert.match(html, /class="hero-overlay"/);
+    assert.match(html, /class="model-showcase"/);
+    assert.match(html, /class="merch-preview-grid"/);
+    assert.match(html, /["']\/static\/images\/wellness-stage-loop\.svg/);
     assert.doesNotMatch(html, /\/api\/merch\//);
     assert.doesNotMatch(html, /Bayerische|Motoren|Werke/);
   } finally {

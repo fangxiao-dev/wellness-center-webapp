@@ -159,6 +159,8 @@ test("aftercare listing SSR fetches products through the API gateway", async () 
 
     assert.equal(response.status, 200);
     assert.match(html, /Heated Neck Wrap/);
+    assert.match(html, /class="aftercare-shop-layout"/);
+    assert.match(html, /class="product-grid"/);
     assert.deepEqual(requests, ["/api/aftercare/products"]);
   } finally {
     await backend.stop();
@@ -274,6 +276,8 @@ test("package configurator route renders initial package selection", async () =>
     assert.equal(response.status, 200);
     assert.match(html, /Serenity Wellness Center/);
     assert.match(html, /neck-shoulder-relief/);
+    assert.match(html, /class="configurator-shell"/);
+    assert.match(html, /id="configurator-app"/);
   } finally {
     await backend.stop();
     await closeServer(apiGateway);

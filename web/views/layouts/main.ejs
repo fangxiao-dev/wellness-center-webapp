@@ -1,27 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><%= typeof title !== 'undefined' && title ? title : 'Serenity Wellness Center' %></title>
-    <link rel="stylesheet" href="/static/styles.css" />
+    <link rel="stylesheet" href="/static/ci/wellness-ci.css">
   </head>
   <body>
     <%
+      const variant = (typeof navVariant !== 'undefined' && navVariant) ? navVariant : 'solid';
       const active = (typeof activePage !== 'undefined' && activePage) ? activePage : null;
       const navLinks = [
-        { key: 'home', href: '/', label: 'Home' },
-        { key: 'packages', href: '/package-configurator', label: 'Packages' },
-        { key: 'ai', href: '/ai-feature', label: 'AI Consultation' },
-        { key: 'aftercare', href: '/aftercare-shop', label: 'Aftercare Shop' },
-        { key: 'visit', href: '/visit-context', label: 'Visit Context' },
-        { key: 'cart', href: '/shopping-cart', label: 'Cart' },
+        { key: 'home',         href: '/',                  label: 'Home' },
+        { key: 'configurator', href: '/package-configurator',  label: 'Packages' },
+        { key: 'merch',        href: '/aftercare-shop',        label: 'Aftercare' },
+        { key: 'visit',        href: '/visit-context',         label: 'Visit' },
+        { key: 'ai',           href: '/ai-feature',        label: 'AI Consultation' },
+        { key: 'cart',         href: '/shopping-cart',     label: 'Cart' },
       ];
     %>
-    <nav class="site-nav" aria-label="Main navigation">
+    <nav class="site-nav site-nav--<%= variant %>" aria-label="Hauptnavigation">
       <a class="brand" href="/">
         <strong>Serenity Wellness Center</strong>
-        <span>Massage, recovery, aftercare</span>
+        <span>Wellness Center</span>
       </a>
       <div class="nav-links">
         <% navLinks.forEach(function(link) { %>
@@ -32,24 +33,23 @@
 
     <main><%- body %></main>
 
-    <footer class="site-footer">
+    <footer class="site-footer" id="impressum">
       <div class="page-shell footer-grid">
-        <div>
+        <div class="footer-brand">
           <strong>Serenity Wellness Center</strong>
-          <span>Cloud-based Web Application course project</span>
+          <span>Elective: Cloud Based Web Development</span>
+          <span class="footer-legal">Impressum: HHZ Cloud Web App Team, Hermann Hollerith Zentrum, Böblingen.</span>
+          <span class="footer-legal">© 2026 HHZ Cloud Web App Team</span>
         </div>
-        <nav class="footer-links" aria-label="Footer navigation">
+        <nav class="footer-links" aria-label="Footer Navigation">
+          <a href="/">Home</a>
           <a href="/package-configurator">Packages</a>
           <a href="/aftercare-shop">Aftercare</a>
-          <a href="/visit-context">Visit Context</a>
+          <a href="/visit-context">Visit</a>
+          <a href="/ai-feature">AI Consultation</a>
           <a href="/impressum">Impressum</a>
         </nav>
       </div>
     </footer>
-    <script>
-      window.SERENITY_MAPS_KEY = "<%= typeof mapsApiKey !== 'undefined' ? mapsApiKey : '' %>";
-      window.SERENITY_INITIAL_SELECTION = <%- JSON.stringify(typeof initialSelection !== 'undefined' ? initialSelection : null) %>;
-    </script>
-    <script src="/static/app.js"></script>
   </body>
 </html>

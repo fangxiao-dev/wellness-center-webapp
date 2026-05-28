@@ -142,10 +142,10 @@ async function forwardToApiGateway(req, res) {
 function getInitialPackageSelection(req) {
   if (!req.params.package) return null;
   return {
-    package: req.params.package,
-    duration: Number(req.params.duration),
-    intensity: req.params.intensity,
-    addon: req.params.addon,
+    model: req.params.package,
+    color: req.params.duration,
+    interior: req.params.intensity,
+    wheels: req.params.addon,
   };
 }
 
@@ -174,7 +174,7 @@ app.get("/home", (_req, res) => res.redirect(301, "/"));
 function renderConfigurator(req, res) {
   renderPage(res, "package-configurator", {
     title: "Configure a Package | Serenity Wellness Center",
-    activePage: "packages",
+    activePage: "configurator",
     initialSelection: getInitialPackageSelection(req),
   });
 }
@@ -194,7 +194,7 @@ app.get("/aftercare-shop", async (_req, res) => {
     const products = await fetchJson("/api/aftercare/products", []);
     renderPage(res, "aftercare-shop", {
       title: "Aftercare Shop | Serenity Wellness Center",
-      activePage: "aftercare",
+      activePage: "merch",
       products,
     });
   } catch (err) {
@@ -207,7 +207,7 @@ app.get("/aftercare-shop/:productId", async (req, res) => {
     const product = await fetchJson(`/api/aftercare/products/${encodeURIComponent(req.params.productId)}`, null);
     renderPage(res, "aftercare-product", {
       title: product ? `${product.name} | Aftercare Shop` : "Product not found",
-      activePage: "aftercare",
+      activePage: "merch",
       product,
     });
   } catch (err) {

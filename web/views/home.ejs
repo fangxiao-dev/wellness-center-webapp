@@ -1,27 +1,1725 @@
+<%
+  const homeImageBase = "/static/images";
+  const merchImageBase = "/api/aftercare/assets/aftercare-shop";
+
+  const merchPreviewProducts = [
+    { name: "Heated Neck Wrap", variant: "Warmth", slug: "heated-neck-wrap", category: "Recovery", price: "34,90 EUR", description: "Reusable warmth for neck and shoulder recovery.", image: "heated-neck-wrap.svg" },
+    { name: "Ergonomic Neck Pillow", variant: "Travel", slug: "ergonomic-neck-pillow", category: "Comfort", price: "29,90 EUR", description: "Compact support for the way home after treatment.", image: "ergonomic-neck-pillow.svg" },
+    { name: "Lavender Aroma Oil", variant: "Calm", slug: "lavender-aroma-oil", category: "Aroma", price: "18,50 EUR", description: "A calming aroma companion for aftercare routines.", image: "lavender-aroma-oil.svg" },
+    { name: "Stretching Band", variant: "Mobility", slug: "stretching-band", category: "Mobility", price: "16,90 EUR", description: "Light resistance support for guided stretching.", image: "stretching-band.svg" },
+    { name: "Recovery Massage Ball", variant: "Trigger Point", slug: "recovery-massage-ball", category: "Mobility", price: "12,90 EUR", description: "Focused pressure support between visits.", image: "recovery-massage-ball.svg" },
+    { name: "Herbal Warmth Pack", variant: "Relax", slug: "herbal-warmth-pack", category: "Recovery", price: "24,90 EUR", description: "Gentle warmth with a reusable herbal insert.", image: "herbal-warmth-pack.svg" },
+  ];
+%>
+<style>
+  /* Home-specific layouts only.
+     Tokens, reset, fonts, .page-shell, .site-nav (both variants), .site-footer,
+     .section-*, .btn*, .field/.input, .card* live in /static/ci/wellness-ci.css. */
+
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    width: 100%;
+    overflow: hidden;
+    color: #fff;
+    background: #000;
+  }
+
+  .hero-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(180deg, rgba(0, 0, 0, 0.22) 0%, rgba(0, 0, 0, 0.18) 45%, rgba(0, 0, 0, 0.62) 100%),
+      linear-gradient(90deg, rgba(0, 0, 0, 0.38), rgba(0, 0, 0, 0.05) 55%, rgba(0, 0, 0, 0.3));
+  }
+
+  .hero-overlay {
+    position: relative;
+    z-index: 2;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 130px 24px 88px;
+  }
+
+  .hero-title {
+    margin: 0;
+    font-size: clamp(2.7rem, 7vw, 6.4rem);
+    font-weight: 700;
+    letter-spacing: 0;
+    line-height: 1.02;
+    text-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  }
+
+  .hero-subtitle {
+    margin: 18px 0 0;
+    color: rgba(255, 255, 255, 0.86);
+    font-size: clamp(1rem, 1.5vw, 1.25rem);
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .hero-overlay .btn-cta {
+    margin-top: 34px;
+  }
+
+  .scroll-hint {
+    position: absolute;
+    bottom: 34px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255, 255, 255, 0.76);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+
+  .experience-section {
+    background: #fff;
+    padding: clamp(76px, 9vw, 124px) 0 0;
+  }
+
+  .vehicle-hero {
+    margin-top: 0;
+    margin-left: calc(50% - 50vw);
+    position: relative;
+    width: 100vw;
+    min-height: 100vh;
+    min-height: 100svh;
+    overflow: hidden;
+    background: #070b10;
+    color: #fff;
+  }
+
+  .vehicle-backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  .vehicle-hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background:
+      linear-gradient(180deg, rgba(6, 10, 16, 0.12) 0%, rgba(6, 10, 16, 0.22) 48%, rgba(6, 10, 16, 0.76) 100%),
+      linear-gradient(90deg, rgba(6, 10, 16, 0.46) 0%, rgba(6, 10, 16, 0.08) 52%, rgba(6, 10, 16, 0.24) 100%);
+    pointer-events: none;
+  }
+
+  .vehicle-hotspot {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: block;
+    outline: none;
+  }
+
+  .vehicle-hotspot--3er {
+    clip-path: polygon(1% 41%, 62% 40%, 76% 53%, 77% 77%, 3% 82%, 0 65%);
+  }
+
+  .vehicle-hotspot--x5 {
+    clip-path: polygon(42% 31%, 100% 31%, 100% 82%, 47% 84%, 39% 68%);
+  }
+
+  .vehicle-hotspot img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    opacity: 0.96;
+    filter: brightness(0.58) saturate(0.92) contrast(1.03);
+    transform: scale(1);
+    transition: transform 0.28s ease, filter 0.28s ease, opacity 0.28s ease;
+    pointer-events: none;
+    will-change: transform, filter;
+  }
+
+  .vehicle-hotspot--3er img {
+    transform-origin: 35% 64%;
+  }
+
+  .vehicle-hotspot--x5 img {
+    transform-origin: 83% 61%;
+  }
+
+  .vehicle-hotspot:hover img,
+  .vehicle-hotspot:focus-visible img {
+    opacity: 1;
+    filter: brightness(1.08) saturate(1.08) contrast(1.04) drop-shadow(0 18px 26px rgba(0, 0, 0, 0.38));
+    transform: scale(1.026);
+  }
+
+  .vehicle-label {
+    position: absolute;
+    z-index: 3;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 16px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: var(--radius);
+    background: rgba(7, 12, 18, 0.76);
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28);
+    backdrop-filter: blur(14px);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(6px);
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease, background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  }
+
+  .vehicle-label::after {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-top: 2px solid currentColor;
+    border-right: 2px solid currentColor;
+    transform: rotate(45deg);
+  }
+
+  .vehicle-hotspot--3er .vehicle-label {
+    left: 14%;
+    bottom: 24%;
+  }
+
+  .vehicle-hotspot--x5 .vehicle-label {
+    right: 13%;
+    bottom: 24%;
+  }
+
+  .vehicle-hotspot:hover .vehicle-label,
+  .vehicle-hotspot:focus-visible .vehicle-label {
+    background: var(--accent);
+    border-color: rgba(255, 255, 255, 0.44);
+    opacity: 1;
+    transform: translateY(-3px);
+    visibility: visible;
+  }
+
+  .vehicle-hotspot:focus-visible .vehicle-label {
+    box-shadow: 0 0 0 3px rgba(143, 192, 255, 0.42), 0 16px 36px rgba(0, 0, 0, 0.28);
+  }
+
+  .stage-index {
+    position: absolute;
+    top: 28px;
+    left: 28px;
+    z-index: 3;
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .stage-caption {
+    position: absolute;
+    left: 50%;
+    bottom: clamp(24px, 4vw, 46px);
+    z-index: 3;
+    width: min(92vw, 1240px);
+    transform: translateX(-50%);
+    text-align: center;
+    pointer-events: none;
+  }
+
+  .stage-caption h4 {
+    margin: 0;
+    color: #fff;
+    font-size: 3.35rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    line-height: 0.96;
+    white-space: nowrap;
+    text-shadow: 0 18px 46px rgba(0, 0, 0, 0.45);
+  }
+
+  .service-rail {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(20px, 3vw, 36px);
+    margin-bottom: clamp(52px, 8vw, 96px);
+  }
+
+  .service-intro {
+    margin-bottom: 34px;
+  }
+
+  .service-intro .section-copy {
+    max-width: 620px;
+  }
+
+  .service-link {
+    min-height: 260px;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto 1fr;
+    row-gap: 12px;
+    padding: 18px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.78);
+    color: var(--ink);
+    text-decoration: none;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  }
+
+  .service-image {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    background: #e7ebf0;
+  }
+
+  .service-link:hover {
+    background: #fff;
+    border-color: rgba(17, 24, 39, 0.24);
+    transform: translateY(-2px);
+  }
+
+  .service-number {
+    color: var(--accent);
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+  }
+
+  .service-link h3 {
+    margin: 0;
+    font-size: 1.18rem;
+    font-weight: 700;
+    line-height: 1.18;
+  }
+
+  .service-link p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+
+  .merch-preview-section {
+    min-height: 100vh;
+    min-height: 100svh;
+    display: flex;
+    align-items: flex-start;
+    background: #fff;
+    padding: clamp(32px, 5vw, 64px) 0 clamp(76px, 9vw, 124px);
+  }
+
+  .merch-preview-section .page-shell {
+    width: min(1180px, calc(100% - 40px));
+  }
+
+  .merch-preview-head {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 28px;
+    margin-bottom: 36px;
+  }
+
+  .merch-preview-head .section-copy {
+    max-width: 520px;
+  }
+
+  .merch-preview-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .merch-carousel-button {
+    width: 44px;
+    height: 44px;
+    border: 1px solid rgba(17, 24, 39, 0.2);
+    background: #fff;
+    color: var(--ink);
+    cursor: pointer;
+    font-size: 1.2rem;
+    font-weight: 700;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  }
+
+  .merch-carousel-button:hover {
+    background: var(--ink);
+    color: #fff;
+    transform: translateY(-2px);
+  }
+
+  .merch-grid {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(280px, calc((100% - 36px) / 3));
+    gap: 18px;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    padding: 0 0 12px;
+    scroll-padding-inline: 2px;
+    scroll-snap-type: inline mandatory;
+    scrollbar-width: thin;
+  }
+
+  .merch-grid .merch-card {
+    scroll-snap-align: start;
+  }
+
+  .merch-preview-section .merch-card {
+    position: relative;
+    display: block;
+    height: clamp(260px, 32vw, 380px);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #f1f5f9;
+    color: #fff;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+  }
+
+  .merch-preview-section .merch-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.14);
+  }
+
+  .merch-preview-section .merch-card-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease;
+  }
+
+  .merch-preview-section .merch-card:hover .merch-card-img {
+    transform: scale(1.06);
+  }
+
+  .merch-preview-section .merch-card-overlay {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    padding: 56px 20px 20px;
+    background: linear-gradient(to top, rgba(5, 10, 18, 0.88) 0%, rgba(5, 10, 18, 0.42) 55%, transparent 100%);
+    color: #fff;
+    transition: padding-bottom 0.25s ease;
+  }
+
+  .merch-preview-section .merch-card:hover .merch-card-overlay {
+    padding-bottom: 68px;
+  }
+
+  .merch-preview-section .merch-card-category {
+    display: block;
+    margin-bottom: 5px;
+    color: rgba(255, 255, 255, 0.62);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .merch-preview-section .merch-card-name {
+    display: -webkit-box;
+    margin: 0 0 5px;
+    overflow: hidden;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.2;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .merch-preview-section .merch-card-price {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1rem;
+    font-weight: 800;
+  }
+
+  .heritage-section {
+    position: relative;
+    overflow: hidden;
+    min-height: 100vh;
+    min-height: 100svh;
+    background: #070b10;
+    color: #fff;
+  }
+
+  .heritage-video {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: min(58%, 860px);
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.46;
+  }
+
+  .heritage-yt {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    margin: 1.5rem 0;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .heritage-yt iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+
+  .yt-stage-section {
+    background: #fff;
+    padding: clamp(48px, 7vw, 96px) 0;
+  }
+
+  .yt-stage-section .yt-stage-header {
+    margin-bottom: 2rem;
+  }
+
+  .heritage-section::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(90deg, #070b10 0%, rgba(7, 11, 16, 0.94) 36%, rgba(7, 11, 16, 0.5) 68%, rgba(7, 11, 16, 0.8) 100%),
+      linear-gradient(180deg, rgba(7, 11, 16, 0.1), rgba(7, 11, 16, 0.82));
+  }
+
+  .heritage-content {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    min-height: 100svh;
+    display: grid;
+    grid-template-columns: minmax(0, 0.76fr) minmax(170px, 0.24fr);
+    gap: 42px;
+    align-items: center;
+    padding: clamp(112px, 12vw, 172px) 0;
+  }
+
+  .heritage-content .section-kicker {
+    color: #8fc0ff;
+  }
+
+  .heritage-title {
+    margin: 0;
+    max-width: 790px;
+    font-size: clamp(2.2rem, 5vw, 5.15rem);
+    font-weight: 700;
+    letter-spacing: 0;
+    line-height: 0.98;
+  }
+
+  .heritage-copy {
+    max-width: 620px;
+    margin: 24px 0 0;
+    color: rgba(255, 255, 255, 0.74);
+    font-size: 1.02rem;
+  }
+
+  .heritage-ledger {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    max-width: 860px;
+    margin-top: 46px;
+    border-top: 1px solid rgba(255, 255, 255, 0.24);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.24);
+  }
+
+  .ledger-item {
+    padding: 22px 22px 22px 0;
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .ledger-item + .ledger-item {
+    padding-left: 22px;
+  }
+
+  .ledger-item:last-child {
+    border-right: 0;
+  }
+
+  .ledger-item span {
+    display: block;
+    color: #8fc0ff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .ledger-item strong {
+    display: block;
+    margin-top: 10px;
+    font-size: 1.16rem;
+    font-weight: 700;
+    line-height: 1.18;
+  }
+
+  .heritage-mark {
+    justify-self: end;
+    padding-left: 28px;
+    border-left: 1px solid rgba(255, 255, 255, 0.26);
+    text-align: right;
+  }
+
+  .heritage-mark strong {
+    display: block;
+    font-size: clamp(3.8rem, 8vw, 8rem);
+    font-weight: 200;
+    line-height: 0.82;
+  }
+
+  .heritage-mark span {
+    display: block;
+    margin-top: 16px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .route-section {
+    position: relative;
+    overflow: hidden;
+    background: #070b10;
+    color: #fff;
+    min-height: 100vh;
+    min-height: 100svh;
+    padding: 0;
+    scroll-margin-top: 0;
+  }
+
+  .route-section::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background:
+      linear-gradient(90deg, rgba(7, 11, 16, 0.9) 0%, rgba(7, 11, 16, 0.66) 31%, rgba(7, 11, 16, 0.12) 68%, rgba(7, 11, 16, 0.32) 100%),
+      linear-gradient(180deg, rgba(7, 11, 16, 0.72) 0%, rgba(7, 11, 16, 0.04) 38%, rgba(7, 11, 16, 0.5) 100%);
+    pointer-events: none;
+  }
+
+  .route-section .page-shell {
+    width: min(1180px, calc(100% - 40px));
+  }
+
+  .route-overlay {
+    position: relative;
+    z-index: 2;
+    min-height: 100vh;
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding: clamp(28px, 4vw, 58px) 0;
+    pointer-events: none;
+  }
+
+  .route-copy {
+    max-width: 760px;
+    text-shadow: 0 16px 42px rgba(0, 0, 0, 0.48);
+    pointer-events: auto;
+  }
+
+  .route-section .section-kicker {
+    color: #8fc0ff;
+  }
+
+  .route-section .section-title {
+    max-width: 980px;
+    color: #fff;
+  }
+
+  .route-section .section-copy {
+    max-width: 640px;
+    color: rgba(255, 255, 255, 0.74);
+  }
+
+  .route-layout {
+    width: min(720px, 100%);
+    margin-top: clamp(13px, 2vw, 24px);
+    pointer-events: auto;
+  }
+
+  .route-panel {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 10px;
+    align-items: stretch;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: #fff;
+    box-shadow: none;
+    backdrop-filter: none;
+    overflow: visible;
+  }
+
+  .controls {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .route-status {
+    display: block;
+    margin-top: 10px;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    white-space: normal;
+  }
+
+  .route-status.error {
+    color: #ffb4ab;
+  }
+
+  .route-status.success {
+    color: #8fdab5;
+  }
+
+  .route-result {
+    position: absolute;
+    top: clamp(28px, 4vw, 58px);
+    right: 0;
+    display: grid;
+    width: min(430px, 36vw);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    margin: 0;
+    padding: 14px 18px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: var(--radius);
+    background: rgba(7, 12, 18, 0.38);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(18px);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .route-metric {
+    min-width: 0;
+  }
+
+  .route-metric span {
+    display: block;
+    color: #8fc0ff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .route-metric strong {
+    display: block;
+    color: #fff;
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+
+  .map-frame {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    min-height: 100vh;
+    min-height: 100svh;
+    height: 100%;
+    border-radius: 0;
+    overflow: hidden;
+    background: #101722;
+    box-shadow: none;
+  }
+
+  #map {
+    width: 100%;
+    height: 100%;
+    min-height: 100vh;
+    min-height: 100svh;
+    background: #101722;
+  }
+
+  .wellness-marker {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
+    transform: translateY(50%);
+    border: 2px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .wellness-marker img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .route-car-marker {
+    position: absolute;
+    width: 44px;
+    height: 68px;
+    pointer-events: none;
+    transform-origin: center;
+    transition: transform 0.08s linear;
+    will-change: transform;
+    filter: drop-shadow(0 7px 12px rgba(0, 0, 0, 0.64));
+  }
+
+  .route-car-marker svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .route-car-marker.hidden {
+    display: none;
+  }
+
+  .no-key {
+    margin-top: 40px;
+    padding: 56px 32px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--paper);
+    color: var(--muted);
+    text-align: center;
+  }
+
+  .no-key h3 {
+    margin: 0 0 10px;
+    color: var(--ink);
+  }
+
+  .no-key code {
+    background: #e7ebf0;
+    padding: 4px 8px;
+    border-radius: 5px;
+    color: var(--accent-dark);
+  }
+
+  @media (max-width: 1180px) {
+    .stage-caption h4 {
+      font-size: 3rem;
+    }
+
+    .service-rail {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 980px) {
+    .stage-caption h4 {
+      font-size: 2.55rem;
+    }
+
+    .route-layout {
+      margin-top: 42px;
+    }
+
+    .heritage-content {
+      grid-template-columns: 1fr;
+    }
+
+    .heritage-mark {
+      justify-self: start;
+      text-align: left;
+    }
+  }
+
+  @media (max-width: 880px) {
+    .stage-caption h4 {
+      font-size: 2.25rem;
+    }
+  }
+
+  @media (max-width: 780px) {
+    .stage-caption h4 {
+      font-size: 1.95rem;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .hero-overlay {
+      padding-top: 180px;
+    }
+
+    .scroll-hint {
+      display: none;
+    }
+
+    .route-section {
+      min-height: 100vh;
+      min-height: 100svh;
+      padding: 0;
+    }
+
+    .route-overlay {
+      padding: 30px 0 44px;
+    }
+
+    .route-layout {
+      width: 100%;
+      margin-top: 28px;
+    }
+
+    .vehicle-hero {
+      margin-top: 0;
+    }
+
+    .service-rail,
+    .heritage-ledger {
+      grid-template-columns: 1fr;
+    }
+
+    .merch-preview-head {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .merch-preview-actions {
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .merch-grid {
+      grid-auto-columns: minmax(260px, 82vw);
+    }
+
+    .merch-preview-section .merch-card {
+      height: clamp(220px, 60vw, 300px);
+    }
+
+    .stage-index {
+      top: 28px;
+      left: 18px;
+    }
+
+    .vehicle-label {
+      min-height: 40px;
+      padding: 0 12px;
+      font-size: 0.68rem;
+      letter-spacing: 0.05em;
+    }
+
+    .vehicle-hotspot--3er .vehicle-label {
+      left: 8%;
+      bottom: 25%;
+    }
+
+    .vehicle-hotspot--x5 .vehicle-label {
+      right: 7%;
+      bottom: 25%;
+    }
+
+    .stage-caption h4 {
+      font-size: 1.55rem;
+    }
+
+    .vehicle-hotspot--3er {
+      clip-path: polygon(0 42%, 67% 42%, 76% 78%, 0 84%);
+    }
+
+    .vehicle-hotspot--x5 {
+      clip-path: polygon(38% 31%, 100% 31%, 100% 82%, 42% 84%, 35% 68%);
+    }
+
+    .heritage-section {
+      min-height: 100vh;
+      min-height: 100svh;
+    }
+
+    .heritage-video {
+      width: 100%;
+      opacity: 0.34;
+    }
+
+    .heritage-content {
+      padding: 96px 0;
+    }
+
+    .ledger-item,
+    .ledger-item + .ledger-item {
+      padding: 18px 0;
+      border-right: 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .ledger-item:last-child {
+      border-bottom: 0;
+    }
+
+    .route-panel {
+      padding: 18px;
+      grid-template-columns: 1fr;
+      max-height: 64svh;
+    }
+
+    .controls,
+    .route-result {
+      grid-template-columns: 1fr;
+    }
+
+    .route-result {
+      position: static;
+      width: 100%;
+    }
+
+    .map-frame {
+      min-height: 100vh;
+      min-height: 100svh;
+    }
+
+    #map {
+      min-height: 100vh;
+      min-height: 100svh;
+      height: 100%;
+    }
+  }
+
+  @media (max-width: 420px) {
+    .stage-caption h4 {
+      font-size: 1.08rem;
+    }
+  }
+</style>
+
 <section class="hero">
-  <img src="/static/images/home-hero.svg" alt="Serenity Wellness Center" />
-  <div>
-    <p class="eyebrow">Massage-focused care</p>
-    <h1>Serenity Wellness Center</h1>
-    <p>Massage-focused wellness packages, guided consultation, aftercare products, and visit preparation.</p>
-    <div class="button-row">
-      <a class="button" href="/ai-feature">Start consultation</a>
-      <a class="button secondary" href="/package-configurator">Configure a package</a>
-    </div>
+  <video class="hero-video" autoplay muted loop playsinline preload="auto">
+    <source src="<%= homeImageBase %>/wellness-stage-loop.svg" type="video/mp4">
+  </video>
+
+  <div class="hero-overlay">
+    <h1 class="hero-title">Dein Weg zu deinem<br>Wellness Reset</h1>
+    <p class="hero-subtitle">Mit KI-Beratung, passenden Produkten und deinem Besuchskontext im Serenity Center.</p>
+    <a class="btn btn-cta" href="/package-configurator">Jetzt konfigurieren</a>
+    <div class="scroll-hint">Scroll</div>
   </div>
 </section>
 
-<section class="page-shell feature-grid">
-  <article>
-    <h2>Relief packages</h2>
-    <p>Choose duration, intensity, and supportive add-ons for focused massage sessions.</p>
-  </article>
-  <article>
-    <h2>Aftercare products</h2>
-    <p>Extend the visit with heat, mobility, and recovery products.</p>
-  </article>
-  <article>
-    <h2>Visit context</h2>
-    <p>Review location, arrival guidance, and weather-aware preparation.</p>
-  </article>
-</section>
+<main>
+  <section class="experience-section" id="experience">
+    <div class="page-shell">
+      <div class="service-intro">
+        <p class="section-kicker">Deine Serenity Experience</p>
+        <h2 class="section-title">Vier Einstiege für deinen nächsten Besuch.</h2>
+        <p class="section-copy">Package-Konfiguration, KI-Beratung, Aftercare und Besuchskontext an einem Ort.</p>
+      </div>
+
+      <div class="service-rail" aria-label="Serenity Experience Einstiege">
+        <a class="service-link" href="/package-configurator">
+          <img class="service-image" src="<%= homeImageBase %>/wellness-ai-hero.svg" alt="Serenity package consultation" loading="lazy">
+          <span class="service-number">01</span>
+          <h3>Packages</h3>
+          <p>Wähle Package, Dauer, Intensität und Add-ons für deinen nächsten Besuch.</p>
+        </a>
+        <a class="service-link" href="/ai-feature">
+          <img class="service-image" src="<%= homeImageBase %>/wellness-ai-hero.svg" alt="Serenity AI Consultation" loading="lazy">
+          <span class="service-number">02</span>
+          <h3>AI Consultation</h3>
+          <p>Aus einem Alltagssatz wird ein konkreter Vorschlag für Package und Zubehör.</p>
+        </a>
+        <a class="service-link" href="/aftercare-shop">
+          <img class="service-image" src="<%= homeImageBase %>/aftercare-preview.svg" alt="Serenity Aftercare" loading="lazy">
+          <span class="service-number">03</span>
+          <h3>Aftercare</h3>
+          <p>Passende Produkte für Ruhe, Mobilität und Pflege nach deinem Termin.</p>
+        </a>
+        <a class="service-link" href="#route-planner">
+          <img class="service-image" src="<%= homeImageBase %>/center-impression.svg" alt="Serenity Wellness Center" loading="lazy">
+          <span class="service-number">04</span>
+          <h3>Visit Context</h3>
+          <p>Plane Anreise, Zeitfenster und Hinweise für deinen Besuch.</p>
+        </a>
+      </div>
+
+      <section class="vehicle-hero model-showcase" aria-label="Package stage">
+        <span class="model-showcase" aria-hidden="true"></span>
+        <img class="vehicle-backdrop" src="<%= homeImageBase %>/wellness-ai-hero.svg" alt="Serenity package stage" loading="lazy">
+        <span class="stage-index">Aktueller Fokus</span>
+        <a class="vehicle-hotspot vehicle-hotspot--3er" href="/package-configurator/neck-shoulder-relief/60/medium/aroma-oil" aria-label="Neck and Shoulder Relief konfigurieren">
+          <img src="<%= homeImageBase %>/package-relief.svg" alt="" aria-hidden="true" loading="lazy">
+          <span class="vehicle-label">Relief Package konfigurieren</span>
+        </a>
+        <a class="vehicle-hotspot vehicle-hotspot--x5" href="/package-configurator/warm-recovery-massage/90/deep/herbal-compress" aria-label="Warm Recovery Massage konfigurieren">
+          <img src="<%= homeImageBase %>/package-recovery.svg" alt="" aria-hidden="true" loading="lazy">
+          <span class="vehicle-label">Recovery Package konfigurieren</span>
+        </a>
+        <div class="stage-caption">
+          <h4>Zwei Package-Pfade. Ein Klick zur Konfiguration.</h4>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <section class="merch-preview-section" aria-label="Aftercare Highlights">
+    <div class="page-shell">
+      <div class="merch-preview-head">
+        <div>
+          <p class="section-kicker">Aftercare Highlights</p>
+          <h2 class="section-title">Serenity Aftercare entdecken.</h2>
+          <p class="section-copy">Ausgewählte Produkte für Ruhe, Mobilität und Pflege. Direkt ansehen oder im Shop weiterstöbern.</p>
+        </div>
+        <div class="merch-preview-actions">
+          <a class="btn btn-ghost" href="/aftercare-shop">Zum Shop</a>
+          <button class="merch-carousel-button" type="button" aria-label="Vorherige Produkte" data-merch-prev>&larr;</button>
+          <button class="merch-carousel-button" type="button" aria-label="Nächste Produkte" data-merch-next>&rarr;</button>
+        </div>
+      </div>
+
+      <span class="merch-preview-grid" aria-hidden="true"></span>
+      <div class="merch-grid merch-preview-grid" data-merch-carousel>
+        <% merchPreviewProducts.forEach(function(product) { %>
+          <a class="merch-card" href="/aftercare-shop/<%= product.slug %>">
+            <img class="merch-card-img" src="<%= merchImageBase %>/<%= product.image %>" alt="<%= product.name %> <%= product.variant %>" loading="lazy">
+            <div class="merch-card-overlay">
+              <span class="merch-card-category"><%= product.category %></span>
+              <h3 class="merch-card-name"><%= product.name %> <%= product.variant %></h3>
+              <span class="merch-card-price"><%= product.price %></span>
+            </div>
+          </a>
+        <% }) %>
+      </div>
+    </div>
+  </section>
+
+  <section class="heritage-section" aria-label="Heritage">
+    <video class="heritage-video" autoplay muted loop playsinline preload="metadata">
+      <source src="<%= homeImageBase %>/wellness-stage-loop.svg" type="video/mp4">
+    </video>
+    <div class="page-shell heritage-content">
+      <div>
+        <p class="section-kicker">Aus Ruhe wird Struktur</p>
+        <h2 class="heritage-title">Vom Erstimpuls bis zu deiner Behandlung.</h2>
+
+        <p class="heritage-copy">Serenity steht hier für klare Entscheidungen: vom passenden Massageziel über Add-ons bis zu Produkten, die den Effekt zu Hause verlängern.</p>
+
+        <div class="heritage-ledger">
+          <div class="ledger-item">
+            <span>Assessment</span>
+            <strong>Wo Bedürfnisse sichtbar werden.</strong>
+          </div>
+          <div class="ledger-item">
+            <span>Package</span>
+            <strong>Klarheit in jedem Behandlungsschritt.</strong>
+          </div>
+          <div class="ledger-item">
+            <span>Aftercare</span>
+            <strong>Die Wirkung wird zu Hause weitergedacht.</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="heritage-mark" aria-label="Gründungsjahr">
+        <strong>2026</strong>
+        <span>Cloud style<br>for care</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="yt-stage-section">
+    <div class="page-shell">
+      <div class="yt-stage-header">
+        <p class="section-kicker">Scaffold media stage</p>
+        <h2 class="section-title">Bereit für deine späteren Wellness Assets.</h2>
+        <p class="section-copy">Diese Fläche behält Rhythmus und Proportionen des Originals, nutzt aber nur leichte Platzhalter.</p>
+      </div>
+      <div class="heritage-yt">
+        <img src="<%= homeImageBase %>/center-impression.svg" alt="Serenity Wellness Center scaffold media slot" loading="lazy">
+      </div>
+    </div>
+  </section>
+
+  <section class="route-section" id="route-planner">
+    <% if (mapsApiKey) { %>
+      <div class="map-frame">
+        <div id="map"></div>
+      </div>
+
+      <div class="page-shell route-overlay">
+        <div class="route-copy">
+          <p class="section-kicker">Visit Context</p>
+          <h2 class="section-title" id="routeTitle">Dein Weg zum Serenity Center.</h2>
+          <p class="section-copy">Starte die Berechnung mit deinem Standort und sieh Distanz und Reisezeit direkt auf der Karte.</p>
+        </div>
+
+        <div class="route-layout">
+          <aside class="route-panel">
+            <form class="controls" id="routeForm">
+              <button class="btn btn-primary" id="routeBtn" type="submit" disabled>Route berechnen</button>
+            </form>
+
+            <div class="route-result" id="routeResult" aria-live="polite">
+              <div class="route-metric">
+                <span>Distanz</span>
+                <strong id="resultDistance">-</strong>
+              </div>
+              <div class="route-metric">
+                <span>Reisezeit</span>
+                <strong id="resultDuration">-</strong>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+
+        <script>
+          const DEFAULT_CENTER = { lat: 51.1657, lng: 10.4515 };
+          const Serenity_MAP_STYLES = [
+            { elementType: "geometry", stylers: [{ color: "#101722" }] },
+            { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+            { elementType: "labels.text.fill", stylers: [{ color: "#8b98aa" }] },
+            { elementType: "labels.text.stroke", stylers: [{ color: "#070b10" }, { weight: 2 }] },
+            { featureType: "administrative", elementType: "geometry.stroke", stylers: [{ color: "#263243" }] },
+            { featureType: "landscape", elementType: "geometry", stylers: [{ color: "#0d141e" }] },
+            { featureType: "poi", stylers: [{ visibility: "off" }] },
+            { featureType: "road", elementType: "geometry", stylers: [{ color: "#202b3a" }] },
+            { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#080d13" }] },
+            { featureType: "road.arterial", elementType: "geometry", stylers: [{ color: "#28384d" }] },
+            { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#1c69d4" }, { lightness: -38 }, { saturation: -12 }] },
+            { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#8fc0ff" }, { lightness: -35 }] },
+            { featureType: "road.local", elementType: "labels.text.fill", stylers: [{ color: "#647184" }] },
+            { featureType: "transit", stylers: [{ visibility: "off" }] },
+            { featureType: "water", elementType: "geometry", stylers: [{ color: "#050b13" }] },
+            { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#526073" }] },
+          ];
+          const Serenity_PIN_SVG =
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">' +
+              '<circle cx="32" cy="32" r="28" fill="#0b0f14" stroke="#8fc0ff" stroke-width="3"/>' +
+              '<circle cx="32" cy="32" r="18" fill="#fff"/>' +
+              '<path d="M32 14a18 18 0 0 1 18 18H32z" fill="#1c69d4"/>' +
+              '<path d="M14 32a18 18 0 0 1 18-18v18z" fill="#fff"/>' +
+              '<path d="M32 32h18a18 18 0 0 1-18 18z" fill="#fff"/>' +
+              '<path d="M14 32h18v18a18 18 0 0 1-18-18z" fill="#1c69d4"/>' +
+              '<circle cx="32" cy="32" r="18" fill="none" stroke="#0b0f14" stroke-width="2"/>' +
+            '</svg>';
+          const SPORTS_CAR_SVG =
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 112" aria-hidden="true">' +
+              '<rect x="14" y="10" width="44" height="92" rx="15" fill="#1c69d4" stroke="#fff" stroke-width="4"/>' +
+              '<rect x="22" y="22" width="28" height="22" rx="5" fill="#d9f0ff" opacity=".92"/>' +
+              '<rect x="22" y="66" width="28" height="22" rx="5" fill="#0b2349" opacity=".88"/>' +
+              '<path d="M17 46h8M47 46h8M17 78h8M47 78h8" stroke="#8fc0ff" stroke-width="4" stroke-linecap="round"/>' +
+              '<circle cx="23" cy="16" r="3" fill="#fff6a6"/>' +
+              '<circle cx="49" cy="16" r="3" fill="#fff6a6"/>' +
+              '<circle cx="23" cy="96" r="3" fill="#ff6b6b"/>' +
+              '<circle cx="49" cy="96" r="3" fill="#ff6b6b"/>' +
+              '<path d="M28 54h16" stroke="#07111c" stroke-width="4" stroke-linecap="round" opacity=".65"/>' +
+            '</svg>';
+
+          let map, directionsService, directionsRenderer;
+          let carMarker, destinationMarker;
+          let animationFrame = null;
+          let destinations = [];
+          let currentLocationOrigin = null;
+
+          function svgDataUrl(svg) {
+            return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+          }
+
+          function createSportsCarMarker(initialPosition, targetMap) {
+            function toLatLng(position) {
+              if (position && typeof position.lat === "function") return position;
+              return new google.maps.LatLng(position.lat, position.lng);
+            }
+
+            class SportsCarOverlay extends google.maps.OverlayView {
+              constructor(position) {
+                super();
+                this.position = toLatLng(position);
+                this.rotation = 0;
+                this.div = null;
+              }
+
+              onAdd() {
+                this.div = document.createElement("div");
+                this.div.className = "route-car-marker hidden";
+                this.div.innerHTML = SPORTS_CAR_SVG;
+                this.getPanes().overlayMouseTarget.appendChild(this.div);
+              }
+
+              draw() {
+                if (!this.div) return;
+                const projection = this.getProjection();
+                if (!projection) return;
+                const point = projection.fromLatLngToDivPixel(this.position);
+                this.div.style.left = point.x + "px";
+                this.div.style.top = point.y + "px";
+                this.div.style.transform = `translate(-50%, -50%) rotate(${this.rotation}deg)`;
+              }
+
+              onRemove() {
+                if (this.div) {
+                  this.div.remove();
+                  this.div = null;
+                }
+              }
+
+              setPosition(position) {
+                this.position = toLatLng(position);
+                this.draw();
+              }
+
+              setRotation(rotation) {
+                this.rotation = rotation || 0;
+                this.draw();
+              }
+
+              show() {
+                if (this.div) this.div.classList.remove("hidden");
+              }
+
+              hide() {
+                if (this.div) this.div.classList.add("hidden");
+              }
+            }
+
+            const overlay = new SportsCarOverlay(initialPosition);
+            overlay.setMap(targetMap);
+            return overlay;
+          }
+
+          function initMap() {
+            map = new google.maps.Map(document.getElementById("map"), {
+              zoom: 5,
+              center: DEFAULT_CENTER,
+              backgroundColor: "#070b10",
+              clickableIcons: false,
+              disableDefaultUI: true,
+              gestureHandling: "cooperative",
+              styles: Serenity_MAP_STYLES,
+              zoomControl: false,
+            });
+
+            directionsService = new google.maps.DirectionsService();
+            directionsRenderer = new google.maps.DirectionsRenderer({
+              suppressMarkers: true,
+              preserveViewport: true,
+              polylineOptions: {
+                strokeColor: "#8FC0FF",
+                strokeOpacity: 0.95,
+                strokeWeight: 6,
+              },
+            });
+            directionsRenderer.setMap(map);
+
+            carMarker = createSportsCarMarker(DEFAULT_CENTER, map);
+            carMarker.hide();
+
+            loadDestinations();
+          }
+
+          function selectedDestination() {
+            return destinations[0] || null;
+          }
+
+          async function loadDestinations() {
+            const routeBtn = document.getElementById("routeBtn");
+
+            try {
+              const response = await fetch("/api/destinations");
+              if (!response.ok) throw new Error("Destinations request failed");
+              destinations = await response.json();
+
+              routeBtn.disabled = destinations.length === 0;
+              updateRouteTitle();
+            } catch (err) {
+              console.error(err);
+              routeBtn.disabled = true;
+            }
+          }
+
+          function updateRouteTitle() {
+            const destination = selectedDestination();
+            const routeTitle = document.getElementById("routeTitle");
+            if (!routeTitle) return;
+            routeTitle.textContent = destination
+              ? `Dein Ziel: ${destination.name || destination.label}`
+              : "Dein Ziel: Serenity Wellness Center";
+          }
+
+          function updateDestinationMarker(position, title) {
+            if (!position) return;
+
+            if (destinationMarker) {
+              destinationMarker.setMap(null);
+            }
+
+            destinationMarker = new google.maps.Marker({
+              position,
+              map,
+              title,
+              icon: {
+                url: svgDataUrl(Serenity_PIN_SVG),
+                scaledSize: new google.maps.Size(56, 56),
+                anchor: new google.maps.Point(28, 28),
+              },
+              zIndex: 5,
+            });
+
+            destinationMarker.addListener("click", () => {
+              const streetView = map.getStreetView();
+              streetView.setPosition(position);
+              streetView.setPov({ heading: 265, pitch: 0 });
+              streetView.setVisible(true);
+            });
+          }
+
+          function animateCar(path) {
+            if (!path || path.length < 2) return;
+            if (animationFrame) cancelAnimationFrame(animationFrame);
+
+            carMarker.show();
+
+            const DRIVE_DURATION = 8000;
+            const ZOOM_DURATION = 1500;
+            const FINAL_ZOOM = 13;
+
+            const startZoom = map.getZoom();
+            const start = performance.now();
+
+            function easeInOutCubic(x) {
+              return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+            }
+
+            function positionAt(progress) {
+              const idx = progress * (path.length - 1);
+              const i = Math.floor(idx);
+              const frac = idx - i;
+              const p1 = path[i];
+              const p2 = path[Math.min(i + 1, path.length - 1)];
+              return {
+                lat: p1.lat() + (p2.lat() - p1.lat()) * frac,
+                lng: p1.lng() + (p2.lng() - p1.lng()) * frac,
+                bearing: Math.atan2(p2.lng() - p1.lng(), p2.lat() - p1.lat()) * 180 / Math.PI,
+              };
+            }
+
+            function step(now) {
+              const elapsed = now - start;
+
+              if (elapsed < DRIVE_DURATION) {
+                const progress = easeInOutCubic(elapsed / DRIVE_DURATION);
+                const pos = positionAt(progress);
+                carMarker.setPosition({ lat: pos.lat, lng: pos.lng });
+                carMarker.setRotation(pos.bearing);
+                animationFrame = requestAnimationFrame(step);
+              } else {
+                const destination = selectedDestination();
+                carMarker.setPosition(path[path.length - 1]);
+                animationFrame = null;
+                zoomIn(performance.now(), path[path.length - 1], destination ? destination.name : "Serenity Ziel");
+              }
+            }
+
+            function zoomIn(zoomStart, destinationPosition, destinationTitle) {
+              function zoomStep(now) {
+                const t = Math.min(1, (now - zoomStart) / ZOOM_DURATION);
+                const eased = easeInOutCubic(t);
+                map.setZoom(startZoom + eased * (FINAL_ZOOM - startZoom));
+                map.setCenter(destinationPosition);
+                if (t < 1) animationFrame = requestAnimationFrame(zoomStep);
+                else {
+                  updateDestinationMarker(destinationPosition, destinationTitle);
+                  animationFrame = null;
+                }
+              }
+              animationFrame = requestAnimationFrame(zoomStep);
+            }
+
+            animationFrame = requestAnimationFrame(step);
+          }
+
+          function requestCurrentLocation() {
+            return new Promise((resolve, reject) => {
+              if (!navigator.geolocation) {
+                reject(new Error("Geolocation wird von diesem Browser nicht unterstützt."));
+                return;
+              }
+
+              navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                  resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+                },
+                () => reject(new Error("Standortzugriff wurde verweigert.")),
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+              );
+            });
+          }
+
+          async function resolveOrigin() {
+            if (currentLocationOrigin) {
+              return currentLocationOrigin;
+            }
+
+            currentLocationOrigin = await requestCurrentLocation();
+            return currentLocationOrigin;
+          }
+
+          function formatDuration(seconds) {
+            const totalMinutes = Math.max(1, Math.round(seconds / 60));
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = totalMinutes % 60;
+
+            if (!hours) return `${minutes} min`;
+            if (!minutes) return `${hours}h`;
+            return `${hours}h ${minutes} min`;
+          }
+
+          async function calculateRoute() {
+            const destination = selectedDestination();
+            const routeBtn = document.getElementById("routeBtn");
+
+            if (!destination) {
+              return;
+            }
+
+            routeBtn.disabled = true;
+            routeBtn.textContent = "Route wird berechnet";
+
+            try {
+              const origin = await resolveOrigin();
+
+              directionsService.route({
+                origin,
+                destination: destination.destination || destination.value,
+                travelMode: google.maps.TravelMode.DRIVING,
+              }, (result, status) => {
+                routeBtn.disabled = false;
+                routeBtn.textContent = "Route berechnen";
+
+                if (status === "OK") {
+                  directionsRenderer.setDirections(result);
+                  const route = result.routes[0];
+                  const leg = route.legs[0];
+
+                  document.getElementById("resultDistance").textContent = leg.distance ? leg.distance.text : "-";
+                  document.getElementById("resultDuration").textContent = leg.duration ? formatDuration(leg.duration.value) : "-";
+                  updateDestinationMarker(leg.end_location, destination.name || destination.label);
+
+                  if (route.bounds) {
+                    map.fitBounds(route.bounds, { top: 380, right: 120, bottom: 160, left: 120 });
+                    google.maps.event.addListenerOnce(map, "idle", () => animateCar(route.overview_path));
+                  } else {
+                    animateCar(route.overview_path);
+                  }
+                }
+              });
+            } catch (err) {
+              routeBtn.disabled = false;
+              routeBtn.textContent = "Route starten";
+            }
+          }
+
+          document.getElementById("routeForm").addEventListener("submit", (event) => {
+            event.preventDefault();
+            calculateRoute();
+          });
+        </script>
+        <script src="https://maps.googleapis.com/maps/api/js?key=<%= mapsApiKey %>&v=weekly&callback=initMap" async defer></script>
+      <% } else { %>
+      <div class="page-shell route-overlay">
+        <div class="route-copy">
+          <p class="section-kicker">Route</p>
+          <h2 class="section-title" id="routeTitle">Dein Ziel: Serenity Wellness Center</h2>
+          <p class="section-copy">Standort nutzen, Startadresse eingeben und die Anreise zum Serenity Center direkt auf der Karte planen.</p>
+        </div>
+        <div class="no-key">
+          <h3>API-Key erforderlich</h3>
+          <p>Bitte konfigurieren Sie den <code>GOOGLE_MAPS_API_KEY</code> in Ihrer Umgebung.</p>
+        </div>
+      </div>
+    <% } %>
+  </section>
+</main>
+
+<script>
+  (function () {
+    const experience = document.querySelector('.experience-section');
+    const merchCarousel = document.querySelector('[data-merch-carousel]');
+    const merchPrev = document.querySelector('[data-merch-prev]');
+    const merchNext = document.querySelector('[data-merch-next]');
+    const merchAutoScrollDelay = 5000;
+    const merchAutoScrollCount = 5;
+    let snapping = false;
+    let merchAutoScrollTimer = 0;
+
+    function setupInfiniteAftercareCarousel() {
+      if (!merchCarousel) return;
+
+      const originalCards = Array.from(merchCarousel.children);
+      if (originalCards.length < 2) return;
+
+      const beforeCards = document.createDocumentFragment();
+      const afterCards = document.createDocumentFragment();
+
+      originalCards.forEach(function (card) {
+        const beforeClone = card.cloneNode(true);
+        const afterClone = card.cloneNode(true);
+
+        [beforeClone, afterClone].forEach(function (clone) {
+          clone.setAttribute('aria-hidden', 'true');
+          clone.tabIndex = -1;
+          clone.dataset.merchClone = 'true';
+        });
+
+        beforeCards.appendChild(beforeClone);
+        afterCards.appendChild(afterClone);
+      });
+
+      merchCarousel.insertBefore(beforeCards, merchCarousel.firstChild);
+      merchCarousel.appendChild(afterCards);
+
+      let originalStart = 0;
+      let setWidth = 0;
+      let scrollFrame = 0;
+      let isJumping = false;
+
+      function measureCarousel() {
+        const cards = merchCarousel.children;
+        const firstOriginal = cards[originalCards.length];
+        const firstAfterOriginals = cards[originalCards.length * 2];
+
+        if (!firstOriginal || !firstAfterOriginals) return;
+
+        originalStart = firstOriginal.offsetLeft - merchCarousel.offsetLeft;
+        setWidth = firstAfterOriginals.offsetLeft - firstOriginal.offsetLeft;
+      }
+
+      function jumpTo(left) {
+        isJumping = true;
+        merchCarousel.scrollTo({ left, behavior: 'auto' });
+        requestAnimationFrame(function () {
+          isJumping = false;
+        });
+      }
+
+      function normalizeScrollPosition() {
+        scrollFrame = 0;
+        if (isJumping || !setWidth) return;
+
+        const left = merchCarousel.scrollLeft;
+        const loopStart = originalStart - setWidth;
+        const loopEnd = originalStart + setWidth;
+
+        if (left <= loopStart + 1) {
+          jumpTo(left + setWidth);
+        } else if (left >= loopEnd - 1) {
+          jumpTo(left - setWidth);
+        }
+      }
+
+      function scheduleNormalize() {
+        if (scrollFrame) return;
+        scrollFrame = requestAnimationFrame(normalizeScrollPosition);
+      }
+
+      measureCarousel();
+      jumpTo(originalStart);
+      merchCarousel.addEventListener('scroll', scheduleNormalize, { passive: true });
+
+      window.addEventListener('resize', function () {
+        const progress = setWidth ? (merchCarousel.scrollLeft - originalStart) / setWidth : 0;
+        measureCarousel();
+        jumpTo(originalStart + ((progress % 1 + 1) % 1) * setWidth);
+      });
+    }
+
+    function getAftercareCardStep() {
+      if (!merchCarousel) return 280;
+
+      const firstCard = merchCarousel.querySelector('.merch-card');
+      if (!firstCard) return Math.max(280, merchCarousel.clientWidth * 0.82);
+
+      const styles = window.getComputedStyle(merchCarousel);
+      const gap = Number.parseFloat(styles.columnGap || styles.gap) || 0;
+
+      return firstCard.getBoundingClientRect().width + gap;
+    }
+
+    function scrollAftercareCarousel(direction, itemCount) {
+      if (!merchCarousel) return;
+      merchCarousel.scrollBy({
+        left: direction * getAftercareCardStep() * (itemCount || 1),
+        behavior: 'smooth',
+      });
+    }
+
+    function startAftercareAutoScroll() {
+      if (!merchCarousel) return;
+
+      window.clearInterval(merchAutoScrollTimer);
+      merchAutoScrollTimer = window.setInterval(function () {
+        scrollAftercareCarousel(1, merchAutoScrollCount);
+      }, merchAutoScrollDelay);
+    }
+
+    setupInfiniteAftercareCarousel();
+    startAftercareAutoScroll();
+
+    if (merchPrev) {
+      merchPrev.addEventListener('click', function () {
+        scrollAftercareCarousel(-1);
+        startAftercareAutoScroll();
+      });
+    }
+
+    if (merchNext) {
+      merchNext.addEventListener('click', function () {
+        scrollAftercareCarousel(1);
+        startAftercareAutoScroll();
+      });
+    }
+
+    window.addEventListener('wheel', function (event) {
+      if (!experience || snapping) return;
+      const experienceTop = experience.offsetTop;
+      if (window.scrollY < experienceTop && event.deltaY > 0) {
+        snapping = true;
+        event.preventDefault();
+        window.scrollTo({ top: experienceTop, behavior: 'smooth' });
+        setTimeout(function () { snapping = false; }, 900);
+      }
+    }, { passive: false });
+  })();
+</script>

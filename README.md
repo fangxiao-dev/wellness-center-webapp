@@ -72,6 +72,18 @@ Run with Gemini configured:
 
 Browser-visible media is served through `/api/*/assets/*` routes and never by exposing MinIO directly.
 
+## Scaffold Asset Slots
+
+The restored group-style frontend keeps its media positions but uses lightweight placeholder SVGs. Replace these filenames later with real Wellness Center media using the same paths or prefixes:
+
+- `web/public/images/wellness-stage-loop.svg`
+- `web/public/images/wellness-ai-hero.svg`
+- `web/public/images/aftercare-preview.svg`
+- `web/public/images/package-relief.svg`
+- `web/public/images/package-recovery.svg`
+- `assets/package-configurator/*.svg`
+- `assets/aftercare-shop/*.svg`
+
 ## Notes
 
 The AI feature returns `503` when `GEMINI_API_KEY` is missing or left as `replace_me`. Use `-SkipAi` for local smoke tests without credentials.
