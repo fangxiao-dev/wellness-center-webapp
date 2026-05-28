@@ -1,4 +1,5 @@
 const express = require("express");
+const crypto = require("node:crypto");
 const redis = require("./redisClient");
 
 const router = express.Router();
@@ -38,6 +39,10 @@ router.post("/:sessionId/items", async (req, res) => {
     const { type, name, price, imageUrl, quantity = 1, details = {} } = req.body;
     if (!type || !name || price == null) {
       return res.status(400).json({ error: "type, name and price are required" });
+    }
+    const allowedTypes = new Set(["package", "aftercare"]);
+    if (!allowedTypes.has(type)) {
+      return res.status(400).json({ error: "type must be package or aftercare" });
     }
     const items = await getCart(req.params.sessionId);
 
