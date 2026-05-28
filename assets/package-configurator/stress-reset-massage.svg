@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" role="img" aria-label="Stress Reset Massage image">
+  <rect width="1200" height="800" fill="#f4f0ea"/>
+  <rect x="90" y="90" width="1020" height="620" rx="28" fill="#ffffff" stroke="#c7b7a3" stroke-width="6"/>
+  <circle cx="255" cy="280" r="90" fill="#8fb7a5"/>
+  <rect x="390" y="220" width="520" height="54" rx="12" fill="#38443f"/>
+  <rect x="390" y="320" width="390" height="32" rx="10" fill="#8fb7a5"/>
+  <rect x="390" y="380" width="460" height="32" rx="10" fill="#d8c8b6"/>
+  <text x="600" y="575" text-anchor="middle" font-family="Arial, sans-serif" font-size="56" fill="#38443f">Stress Reset Massage</text>
+</svg>
