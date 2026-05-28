@@ -117,7 +117,7 @@ Browser
 
 Responsibilities:
 
-- expose the browser-facing host port, expected as `localhost:3000`
+- expose the browser-facing host port, expected as `localhost:4100`
 - serve shared static assets under `/static`
 - provide a lightweight `/health` endpoint
 - forward non-static browser requests to `web-backend`

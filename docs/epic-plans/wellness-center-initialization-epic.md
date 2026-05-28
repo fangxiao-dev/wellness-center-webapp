@@ -21,7 +21,7 @@ copy working group architecture
 The milestone is accepted when:
 
 - `docker compose up --build -d` starts the full stack
-- `http://localhost:3000` serves the Wellness Center app
+- `http://localhost:4100` serves the Wellness Center app
 - package configurator endpoints use MySQL and MinIO
 - aftercare shop endpoints use MySQL and MinIO
 - visit context endpoints use MySQL and weather fallback or Google Maps Platform data

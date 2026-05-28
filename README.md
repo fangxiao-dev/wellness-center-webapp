@@ -34,6 +34,23 @@ Infrastructure:
 - Redis for cart/session state
 - MinIO for package, product, and center media
 
+## Port Allocation
+
+Application service ports start at `4100`:
+
+| Service | Port |
+|---|---:|
+| `web-frontend` | `4100` |
+| `api-gateway` | `4101` |
+| `web-backend` | `4102` |
+| `package-configurator` | `4103` |
+| `aftercare-shop` | `4104` |
+| `ai-feature` | `4105` |
+| `shopping-cart` | `4106` |
+| `visit-context-service` | `4107` |
+
+Infrastructure services keep their standard internal ports unless the implementation plan says otherwise.
+
 ## Documentation
 
 - Project context: [docs/top-level-knowledge/project-context.md](docs/top-level-knowledge/project-context.md)
@@ -61,7 +78,7 @@ docker compose up --build
 Open:
 
 ```text
-http://localhost:3000
+http://localhost:4100
 ```
 
 Run the Windows smoke test:

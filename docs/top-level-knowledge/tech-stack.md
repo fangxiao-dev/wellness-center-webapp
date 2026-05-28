@@ -60,6 +60,23 @@ Required services:
 - committed `package-lock.json` files
 - Windows-friendly PowerShell smoke test
 
+## Port Allocation
+
+Application service ports start at `4100`:
+
+| Service | Port |
+|---|---:|
+| `web-frontend` | `4100` |
+| `api-gateway` | `4101` |
+| `web-backend` | `4102` |
+| `package-configurator` | `4103` |
+| `aftercare-shop` | `4104` |
+| `ai-feature` | `4105` |
+| `shopping-cart` | `4106` |
+| `visit-context-service` | `4107` |
+
+MySQL, Redis, and MinIO keep their standard container-internal ports unless a concrete implementation need changes that.
+
 ## Runtime Architecture
 
 The required runtime chain is:
@@ -79,7 +96,7 @@ Role:
 
 - browser-facing entry point
 - serves `/static`
-- exposes `localhost:3000`
+- exposes `localhost:4100`
 - forwards non-static requests to `web-backend`
 
 ### web-backend

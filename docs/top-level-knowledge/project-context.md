@@ -310,7 +310,7 @@ Each primary page should be reachable and backed by real API calls where relevan
 The project is successful for the current milestone when:
 
 - the application starts with Docker Compose
-- `http://localhost:3000` serves the Wellness Center app
+- `http://localhost:4100` serves the Wellness Center app
 - the gateway routes to all domain services
 - MySQL, Redis, and MinIO are all used in the running stack
 - smoke test passes without AI

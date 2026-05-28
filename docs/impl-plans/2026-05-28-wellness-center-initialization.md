@@ -83,13 +83,15 @@ Responsibilities:
 ### Task 1: Prepare The Architecture Skeleton
 
 **Files:**
-- Create/modify: root files copied from `D:\CodeSpace\dbe-cloud-groupproject`
+- Reference only: `D:\CodeSpace\dbe-cloud-groupproject`
+- Create/modify selectively: root runtime/config files copied from the group project when needed
 - Create/modify: `api-gateway/**`
 - Create/modify: `assets/**`
 - Create/modify: `infrastructure/**`
 - Create/modify: `scripts/**`
 - Create/modify: `services/**`
 - Create/modify: `web/**`
+- Do not copy: group `docs/**`, `exchange/**`, `CLAUDE.md`, or historical project documentation
 - Preserve: `docs/top-level-knowledge/project-context.md`
 - Preserve: `docs/top-level-knowledge/tech-stack.md`
 - Preserve: `docs/impl-plans/2026-05-28-wellness-center-initialization-design.md`
@@ -107,59 +109,52 @@ Get-ChildItem -Force | Select-Object Mode,Length,Name
 Expected:
 
 ```text
-?? api-gateway/
-?? services/
+Existing tracked docs may be modified. Do not discard or overwrite them.
 ```
 
-There may also be existing committed docs and `.gitignore`.
+The group project is a reference source, not a whole-repository copy source.
 
-- [ ] **Step 2: Copy the reusable group project structure**
+- [ ] **Step 2: Copy only reusable runtime folders and config files**
 
 Run this from `D:\CodeSpace\dbe-cloud-soloproject`:
 
 ```powershell
 $source = 'D:\CodeSpace\dbe-cloud-groupproject'
 $target = 'D:\CodeSpace\dbe-cloud-soloproject'
-$excludeNames = @('.git', '.worktrees', '.claude', 'node_modules')
+$runtimeDirectories = @('api-gateway', 'assets', 'infrastructure', 'scripts', 'services', 'web')
+$runtimeFiles = @('.dockerignore', '.env.example', '.gitattributes', 'docker-compose.yml')
 
-Get-ChildItem -LiteralPath $source -Force |
-  Where-Object { $excludeNames -notcontains $_.Name } |
-  ForEach-Object {
-    $destination = Join-Path $target $_.Name
-    if ($_.PSIsContainer) {
-      Copy-Item -LiteralPath $_.FullName -Destination $destination -Recurse -Force
-    } else {
-      Copy-Item -LiteralPath $_.FullName -Destination $destination -Force
-    }
-  }
+foreach ($name in $runtimeDirectories) {
+  $sourceDirectory = Join-Path $source $name
+  $targetDirectory = Join-Path $target $name
+  New-Item -ItemType Directory -Path $targetDirectory -Force | Out-Null
+  Get-ChildItem -LiteralPath $sourceDirectory -Force |
+    Copy-Item -Destination $targetDirectory -Recurse -Force
+}
+
+foreach ($name in $runtimeFiles) {
+  Copy-Item -LiteralPath (Join-Path $source $name) -Destination (Join-Path $target $name) -Force
+}
 ```
 
 Expected:
 
 ```text
-api-gateway, assets, infrastructure, scripts, services, web, docker-compose.yml, README.md and env files exist in the solo project.
+api-gateway, assets, infrastructure, scripts, services, web, docker-compose.yml, .dockerignore, .env.example, and .gitattributes exist in the solo project.
+Group docs, exchange notes, CLAUDE.md, historical README content, and other project-history files are not copied.
 ```
 
-- [ ] **Step 3: Restore the approved plan/spec if the copy overwrote docs**
+- [ ] **Step 3: Verify durable solo docs were not overwritten**
 
 Run:
 
 ```powershell
-git checkout -- docs/impl-plans/2026-05-28-wellness-center-initialization-design.md
-git checkout -- docs/impl-plans/2026-05-28-wellness-center-initialization.md
-```
-
-Expected:
-
-```text
-error: pathspec ... did not match any file(s) known to git
-```
-
-is acceptable for the plan if it was not committed yet. If the file is untracked and still present, do not run additional restore commands. Verify:
-
-```powershell
+Test-Path docs\top-level-knowledge\project-context.md
+Test-Path docs\top-level-knowledge\tech-stack.md
 Test-Path docs\impl-plans\2026-05-28-wellness-center-initialization-design.md
 Test-Path docs\impl-plans\2026-05-28-wellness-center-initialization.md
+Test-Path docs\docs
+Test-Path CLAUDE.md
 ```
 
 Expected:
@@ -167,6 +162,24 @@ Expected:
 ```text
 True
 True
+True
+True
+False
+False
+```
+
+Do not run `git checkout -- docs/...` here. The approved solo docs are the source of truth and may contain intentional uncommitted edits.
+
+Verify the staged/candidate tree does not contain copied group history:
+
+```powershell
+git status --short
+```
+
+Expected:
+
+```text
+No copied group documentation such as docs/PRD.md, docs/team-collaboration-breakdown.md, docs/docs/**, exchange/**, or CLAUDE.md appears.
 ```
 
 - [ ] **Step 4: Remove copied dependency directories**
@@ -229,7 +242,7 @@ services\shopping-cart
 Run:
 
 ```powershell
-git add -- .
+git add api-gateway assets infrastructure scripts services web .dockerignore .env.example .gitattributes docker-compose.yml
 git commit -m "chore: copy wellness center architecture skeleton"
 ```
 
@@ -324,14 +337,14 @@ services:
       context: .
       dockerfile: api-gateway/Dockerfile
     expose:
-      - "3000"
+      - "4101"
     environment:
-      PORT: 3000
-      CONFIGURATOR_URL: http://package-configurator:3001
-      AFTERCARE_URL: http://aftercare-shop:3002
-      CART_URL: http://shopping-cart:3005
-      AI_URL: http://ai-feature:3004
-      VISIT_CONTEXT_URL: http://visit-context-service:3007
+      PORT: 4101
+      CONFIGURATOR_URL: http://package-configurator:4103
+      AFTERCARE_URL: http://aftercare-shop:4104
+      CART_URL: http://shopping-cart:4106
+      AI_URL: http://ai-feature:4105
+      VISIT_CONTEXT_URL: http://visit-context-service:4107
     depends_on:
       - package-configurator
       - aftercare-shop
@@ -346,10 +359,10 @@ services:
       context: .
       dockerfile: services/web-frontend/Dockerfile
     ports:
-      - "3000:3000"
+      - "4100:4100"
     environment:
-      PORT: 3000
-      WEB_BACKEND_URL: http://web-backend:3006
+      PORT: 4100
+      WEB_BACKEND_URL: http://web-backend:4102
     depends_on:
       - web-backend
     volumes:
@@ -360,10 +373,10 @@ services:
       context: .
       dockerfile: services/web-backend/Dockerfile
     expose:
-      - "3006"
+      - "4102"
     environment:
-      PORT: 3006
-      API_GATEWAY_URL: http://api-gateway:3000
+      PORT: 4102
+      API_GATEWAY_URL: http://api-gateway:4101
       GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
     depends_on:
       - api-gateway
@@ -374,9 +387,9 @@ services:
     build:
       context: ./services/package-configurator
     expose:
-      - "3001"
+      - "4103"
     environment:
-      PORT: 3001
+      PORT: 4103
       MYSQL_HOST: mysql-configurator
       MYSQL_PORT: ${MYSQL_PORT}
       MYSQL_USER: ${DBE_CLOUDDEV_CONFIGURATOR}
@@ -392,9 +405,9 @@ services:
     build:
       context: ./services/aftercare-shop
     expose:
-      - "3002"
+      - "4104"
     environment:
-      PORT: 3002
+      PORT: 4104
       MYSQL_HOST: mysql-aftercare
       MYSQL_PORT: ${MYSQL_PORT}
       MYSQL_USER: ${DBE_CLOUDDEV_AFTERCARE}
@@ -410,9 +423,9 @@ services:
     build:
       context: ./services/shopping-cart
     expose:
-      - "3005"
+      - "4106"
     environment:
-      PORT: 3005
+      PORT: 4106
       REDIS_HOST: ${REDIS_HOST}
       REDIS_PORT: ${REDIS_PORT}
     depends_on:
@@ -422,11 +435,11 @@ services:
     build:
       context: ./services/ai-feature
     expose:
-      - "3004"
+      - "4105"
     environment:
-      PORT: 3004
-      CONFIGURATOR_URL: http://package-configurator:3001
-      AFTERCARE_URL: http://aftercare-shop:3002
+      PORT: 4105
+      CONFIGURATOR_URL: http://package-configurator:4103
+      AFTERCARE_URL: http://aftercare-shop:4104
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
       GEMINI_FALLBACK_MODEL: ${GEMINI_FALLBACK_MODEL:-gemini-2.5-flash-lite}
@@ -438,9 +451,9 @@ services:
     build:
       context: ./services/visit-context-service
     expose:
-      - "3007"
+      - "4107"
     environment:
-      PORT: 3007
+      PORT: 4107
       MYSQL_HOST: mysql-visit-context
       MYSQL_PORT: ${MYSQL_PORT}
       MYSQL_USER: ${DBE_CLOUDDEV_VISIT_CONTEXT}
@@ -1469,11 +1482,11 @@ POST /api/ai/recommend
 Set service base URLs:
 
 ```javascript
-const CONFIGURATOR = process.env.CONFIGURATOR_URL || "http://package-configurator:3001";
-const AFTERCARE = process.env.AFTERCARE_URL || "http://aftercare-shop:3002";
-const CART = process.env.CART_URL || "http://shopping-cart:3005";
-const AI = process.env.AI_URL || "http://ai-feature:3004";
-const VISIT_CONTEXT = process.env.VISIT_CONTEXT_URL || "http://visit-context-service:3007";
+const CONFIGURATOR = process.env.CONFIGURATOR_URL || "http://package-configurator:4103";
+const AFTERCARE = process.env.AFTERCARE_URL || "http://aftercare-shop:4104";
+const CART = process.env.CART_URL || "http://shopping-cart:4106";
+const AI = process.env.AI_URL || "http://ai-feature:4105";
+const VISIT_CONTEXT = process.env.VISIT_CONTEXT_URL || "http://visit-context-service:4107";
 ```
 
 - [ ] **Step 4: Run gateway tests**
@@ -1651,8 +1664,8 @@ In `services/ai-feature/src/recommendation.js`, normalize AI output to:
 In `services/ai-feature/src/server.js`, set:
 
 ```javascript
-const CONFIGURATOR_URL = process.env.CONFIGURATOR_URL || "http://package-configurator:3001";
-const AFTERCARE_URL = process.env.AFTERCARE_URL || "http://aftercare-shop:3002";
+const CONFIGURATOR_URL = process.env.CONFIGURATOR_URL || "http://package-configurator:4103";
+const AFTERCARE_URL = process.env.AFTERCARE_URL || "http://aftercare-shop:4104";
 ```
 
 Fetch:
@@ -1739,7 +1752,7 @@ Set `services/web-frontend/package.json`:
 In `services/web-frontend/src/server.js`, set:
 
 ```javascript
-const WEB_BACKEND = process.env.WEB_BACKEND_URL || "http://web-backend:3006";
+const WEB_BACKEND = process.env.WEB_BACKEND_URL || "http://web-backend:4102";
 ```
 
 Health response:
@@ -2010,7 +2023,7 @@ Set `scripts/smoke-test.ps1` to validate:
 
 ```powershell
 param(
-  [string]$BaseUrl = "http://localhost:3000",
+  [string]$BaseUrl = "http://localhost:4100",
   [switch]$SkipAi
 )
 
@@ -2143,7 +2156,7 @@ docker compose run --rm minio-init
 - local setup
 - `Copy-Item .env.example .env`
 - `docker compose up --build`
-- `http://localhost:3000`
+- `http://localhost:4100`
 - `.\scripts\smoke-test.ps1 -SkipAi`
 - MinIO object prefixes
 - service responsibilities
@@ -2337,7 +2350,7 @@ If no files changed, do not create an empty commit.
 
 - [ ] **Step 7: Leave stack state clear**
 
-If the user wants the stack left running, keep it running and report `http://localhost:3000`.
+If the user wants the stack left running, keep it running and report `http://localhost:4100`.
 
 If the user wants a clean stopped state, run:
 
