@@ -1,5 +1,5 @@
 <%
-  const aiHeroImg = "/static/images/wellness-ai-hero.svg";
+  const aiHeroImg = "/api/configurator/assets/home/wellness-ai-hero.png";
 %>
 <style>
   /* AI-feature-specific layout. Wellness UI tokens, fonts, page-shell, site-nav,
@@ -414,17 +414,17 @@
   <div class="ai-hero-overlay"></div>
   <div class="ai-hero-content">
     <div class="hero">
-      <h1>Your wellness package, auf dich abgestimmt.</h1>
-      <p class="subtitle">Beschreibe deinen Alltag. Wir finden deinen Serenity.</p>
+      <h1>Your wellness package, tailored to you.</h1>
+      <p class="subtitle">Describe your day. We will find your Serenity match.</p>
     </div>
     <div class="input-card">
-      <textarea id="prompt" placeholder="Ich arbeite als Architekt, pendle täglich in die Stadt und fahre am Wochenende gern durch die Berge..."></textarea>
+      <textarea id="prompt" placeholder="My shoulders feel tight after desk work, and I want something calming after a busy week..."></textarea>
       <div class="input-footer">
-        <button class="send-btn" id="sendBtn">Konfiguration finden</button>
+        <button class="send-btn" id="sendBtn">Find package</button>
       </div>
     </div>
     <div class="error" id="errorMsg"></div>
-    <div class="spinner" id="spinner">Analysiere deinen Lifestyle ...</div>
+    <div class="spinner" id="spinner">Analyzing your needs ...</div>
   </div>
 </div>
 
@@ -437,7 +437,6 @@
 </div>
 
 <script>
-  const COLOR_DE    = { Black: "Schwarz", Blue: "Blau", White: "Weiß" };
   const STORAGE_KEY = "wellness_ai_last_result";
 
   const promptInput = document.getElementById("prompt");
@@ -477,9 +476,9 @@
       modelLabel = carModel ? `Serenity ${escapeHtml(formatPackage(carModel))}` : "Your wellness package";
       const colorLabel   = escapeHtml(carColor || "");
       const specsHtml = [
-        colorLabel ? `<span class="car-reveal-spec"><span class="car-reveal-spec-label">Dauer</span><span class="car-reveal-spec-value">${colorLabel}</span></span>` : "",
+        colorLabel ? `<span class="car-reveal-spec"><span class="car-reveal-spec-label">Duration</span><span class="car-reveal-spec-value">${colorLabel}</span></span>` : "",
         carWheels  ? `<span class="car-reveal-spec"><span class="car-reveal-spec-label">Add-ons</span><span class="car-reveal-spec-value">${escapeHtml(carWheels)}</span></span>` : "",
-        carInterior? `<span class="car-reveal-spec"><span class="car-reveal-spec-label">Intensität</span><span class="car-reveal-spec-value">${escapeHtml(carInterior)}</span></span>` : "",
+        carInterior? `<span class="car-reveal-spec"><span class="car-reveal-spec-label">Intensity</span><span class="car-reveal-spec-value">${escapeHtml(carInterior)}</span></span>` : "",
       ].filter(Boolean).join('');
       carHtml = `
         <div class="car-reveal">
@@ -487,15 +486,15 @@
             <div class="car-img-shimmer"></div>
           </div>
           <div class="car-reveal-panel">
-            <div class="car-reveal-eyebrow">Deine Empfehlung</div>
+            <div class="car-reveal-eyebrow">Your recommendation</div>
             <div class="car-reveal-model">${modelLabel}</div>
             ${specsHtml ? `<div class="car-reveal-specs">${specsHtml}</div>` : ""}
             <div class="car-reveal-btns">
               <a class="car-reveal-cta" href="${escapeHtml(packageLink)}">
-                Konfiguration ansehen &nbsp;→
+                View configuration &nbsp;→
               </a>
               <button class="merch-trigger-btn" id="merchRevealBtn" type="button">
-                Aftercare entdecken
+                Explore aftercare
                 <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
               </button>
             </div>
@@ -505,7 +504,7 @@
               <div class="why-panel-inner" id="whyText"></div>
             </div>
             <button class="why-toggle" id="whyToggle" type="button">
-              <span>Warum passt das zu mir?</span>
+              <span>Why this fits</span>
               <span class="why-arrow">▲</span>
             </button>
           </div>
@@ -526,7 +525,7 @@
       const img = new Image();
       img.onload = () => { revealWrap.innerHTML = ""; revealWrap.appendChild(img); };
       img.onerror = () => { revealWrap.innerHTML = ""; };
-      img.src = "/static/images/wellness-ai-hero.svg";
+      img.src = "/api/configurator/assets/home/wellness-ai-hero.png";
       img.alt = modelLabel;
     }
 
@@ -551,7 +550,7 @@
           <div class="merch-section-inner">
             <div class="merch-section-header">
               <p class="merch-section-eyebrow">Aftercare</p>
-              <h2 class="merch-section-title">Was ebenfalls zu dir passt</h2>
+              <h2 class="merch-section-title">What also fits your visit</h2>
             </div>
             <div class="merch-grid">`;
       aftercareLinks.forEach((l) => {
@@ -564,10 +563,10 @@
         const category = escapeHtml(l.subtitle || "Aftercare");
 
         const href = l.href || l.url;
-        const safeProductPath = (typeof href === "string" && href.startsWith("/aftercare-shop/")) ? href : `/aftercare-shop/${id}`;
+        const safeProductPath = (typeof href === "string" && href.startsWith("/aftercare-shop#product-")) ? href : `/aftercare-shop#product-${id}`;
         const productUrl = escapeHtml(safeProductPath);
         merchHtml += `
-          <a class="merch-product-card" href="${productUrl}" aria-label="${title} im Aftercare Shop ansehen">
+          <a class="merch-product-card" href="${productUrl}" aria-label="View ${title} in the Aftercare Shop">
             <div class="merch-product-img">
               ${imageUrl
                 ? `<img src="${imageUrl}" alt="${title}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='grid';" /><span class="merch-product-img-fallback" style="display:none">${fallback}</span>`
@@ -576,7 +575,7 @@
             <div class="merch-product-body">
               <span class="merch-product-category">${category}</span>
               <span class="merch-product-name">${title}</span>
-              ${price > 0 ? `<span class="merch-product-price">${price.toLocaleString("de-DE", { style: "currency", currency: "EUR" })}</span>` : ""}
+              ${price > 0 ? `<span class="merch-product-price">${price.toLocaleString("en-US", { style: "currency", currency: "EUR" })}</span>` : ""}
             </div>
           </a>`;
       });
@@ -602,7 +601,7 @@
         body: JSON.stringify({ prompt: text }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Anfrage fehlgeschlagen");
+      if (!res.ok) throw new Error(data.error || "Request failed");
 
       try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ data, prompt: text })); } catch {}
 

@@ -141,7 +141,7 @@ test("aftercare listing SSR fetches products through the API gateway", async () 
           name: "Heated Neck Wrap",
           category: "recovery",
           price: 29.9,
-          imageUrl: "/api/aftercare/assets/aftercare-shop/heated-neck-wrap.svg",
+          imageUrl: "/api/aftercare/assets/aftercare-shop/heated-neck-wrap.png",
           description: "Reusable warmth for neck and shoulder aftercare.",
         },
       ]));
@@ -218,7 +218,7 @@ test("api forwarding preserves multiple set-cookie headers from the gateway", as
 test("api forwarding preserves binary asset response metadata and body", async () => {
   const body = Buffer.from([0, 1, 2, 3, 255]);
   const apiGateway = http.createServer((req, res) => {
-    assert.equal(req.url, "/api/aftercare/assets/aftercare-shop/heated-neck-wrap.svg");
+    assert.equal(req.url, "/api/aftercare/assets/aftercare-shop/heated-neck-wrap.png");
     res.writeHead(200, {
       "content-type": "image/svg+xml",
       "cache-control": "public, max-age=120",
@@ -229,7 +229,7 @@ test("api forwarding preserves binary asset response metadata and body", async (
   const backend = await startBackend(`http://127.0.0.1:${apiGatewayPort}`);
 
   try {
-    const response = await fetch(`${backend.baseUrl}/api/aftercare/assets/aftercare-shop/heated-neck-wrap.svg`);
+    const response = await fetch(`${backend.baseUrl}/api/aftercare/assets/aftercare-shop/heated-neck-wrap.png`);
 
     assert.equal(response.status, 200);
     assert.equal(response.headers.get("content-type"), "image/svg+xml");

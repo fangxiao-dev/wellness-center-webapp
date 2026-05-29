@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="Serenity Wellness Center stage placeholder">
-  <rect width="1600" height="900" fill="#0b0f14"/>
-  <path d="M0 640c260-120 450-70 670-142 290-94 465-280 930-180v582H0z" fill="#15202b"/>
-  <path d="M0 760c270-92 510-55 780-126 300-79 475-178 820-110v376H0z" fill="#1c69d4" opacity=".22"/>
-  <circle cx="1160" cy="290" r="170" fill="#ffffff" opacity=".08"/>
-  <rect x="250" y="265" width="1080" height="360" rx="8" fill="#f8fafc" opacity=".08"/>
-  <text x="800" y="435" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="64" font-weight="700" fill="#ffffff">SERENITY</text>
-  <text x="800" y="505" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="26" fill="#dbeafe">Scaffold media slot: stage hero</text>
-</svg>

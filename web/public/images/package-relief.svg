@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Neck and Shoulder Relief package placeholder">
-  <rect width="640" height="360" rx="8" fill="#ffffff"/>
-  <path d="M90 250c80-100 150-65 220-122 92-76 160-78 240 0v122z" fill="#1c69d4" opacity=".18"/>
-  <circle cx="292" cy="146" r="58" fill="#111827" opacity=".85"/>
-  <rect x="205" y="220" width="230" height="28" rx="4" fill="#111827" opacity=".75"/>
-  <text x="320" y="306" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="700" fill="#111827">Relief Package</text>
-</svg>

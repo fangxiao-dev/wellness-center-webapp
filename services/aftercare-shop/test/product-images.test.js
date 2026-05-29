@@ -4,11 +4,11 @@ const { toPublicProductImageUrl } = require("../src/asset-paths");
 
 test("aftercare image keys become API asset URLs", () => {
   assert.equal(
-    toPublicProductImageUrl("aftercare-shop/heated-neck-wrap.svg"),
-    "/api/aftercare/assets/aftercare-shop/heated-neck-wrap.svg"
+    toPublicProductImageUrl("aftercare-shop/heated-neck-wrap.png"),
+    "/api/aftercare/assets/aftercare-shop/heated-neck-wrap.png"
   );
 });
 
 test("unsafe image keys are rejected", () => {
-  assert.throws(() => toPublicProductImageUrl("../secret.svg"), /invalid/i);
+  assert.throws(() => toPublicProductImageUrl("../secret.png"), /invalid/i);
 });

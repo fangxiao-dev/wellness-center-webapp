@@ -89,7 +89,7 @@ async function startBackend() {
   };
 }
 
-test("home page preserves group-style presentation structure with scaffold assets", async () => {
+test("home page preserves presentation structure with YouTube hero background", async () => {
   const backend = await startBackend();
 
   try {
@@ -101,11 +101,16 @@ test("home page preserves group-style presentation structure with scaffold asset
 
     assert.doesNotMatch(html, /\/minio\//);
     assert.match(html, /href="\/static\/ci\/wellness-ci\.css"/);
-    assert.match(html, /class="hero-video"/);
+    assert.match(html, /site-nav--transparent/);
+    assert.match(html, /id="heroYoutubePlayer"/);
+    assert.match(html, /data-video-id="A9PhV0B2nmg"/);
+    assert.match(html, /youtube\.com\/iframe_api/);
+    assert.match(html, /youtube-nocookie\.com/);
+    assert.match(html, /\/api\/configurator\/assets\/home\/home-hero\.png/);
     assert.match(html, /class="hero-overlay"/);
-    assert.match(html, /class="model-showcase"/);
+    assert.match(html, /class="vehicle-hero model-showcase"/);
+    assert.match(html, /class="package-stage-grid"/);
     assert.match(html, /class="merch-preview-grid"/);
-    assert.match(html, /["']\/static\/images\/wellness-stage-loop\.svg/);
     assert.doesNotMatch(html, /\/api\/merch\//);
     assert.doesNotMatch(html, /Bayerische|Motoren|Werke/);
   } finally {

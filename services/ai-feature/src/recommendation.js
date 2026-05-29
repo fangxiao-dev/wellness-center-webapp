@@ -107,7 +107,7 @@ function buildRecommendationResponse(recommendation, products = []) {
       const product = productById.get(item.id);
       return {
         id: item.id,
-        href: `/aftercare-shop/${product?.slug || item.id}`,
+        href: `/aftercare-shop#product-${product?.slug || item.id}`,
         title: product?.name || `Aftercare product #${item.id}`,
         imageUrl: product?.imageUrl || "",
         price: product?.price ?? null,

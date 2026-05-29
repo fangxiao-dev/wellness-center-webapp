@@ -70,19 +70,19 @@ Run with Gemini configured:
 - `center/*`
 - `home/*`
 
-Browser-visible media is served through `/api/*/assets/*` routes and never by exposing MinIO directly.
+Browser-visible media is served through `/api/*/assets/*` routes and never by exposing MinIO directly. Home display media is seeded from `web/public/images` into the MinIO `home/*` prefix and read through the configurator asset proxy.
 
 ## Scaffold Asset Slots
 
-The restored group-style frontend keeps its media positions but uses lightweight placeholder SVGs. Replace these filenames later with real Wellness Center media using the same paths or prefixes:
+The restored group-style frontend keeps its media positions and now uses PNG Wellness Center media. Replace these filenames later with improved Wellness Center media using the same paths or prefixes:
 
-- `web/public/images/wellness-stage-loop.svg`
-- `web/public/images/wellness-ai-hero.svg`
-- `web/public/images/aftercare-preview.svg`
-- `web/public/images/package-relief.svg`
-- `web/public/images/package-recovery.svg`
-- `assets/package-configurator/*.svg`
-- `assets/aftercare-shop/*.svg`
+- `web/public/images/wellness-stage-loop.png`
+- `web/public/images/wellness-ai-hero.png`
+- `web/public/images/aftercare-preview.png`
+- `web/public/images/package-relief.png`
+- `web/public/images/package-recovery.png`
+- `assets/package-configurator/*.png`
+- `assets/aftercare-shop/*.png`
 
 ## Notes
 

@@ -141,11 +141,14 @@ async function forwardToApiGateway(req, res) {
 
 function getInitialPackageSelection(req) {
   if (!req.params.package) return null;
+  const addOns = !req.params.addon || req.params.addon === "none"
+    ? []
+    : req.params.addon.split(",").filter(Boolean);
   return {
-    model: req.params.package,
-    color: req.params.duration,
-    interior: req.params.intensity,
-    wheels: req.params.addon,
+    package: req.params.package,
+    duration: req.params.duration,
+    intensity: req.params.intensity,
+    addOns,
   };
 }
 
@@ -165,6 +168,7 @@ app.get(["/", "/index.html"], (_req, res) => {
   renderPage(res, "home", {
     title: "Serenity Wellness Center",
     activePage: "home",
+    navVariant: "transparent",
     mapsApiKey: process.env.GOOGLE_MAPS_API_KEY || "",
   });
 });
@@ -196,19 +200,6 @@ app.get("/aftercare-shop", async (_req, res) => {
       title: "Aftercare Shop | Serenity Wellness Center",
       activePage: "merch",
       products,
-    });
-  } catch (err) {
-    res.status(502).send("aftercare-shop service unavailable: " + err.message);
-  }
-});
-
-app.get("/aftercare-shop/:productId", async (req, res) => {
-  try {
-    const product = await fetchJson(`/api/aftercare/products/${encodeURIComponent(req.params.productId)}`, null);
-    renderPage(res, "aftercare-product", {
-      title: product ? `${product.name} | Aftercare Shop` : "Product not found",
-      activePage: "merch",
-      product,
     });
   } catch (err) {
     res.status(502).send("aftercare-shop service unavailable: " + err.message);

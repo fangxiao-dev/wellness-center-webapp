@@ -30,13 +30,17 @@ app.post("/recommend", async (req, res) => {
   }
 
   try {
-    const [packagesRes, configurationsRes, productsRes] = await Promise.all([
+    const [packagesRes, durationsRes, intensitiesRes, addOnsRes, productsRes] = await Promise.all([
       fetch(`${CONFIGURATOR_URL}/packages`),
-      fetch(`${CONFIGURATOR_URL}/configurations`),
+      fetch(`${CONFIGURATOR_URL}/options/durations`),
+      fetch(`${CONFIGURATOR_URL}/options/intensities`),
+      fetch(`${CONFIGURATOR_URL}/options/add-ons`),
       fetch(`${AFTERCARE_URL}/products`),
     ]);
     const packages = await packagesRes.json();
-    const configurations = await configurationsRes.json();
+    const durations = await durationsRes.json();
+    const intensities = await intensitiesRes.json();
+    const addOns = await addOnsRes.json();
     const products = await productsRes.json();
 
     const systemPrompt = [
@@ -44,7 +48,9 @@ app.post("/recommend", async (req, res) => {
       "Return one valid wellness package recommendation and one to three aftercare products.",
       "Use only package slugs, durations, intensities, add-on slugs, and product ids present in this context.",
       `Packages: ${JSON.stringify(packages)}`,
-      `Configurations: ${JSON.stringify(configurations)}`,
+      `Durations: ${JSON.stringify(durations)}`,
+      `Intensities: ${JSON.stringify(intensities)}`,
+      `Add-ons: ${JSON.stringify(addOns)}`,
       `Aftercare products: ${JSON.stringify(products)}`,
     ].join("\n");
 

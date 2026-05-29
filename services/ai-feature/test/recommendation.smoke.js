@@ -61,7 +61,7 @@ async function run() {
       id: 1,
       slug: "heated-neck-wrap",
       name: "Heated Neck Wrap",
-      imageUrl: "/api/aftercare/assets/aftercare-shop/heated-neck-wrap.svg",
+      imageUrl: "/api/aftercare/assets/aftercare-shop/heated-neck-wrap.png",
       price: 34.9,
     },
   ]);
@@ -69,9 +69,9 @@ async function run() {
   assert.equal(response.packageLink, "/package-configurator/neck-shoulder-relief/60/medium/aroma-oil");
   assert.deepEqual(response.aftercareLinks, [{
     id: 1,
-    href: "/aftercare-shop/heated-neck-wrap",
+    href: "/aftercare-shop#product-heated-neck-wrap",
     title: "Heated Neck Wrap",
-    imageUrl: "/api/aftercare/assets/aftercare-shop/heated-neck-wrap.svg",
+    imageUrl: "/api/aftercare/assets/aftercare-shop/heated-neck-wrap.png",
     price: 34.9,
     reason: "Supports warmth after the session.",
   }]);

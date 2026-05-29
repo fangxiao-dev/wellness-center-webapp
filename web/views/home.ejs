@@ -1,14 +1,14 @@
 <%
-  const homeImageBase = "/static/images";
+  const homeImageBase = "/api/configurator/assets/home";
   const merchImageBase = "/api/aftercare/assets/aftercare-shop";
 
   const merchPreviewProducts = [
-    { name: "Heated Neck Wrap", variant: "Warmth", slug: "heated-neck-wrap", category: "Recovery", price: "34,90 EUR", description: "Reusable warmth for neck and shoulder recovery.", image: "heated-neck-wrap.svg" },
-    { name: "Ergonomic Neck Pillow", variant: "Travel", slug: "ergonomic-neck-pillow", category: "Comfort", price: "29,90 EUR", description: "Compact support for the way home after treatment.", image: "ergonomic-neck-pillow.svg" },
-    { name: "Lavender Aroma Oil", variant: "Calm", slug: "lavender-aroma-oil", category: "Aroma", price: "18,50 EUR", description: "A calming aroma companion for aftercare routines.", image: "lavender-aroma-oil.svg" },
-    { name: "Stretching Band", variant: "Mobility", slug: "stretching-band", category: "Mobility", price: "16,90 EUR", description: "Light resistance support for guided stretching.", image: "stretching-band.svg" },
-    { name: "Recovery Massage Ball", variant: "Trigger Point", slug: "recovery-massage-ball", category: "Mobility", price: "12,90 EUR", description: "Focused pressure support between visits.", image: "recovery-massage-ball.svg" },
-    { name: "Herbal Warmth Pack", variant: "Relax", slug: "herbal-warmth-pack", category: "Recovery", price: "24,90 EUR", description: "Gentle warmth with a reusable herbal insert.", image: "herbal-warmth-pack.svg" },
+    { name: "Heated Neck Wrap", variant: "Warmth", slug: "heated-neck-wrap", category: "Recovery", price: "34,90 EUR", description: "Reusable warmth for neck and shoulder recovery.", image: "heated-neck-wrap.png" },
+    { name: "Ergonomic Neck Pillow", variant: "Travel", slug: "ergonomic-neck-pillow", category: "Comfort", price: "29,90 EUR", description: "Compact support for the way home after treatment.", image: "ergonomic-neck-pillow.png" },
+    { name: "Lavender Aroma Oil", variant: "Calm", slug: "lavender-aroma-oil", category: "Aroma", price: "18,50 EUR", description: "A calming aroma companion for aftercare routines.", image: "lavender-aroma-oil.png" },
+    { name: "Stretching Band", variant: "Mobility", slug: "stretching-band", category: "Mobility", price: "16,90 EUR", description: "Light resistance support for guided stretching.", image: "stretching-band.png" },
+    { name: "Recovery Massage Ball", variant: "Trigger Point", slug: "recovery-massage-ball", category: "Mobility", price: "12,90 EUR", description: "Focused pressure support between visits.", image: "recovery-massage-ball.png" },
+    { name: "Herbal Warmth Pack", variant: "Relax", slug: "herbal-warmth-pack", category: "Recovery", price: "24,90 EUR", description: "Gentle warmth with a reusable herbal insert.", image: "herbal-warmth-pack.png" },
   ];
 %>
 <style>
@@ -25,12 +25,55 @@
     background: #000;
   }
 
-  .hero-video {
+  .hero-media,
+  .hero-poster,
+  .hero-youtube-wrap,
+  .hero-youtube-wrap iframe,
+  #heroYoutubePlayer {
     position: absolute;
     inset: 0;
+  }
+
+  .hero-media {
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .hero-poster {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    opacity: 1;
+    transition: opacity 700ms ease;
+  }
+
+  .hero-youtube-wrap {
+    opacity: 0;
+    transition: opacity 900ms ease;
+  }
+
+  .hero.is-youtube-ready .hero-poster {
+    opacity: 0;
+  }
+
+  .hero.is-youtube-ready .hero-youtube-wrap {
+    opacity: 1;
+  }
+
+  #heroYoutubePlayer {
+    top: 50%;
+    left: 50%;
+    width: max(100vw, 177.78vh);
+    height: max(100vh, 56.25vw);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  .hero-youtube-wrap iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    pointer-events: none;
   }
 
   .hero::after {
@@ -94,52 +137,98 @@
   }
 
   .vehicle-hero {
-    margin-top: 0;
     margin-left: calc(50% - 50vw);
     position: relative;
     width: 100vw;
-    min-height: 100vh;
-    min-height: 100svh;
     overflow: hidden;
-    background: #070b10;
+    background:
+      linear-gradient(135deg, rgba(7, 11, 16, 0.94), rgba(16, 22, 28, 0.86)),
+      #070b10;
     color: #fff;
+    padding: clamp(64px, 8vw, 112px) 0;
   }
 
   .vehicle-backdrop {
     position: absolute;
     inset: 0;
-    z-index: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center;
+    opacity: 0.16;
+    filter: blur(10px) saturate(0.85);
+    transform: scale(1.04);
   }
 
   .vehicle-hero::after {
     content: "";
     position: absolute;
     inset: 0;
-    z-index: 1;
     background:
-      linear-gradient(180deg, rgba(6, 10, 16, 0.12) 0%, rgba(6, 10, 16, 0.22) 48%, rgba(6, 10, 16, 0.76) 100%),
-      linear-gradient(90deg, rgba(6, 10, 16, 0.46) 0%, rgba(6, 10, 16, 0.08) 52%, rgba(6, 10, 16, 0.24) 100%);
+      linear-gradient(180deg, rgba(7, 11, 16, 0.05), rgba(7, 11, 16, 0.82)),
+      radial-gradient(circle at 18% 10%, rgba(255, 255, 255, 0.1), transparent 34%);
     pointer-events: none;
   }
 
-  .vehicle-hotspot {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
+  .package-stage-inner {
+    position: relative;
+    z-index: 1;
+    width: min(1180px, calc(100% - 40px));
+    margin: 0 auto;
+  }
+
+  .package-stage-head {
+    display: grid;
+    grid-template-columns: minmax(0, 0.68fr) minmax(260px, 0.32fr);
+    gap: clamp(26px, 5vw, 64px);
+    align-items: end;
+    margin-bottom: clamp(28px, 4vw, 48px);
+  }
+
+  .stage-index {
     display: block;
-    outline: none;
+    margin-bottom: 12px;
+    color: rgba(255, 255, 255, 0.68);
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
   }
 
-  .vehicle-hotspot--3er {
-    clip-path: polygon(1% 41%, 62% 40%, 76% 53%, 77% 77%, 3% 82%, 0 65%);
+  .stage-caption h4 {
+    max-width: 780px;
+    margin: 0;
+    color: #fff;
+    font-size: clamp(2rem, 4.2vw, 4.4rem);
+    font-weight: 760;
+    letter-spacing: 0;
+    line-height: 0.98;
   }
 
-  .vehicle-hotspot--x5 {
-    clip-path: polygon(42% 31%, 100% 31%, 100% 82%, 47% 84%, 39% 68%);
+  .stage-caption p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.72);
+    font-size: clamp(0.98rem, 1.4vw, 1.12rem);
+    line-height: 1.65;
+  }
+
+  .package-stage-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(18px, 3vw, 32px);
+  }
+
+  .vehicle-hotspot {
+    position: relative;
+    min-height: clamp(420px, 46vw, 620px);
+    display: grid;
+    align-items: end;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: var(--radius);
+    color: #fff;
+    text-decoration: none;
+    background: #111820;
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.32);
   }
 
   .vehicle-hotspot img {
@@ -148,119 +237,86 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center;
-    opacity: 0.96;
-    filter: brightness(0.58) saturate(0.92) contrast(1.03);
-    transform: scale(1);
-    transition: transform 0.28s ease, filter 0.28s ease, opacity 0.28s ease;
-    pointer-events: none;
-    will-change: transform, filter;
+    transform: scale(1.01);
+    transition: transform 0.35s ease, filter 0.35s ease;
   }
 
-  .vehicle-hotspot--3er img {
-    transform-origin: 35% 64%;
-  }
-
-  .vehicle-hotspot--x5 img {
-    transform-origin: 83% 61%;
+  .vehicle-hotspot::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(180deg, rgba(7, 11, 16, 0.06) 0%, rgba(7, 11, 16, 0.18) 45%, rgba(7, 11, 16, 0.88) 100%),
+      linear-gradient(90deg, rgba(7, 11, 16, 0.34), rgba(7, 11, 16, 0.02) 60%);
   }
 
   .vehicle-hotspot:hover img,
   .vehicle-hotspot:focus-visible img {
-    opacity: 1;
-    filter: brightness(1.08) saturate(1.08) contrast(1.04) drop-shadow(0 18px 26px rgba(0, 0, 0, 0.38));
-    transform: scale(1.026);
+    filter: saturate(1.08) contrast(1.02);
+    transform: scale(1.055);
+  }
+
+  .vehicle-hotspot:focus-visible {
+    outline: 3px solid rgba(143, 192, 255, 0.7);
+    outline-offset: 4px;
   }
 
   .vehicle-label {
-    position: absolute;
-    z-index: 3;
-    min-height: 44px;
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: 14px;
+    padding: clamp(22px, 3vw, 34px);
+  }
+
+  .vehicle-label small {
+    color: rgba(255, 255, 255, 0.74);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .vehicle-label strong {
+    max-width: 420px;
+    font-size: clamp(1.6rem, 3vw, 2.75rem);
+    font-weight: 760;
+    letter-spacing: 0;
+    line-height: 1.02;
+  }
+
+  .vehicle-label span {
+    max-width: 460px;
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 0.98rem;
+    line-height: 1.55;
+  }
+
+  .vehicle-label em {
+    width: fit-content;
+    min-height: 42px;
     display: inline-flex;
     align-items: center;
     gap: 10px;
     padding: 0 16px;
-    border: 1px solid rgba(255, 255, 255, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: var(--radius);
-    background: rgba(7, 12, 18, 0.76);
     color: #fff;
-    font-size: 0.82rem;
-    font-weight: 700;
+    font-size: 0.76rem;
+    font-style: normal;
+    font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28);
     backdrop-filter: blur(14px);
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(6px);
-    visibility: hidden;
-    transition: opacity 0.2s ease, visibility 0.2s ease, background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
   }
 
-  .vehicle-label::after {
+  .vehicle-label em::after {
     content: "";
     width: 8px;
     height: 8px;
     border-top: 2px solid currentColor;
     border-right: 2px solid currentColor;
     transform: rotate(45deg);
-  }
-
-  .vehicle-hotspot--3er .vehicle-label {
-    left: 14%;
-    bottom: 24%;
-  }
-
-  .vehicle-hotspot--x5 .vehicle-label {
-    right: 13%;
-    bottom: 24%;
-  }
-
-  .vehicle-hotspot:hover .vehicle-label,
-  .vehicle-hotspot:focus-visible .vehicle-label {
-    background: var(--accent);
-    border-color: rgba(255, 255, 255, 0.44);
-    opacity: 1;
-    transform: translateY(-3px);
-    visibility: visible;
-  }
-
-  .vehicle-hotspot:focus-visible .vehicle-label {
-    box-shadow: 0 0 0 3px rgba(143, 192, 255, 0.42), 0 16px 36px rgba(0, 0, 0, 0.28);
-  }
-
-  .stage-index {
-    position: absolute;
-    top: 28px;
-    left: 28px;
-    z-index: 3;
-    color: rgba(255, 255, 255, 0.72);
-    font-size: 0.74rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-  }
-
-  .stage-caption {
-    position: absolute;
-    left: 50%;
-    bottom: clamp(24px, 4vw, 46px);
-    z-index: 3;
-    width: min(92vw, 1240px);
-    transform: translateX(-50%);
-    text-align: center;
-    pointer-events: none;
-  }
-
-  .stage-caption h4 {
-    margin: 0;
-    color: #fff;
-    font-size: 3.35rem;
-    font-weight: 700;
-    letter-spacing: 0;
-    line-height: 0.96;
-    white-space: nowrap;
-    text-shadow: 0 18px 46px rgba(0, 0, 0, 0.45);
   }
 
   .service-rail {
@@ -840,18 +896,15 @@
   }
 
   @media (max-width: 1180px) {
-    .stage-caption h4 {
-      font-size: 3rem;
-    }
-
     .service-rail {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
   @media (max-width: 980px) {
-    .stage-caption h4 {
-      font-size: 2.55rem;
+    .package-stage-head,
+    .package-stage-grid {
+      grid-template-columns: 1fr;
     }
 
     .route-layout {
@@ -865,18 +918,6 @@
     .heritage-mark {
       justify-self: start;
       text-align: left;
-    }
-  }
-
-  @media (max-width: 880px) {
-    .stage-caption h4 {
-      font-size: 2.25rem;
-    }
-  }
-
-  @media (max-width: 780px) {
-    .stage-caption h4 {
-      font-size: 1.95rem;
     }
   }
 
@@ -905,7 +946,15 @@
     }
 
     .vehicle-hero {
-      margin-top: 0;
+      padding: 54px 0;
+    }
+
+    .package-stage-inner {
+      width: min(100% - 28px, 1180px);
+    }
+
+    .vehicle-hotspot {
+      min-height: 360px;
     }
 
     .service-rail,
@@ -931,38 +980,8 @@
       height: clamp(220px, 60vw, 300px);
     }
 
-    .stage-index {
-      top: 28px;
-      left: 18px;
-    }
-
     .vehicle-label {
-      min-height: 40px;
-      padding: 0 12px;
-      font-size: 0.68rem;
-      letter-spacing: 0.05em;
-    }
-
-    .vehicle-hotspot--3er .vehicle-label {
-      left: 8%;
-      bottom: 25%;
-    }
-
-    .vehicle-hotspot--x5 .vehicle-label {
-      right: 7%;
-      bottom: 25%;
-    }
-
-    .stage-caption h4 {
-      font-size: 1.55rem;
-    }
-
-    .vehicle-hotspot--3er {
-      clip-path: polygon(0 42%, 67% 42%, 76% 78%, 0 84%);
-    }
-
-    .vehicle-hotspot--x5 {
-      clip-path: polygon(38% 31%, 100% 31%, 100% 82%, 42% 84%, 35% 68%);
+      padding: 22px;
     }
 
     .heritage-section {
@@ -1017,23 +1036,20 @@
       height: 100%;
     }
   }
-
-  @media (max-width: 420px) {
-    .stage-caption h4 {
-      font-size: 1.08rem;
-    }
-  }
 </style>
 
 <section class="hero">
-  <video class="hero-video" autoplay muted loop playsinline preload="auto">
-    <source src="<%= homeImageBase %>/wellness-stage-loop.svg" type="video/mp4">
-  </video>
+  <div class="hero-media" aria-hidden="true">
+    <img class="hero-poster" src="<%= homeImageBase %>/home-hero.png" alt="" loading="eager">
+    <div class="hero-youtube-wrap">
+      <div id="heroYoutubePlayer" data-video-id="A9PhV0B2nmg"></div>
+    </div>
+  </div>
 
   <div class="hero-overlay">
-    <h1 class="hero-title">Dein Weg zu deinem<br>Wellness Reset</h1>
-    <p class="hero-subtitle">Mit KI-Beratung, passenden Produkten und deinem Besuchskontext im Serenity Center.</p>
-    <a class="btn btn-cta" href="/package-configurator">Jetzt konfigurieren</a>
+    <h1 class="hero-title">Your path to a<br>wellness reset</h1>
+    <p class="hero-subtitle">AI consultation, fitting products, and visit context for the Serenity Center.</p>
+    <a class="btn btn-cta" href="/package-configurator">Configure now</a>
     <div class="scroll-hint">Scroll</div>
   </div>
 </section>
@@ -1042,52 +1058,69 @@
   <section class="experience-section" id="experience">
     <div class="page-shell">
       <div class="service-intro">
-        <p class="section-kicker">Deine Serenity Experience</p>
-        <h2 class="section-title">Vier Einstiege für deinen nächsten Besuch.</h2>
-        <p class="section-copy">Package-Konfiguration, KI-Beratung, Aftercare und Besuchskontext an einem Ort.</p>
+        <p class="section-kicker">Your Serenity Experience</p>
+        <h2 class="section-title">Four entry points for your next visit.</h2>
+        <p class="section-copy">Package configuration, AI consultation, aftercare, and visit context in one place.</p>
       </div>
 
-      <div class="service-rail" aria-label="Serenity Experience Einstiege">
+      <div class="service-rail" aria-label="Serenity Experience entry points">
         <a class="service-link" href="/package-configurator">
-          <img class="service-image" src="<%= homeImageBase %>/wellness-ai-hero.svg" alt="Serenity package consultation" loading="lazy">
+          <img class="service-image" src="<%= homeImageBase %>/wellness-ai-hero.png" alt="Serenity package consultation" loading="lazy">
           <span class="service-number">01</span>
           <h3>Packages</h3>
-          <p>Wähle Package, Dauer, Intensität und Add-ons für deinen nächsten Besuch.</p>
+          <p>Choose package, duration, intensity, and add-ons for your next visit.</p>
         </a>
         <a class="service-link" href="/ai-feature">
-          <img class="service-image" src="<%= homeImageBase %>/wellness-ai-hero.svg" alt="Serenity AI Consultation" loading="lazy">
+          <img class="service-image" src="<%= homeImageBase %>/wellness-ai-hero.png" alt="Serenity AI Consultation" loading="lazy">
           <span class="service-number">02</span>
           <h3>AI Consultation</h3>
-          <p>Aus einem Alltagssatz wird ein konkreter Vorschlag für Package und Zubehör.</p>
+          <p>Turn one everyday sentence into a concrete package and aftercare suggestion.</p>
         </a>
         <a class="service-link" href="/aftercare-shop">
-          <img class="service-image" src="<%= homeImageBase %>/aftercare-preview.svg" alt="Serenity Aftercare" loading="lazy">
+          <img class="service-image" src="<%= homeImageBase %>/aftercare-preview.png" alt="Serenity Aftercare" loading="lazy">
           <span class="service-number">03</span>
           <h3>Aftercare</h3>
-          <p>Passende Produkte für Ruhe, Mobilität und Pflege nach deinem Termin.</p>
+          <p>Fitting products for calm, mobility, and care after your appointment.</p>
         </a>
         <a class="service-link" href="#route-planner">
-          <img class="service-image" src="<%= homeImageBase %>/center-impression.svg" alt="Serenity Wellness Center" loading="lazy">
+          <img class="service-image" src="<%= homeImageBase %>/center-impression.png" alt="Serenity Wellness Center" loading="lazy">
           <span class="service-number">04</span>
           <h3>Visit Context</h3>
-          <p>Plane Anreise, Zeitfenster und Hinweise für deinen Besuch.</p>
+          <p>Plan route, time window, and visit notes for your appointment.</p>
         </a>
       </div>
 
       <section class="vehicle-hero model-showcase" aria-label="Package stage">
-        <span class="model-showcase" aria-hidden="true"></span>
-        <img class="vehicle-backdrop" src="<%= homeImageBase %>/wellness-ai-hero.svg" alt="Serenity package stage" loading="lazy">
-        <span class="stage-index">Aktueller Fokus</span>
-        <a class="vehicle-hotspot vehicle-hotspot--3er" href="/package-configurator/neck-shoulder-relief/60/medium/aroma-oil" aria-label="Neck and Shoulder Relief konfigurieren">
-          <img src="<%= homeImageBase %>/package-relief.svg" alt="" aria-hidden="true" loading="lazy">
-          <span class="vehicle-label">Relief Package konfigurieren</span>
-        </a>
-        <a class="vehicle-hotspot vehicle-hotspot--x5" href="/package-configurator/warm-recovery-massage/90/deep/herbal-compress" aria-label="Warm Recovery Massage konfigurieren">
-          <img src="<%= homeImageBase %>/package-recovery.svg" alt="" aria-hidden="true" loading="lazy">
-          <span class="vehicle-label">Recovery Package konfigurieren</span>
-        </a>
-        <div class="stage-caption">
-          <h4>Zwei Package-Pfade. Ein Klick zur Konfiguration.</h4>
+        <img class="vehicle-backdrop" src="<%= homeImageBase %>/wellness-ai-hero.png" alt="Serenity package stage" loading="lazy">
+        <div class="package-stage-inner">
+          <div class="package-stage-head">
+            <div class="stage-caption">
+              <span class="stage-index">Current focus</span>
+              <h4>Two clear paths into your treatment.</h4>
+            </div>
+            <p>Start directly with a concrete package. Both paths open the configurator with duration, intensity, and a fitting add-on.</p>
+          </div>
+
+          <div class="package-stage-grid">
+            <a class="vehicle-hotspot" href="/package-configurator/neck-shoulder-relief/60/medium/aroma-oil" aria-label="Configure Neck and Shoulder Relief">
+              <img src="<%= homeImageBase %>/package-relief.png" alt="" aria-hidden="true" loading="lazy">
+              <span class="vehicle-label">
+                <small>Relief Package</small>
+                <strong>Neck & Shoulder Relief</strong>
+                <span>For neck, shoulders, and upper back after long work or commute days.</span>
+                <em>Configure</em>
+              </span>
+            </a>
+            <a class="vehicle-hotspot" href="/package-configurator/warm-recovery-massage/90/deep/hot-stone" aria-label="Configure Warm Recovery Massage">
+              <img src="<%= homeImageBase %>/package-recovery.png" alt="" aria-hidden="true" loading="lazy">
+              <span class="vehicle-label">
+                <small>Recovery Package</small>
+                <strong>Warm Recovery Massage</strong>
+                <span>Warmth, quiet pressure, and longer recovery for an unhurried visit.</span>
+                <em>Configure</em>
+              </span>
+            </a>
+          </div>
         </div>
       </section>
     </div>
@@ -1098,20 +1131,20 @@
       <div class="merch-preview-head">
         <div>
           <p class="section-kicker">Aftercare Highlights</p>
-          <h2 class="section-title">Serenity Aftercare entdecken.</h2>
-          <p class="section-copy">Ausgewählte Produkte für Ruhe, Mobilität und Pflege. Direkt ansehen oder im Shop weiterstöbern.</p>
+          <h2 class="section-title">Explore Serenity Aftercare.</h2>
+          <p class="section-copy">Selected products for calm, mobility, and care. View them directly or keep browsing in the shop.</p>
         </div>
         <div class="merch-preview-actions">
-          <a class="btn btn-ghost" href="/aftercare-shop">Zum Shop</a>
-          <button class="merch-carousel-button" type="button" aria-label="Vorherige Produkte" data-merch-prev>&larr;</button>
-          <button class="merch-carousel-button" type="button" aria-label="Nächste Produkte" data-merch-next>&rarr;</button>
+          <a class="btn btn-ghost" href="/aftercare-shop">Shop</a>
+          <button class="merch-carousel-button" type="button" aria-label="Previous products" data-merch-prev>&larr;</button>
+          <button class="merch-carousel-button" type="button" aria-label="Next products" data-merch-next>&rarr;</button>
         </div>
       </div>
 
       <span class="merch-preview-grid" aria-hidden="true"></span>
       <div class="merch-grid merch-preview-grid" data-merch-carousel>
         <% merchPreviewProducts.forEach(function(product) { %>
-          <a class="merch-card" href="/aftercare-shop/<%= product.slug %>">
+          <a class="merch-card" href="/aftercare-shop#product-<%= product.slug %>">
             <img class="merch-card-img" src="<%= merchImageBase %>/<%= product.image %>" alt="<%= product.name %> <%= product.variant %>" loading="lazy">
             <div class="merch-card-overlay">
               <span class="merch-card-category"><%= product.category %></span>
@@ -1125,33 +1158,31 @@
   </section>
 
   <section class="heritage-section" aria-label="Heritage">
-    <video class="heritage-video" autoplay muted loop playsinline preload="metadata">
-      <source src="<%= homeImageBase %>/wellness-stage-loop.svg" type="video/mp4">
-    </video>
+    <img class="heritage-video" src="<%= homeImageBase %>/wellness-stage-loop.png" alt="" aria-hidden="true" loading="lazy">
     <div class="page-shell heritage-content">
       <div>
-        <p class="section-kicker">Aus Ruhe wird Struktur</p>
-        <h2 class="heritage-title">Vom Erstimpuls bis zu deiner Behandlung.</h2>
+        <p class="section-kicker">Calm becomes structure</p>
+        <h2 class="heritage-title">From first signal to your treatment.</h2>
 
-        <p class="heritage-copy">Serenity steht hier für klare Entscheidungen: vom passenden Massageziel über Add-ons bis zu Produkten, die den Effekt zu Hause verlängern.</p>
+        <p class="heritage-copy">Serenity turns care into clear decisions: from the right massage goal to add-ons and products that extend the effect at home.</p>
 
         <div class="heritage-ledger">
           <div class="ledger-item">
             <span>Assessment</span>
-            <strong>Wo Bedürfnisse sichtbar werden.</strong>
+            <strong>Where needs become visible.</strong>
           </div>
           <div class="ledger-item">
             <span>Package</span>
-            <strong>Klarheit in jedem Behandlungsschritt.</strong>
+            <strong>Clarity in every treatment step.</strong>
           </div>
           <div class="ledger-item">
             <span>Aftercare</span>
-            <strong>Die Wirkung wird zu Hause weitergedacht.</strong>
+            <strong>The effect continues at home.</strong>
           </div>
         </div>
       </div>
 
-      <div class="heritage-mark" aria-label="Gründungsjahr">
+      <div class="heritage-mark" aria-label="Founding year">
         <strong>2026</strong>
         <span>Cloud style<br>for care</span>
       </div>
@@ -1162,11 +1193,11 @@
     <div class="page-shell">
       <div class="yt-stage-header">
         <p class="section-kicker">Scaffold media stage</p>
-        <h2 class="section-title">Bereit für deine späteren Wellness Assets.</h2>
-        <p class="section-copy">Diese Fläche behält Rhythmus und Proportionen des Originals, nutzt aber nur leichte Platzhalter.</p>
+        <h2 class="section-title">Ready for your future wellness assets.</h2>
+        <p class="section-copy">This area keeps the rhythm and proportions of the original while using lightweight placeholders.</p>
       </div>
       <div class="heritage-yt">
-        <img src="<%= homeImageBase %>/center-impression.svg" alt="Serenity Wellness Center scaffold media slot" loading="lazy">
+        <img src="<%= homeImageBase %>/center-impression.png" alt="Serenity Wellness Center media slot" loading="lazy">
       </div>
     </div>
   </section>
@@ -1180,14 +1211,14 @@
       <div class="page-shell route-overlay">
         <div class="route-copy">
           <p class="section-kicker">Visit Context</p>
-          <h2 class="section-title" id="routeTitle">Dein Weg zum Serenity Center.</h2>
-          <p class="section-copy">Starte die Berechnung mit deinem Standort und sieh Distanz und Reisezeit direkt auf der Karte.</p>
+          <h2 class="section-title" id="routeTitle">Your route to the Serenity Center.</h2>
+          <p class="section-copy">Start with your location and see distance and travel time directly on the map.</p>
         </div>
 
         <div class="route-layout">
           <aside class="route-panel">
             <form class="controls" id="routeForm">
-              <button class="btn btn-primary" id="routeBtn" type="submit" disabled>Route berechnen</button>
+              <button class="btn btn-primary" id="routeBtn" type="submit" disabled>Calculate route</button>
             </form>
 
             <div class="route-result" id="routeResult" aria-live="polite">
@@ -1473,7 +1504,7 @@
           function requestCurrentLocation() {
             return new Promise((resolve, reject) => {
               if (!navigator.geolocation) {
-                reject(new Error("Geolocation wird von diesem Browser nicht unterstützt."));
+                reject(new Error("Geolocation is not supported by this browser."));
                 return;
               }
 
@@ -1561,12 +1592,12 @@
       <div class="page-shell route-overlay">
         <div class="route-copy">
           <p class="section-kicker">Route</p>
-          <h2 class="section-title" id="routeTitle">Dein Ziel: Serenity Wellness Center</h2>
-          <p class="section-copy">Standort nutzen, Startadresse eingeben und die Anreise zum Serenity Center direkt auf der Karte planen.</p>
+          <h2 class="section-title" id="routeTitle">Your destination: Serenity Wellness Center</h2>
+          <p class="section-copy">Use your location, enter a start address, and plan the route to Serenity Center directly on the map.</p>
         </div>
         <div class="no-key">
-          <h3>API-Key erforderlich</h3>
-          <p>Bitte konfigurieren Sie den <code>GOOGLE_MAPS_API_KEY</code> in Ihrer Umgebung.</p>
+          <h3>API key required</h3>
+          <p>Please configure <code>GOOGLE_MAPS_API_KEY</code> in your environment.</p>
         </div>
       </div>
     <% } %>
@@ -1574,6 +1605,121 @@
 </main>
 
 <script>
+  (function () {
+    const hero = document.querySelector('.hero');
+    const playerEl = document.getElementById('heroYoutubePlayer');
+    if (!hero || !playerEl) return;
+
+    const videoId = playerEl.dataset.videoId;
+    const loopStartSeconds = 0;
+    const loopEndSeconds = 15;
+    let player = null;
+    let loopTimer = 0;
+
+    function setVideoReady(isReady) {
+      hero.classList.toggle('is-youtube-ready', Boolean(isReady));
+    }
+
+    function stopLoopTimer() {
+      if (loopTimer) {
+        window.clearInterval(loopTimer);
+        loopTimer = 0;
+      }
+    }
+
+    function startLoopTimer() {
+      stopLoopTimer();
+      loopTimer = window.setInterval(function () {
+        if (!player || typeof player.getCurrentTime !== 'function') return;
+
+        const currentTime = player.getCurrentTime();
+        if (Number.isFinite(currentTime) && currentTime >= loopEndSeconds) {
+          player.seekTo(loopStartSeconds, true);
+          player.playVideo();
+        }
+      }, 100);
+    }
+
+    function requestPlayback() {
+      if (!player) return;
+
+      player.mute();
+      player.playVideo();
+      startLoopTimer();
+    }
+
+    function handleStateChange(event) {
+      const states = window.YT && window.YT.PlayerState;
+      if (!states) return;
+
+      if (event.data === states.PLAYING || event.data === states.BUFFERING) {
+        setVideoReady(true);
+        startLoopTimer();
+      }
+
+      if (event.data === states.ENDED) {
+        player.seekTo(loopStartSeconds, true);
+        requestPlayback();
+      }
+
+      if (event.data === states.PAUSED) {
+        window.setTimeout(function () {
+          if (!player || player.getPlayerState() !== states.PAUSED) return;
+          requestPlayback();
+          window.setTimeout(function () {
+            if (player && player.getPlayerState() === states.PAUSED) {
+              setVideoReady(false);
+            }
+          }, 300);
+        }, 250);
+      }
+    }
+
+    function createHeroPlayer() {
+      player = new window.YT.Player('heroYoutubePlayer', {
+        videoId,
+        host: 'https://www.youtube-nocookie.com',
+        playerVars: {
+          autoplay: 1,
+          controls: 0,
+          disablekb: 1,
+          enablejsapi: 1,
+          fs: 0,
+          iv_load_policy: 3,
+          playsinline: 1,
+          rel: 0,
+          start: loopStartSeconds,
+          origin: window.location.origin,
+        },
+        events: {
+          onReady: requestPlayback,
+          onStateChange: handleStateChange,
+          onAutoplayBlocked: function () {
+            stopLoopTimer();
+            setVideoReady(false);
+          },
+        },
+      });
+    }
+
+    const previousYouTubeReady = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = function () {
+      if (typeof previousYouTubeReady === 'function') {
+        previousYouTubeReady();
+      }
+      createHeroPlayer();
+    };
+
+    if (window.YT && window.YT.Player) {
+      createHeroPlayer();
+    } else {
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      tag.async = true;
+      document.head.appendChild(tag);
+    }
+  })();
+
   (function () {
     const experience = document.querySelector('.experience-section');
     const merchCarousel = document.querySelector('[data-merch-carousel]');

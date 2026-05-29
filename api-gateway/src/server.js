@@ -101,12 +101,6 @@ app.get("/api/configurator/options/intensities", (_req, res) => {
 app.get("/api/configurator/options/add-ons", (_req, res) => {
   proxyJson(res, () => fetch(`${CONFIGURATOR}/options/add-ons`));
 });
-app.get("/api/configurator/configurations", (_req, res) => {
-  proxyJson(res, () => fetch(`${CONFIGURATOR}/configurations`));
-});
-app.get("/api/configurator/configurations/:id", (req, res) => {
-  proxyJson(res, () => fetch(`${CONFIGURATOR}/configurations/${encodeURIComponent(req.params.id)}`));
-});
 app.post("/api/configurator/configuration/calculate", (req, res) => {
   proxyJson(res, () => fetch(`${CONFIGURATOR}/configuration/calculate`, {
     method: "POST",

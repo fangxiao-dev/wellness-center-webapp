@@ -202,7 +202,7 @@ test("gateway streams configurator asset responses without JSON parsing", async 
   const gateway = await startGateway(`http://127.0.0.1:${configuratorPort}`, `http://127.0.0.1:${aftercarePort}`);
 
   try {
-    const response = await fetch(`${gateway.baseUrl}/api/configurator/assets/package-configurator/neck-shoulder-relief.svg`, {
+    const response = await fetch(`${gateway.baseUrl}/api/configurator/assets/package-configurator/neck-shoulder-relief.png`, {
       signal: AbortSignal.timeout(2000),
     });
 
@@ -210,7 +210,7 @@ test("gateway streams configurator asset responses without JSON parsing", async 
     assert.equal(response.headers.get("content-type"), "image/jpeg");
     assert.equal(response.headers.get("cache-control"), "public, max-age=60");
     assert.deepEqual(Buffer.from(await response.arrayBuffer()), body);
-    assert.deepEqual(requests, ["/assets/package-configurator/neck-shoulder-relief.svg"]);
+    assert.deepEqual(requests, ["/assets/package-configurator/neck-shoulder-relief.png"]);
   } finally {
     await gateway.stop();
     await closeServer(configurator);
@@ -235,7 +235,7 @@ test("gateway streams aftercare asset responses without JSON parsing", async () 
   const gateway = await startGateway(`http://127.0.0.1:${configuratorPort}`, `http://127.0.0.1:${aftercarePort}`);
 
   try {
-    const response = await fetch(`${gateway.baseUrl}/api/aftercare/assets/aftercare-shop/heated-neck-wrap.svg`, {
+    const response = await fetch(`${gateway.baseUrl}/api/aftercare/assets/aftercare-shop/heated-neck-wrap.png`, {
       signal: AbortSignal.timeout(2000),
     });
 
@@ -243,7 +243,7 @@ test("gateway streams aftercare asset responses without JSON parsing", async () 
     assert.equal(response.headers.get("content-type"), "image/svg+xml");
     assert.equal(response.headers.get("cache-control"), "public, max-age=120");
     assert.deepEqual(Buffer.from(await response.arrayBuffer()), body);
-    assert.deepEqual(requests, ["/assets/aftercare-shop/heated-neck-wrap.svg"]);
+    assert.deepEqual(requests, ["/assets/aftercare-shop/heated-neck-wrap.png"]);
   } finally {
     await gateway.stop();
     await closeServer(configurator);
@@ -264,7 +264,7 @@ test("gateway rejects encoded configurator asset traversal before upstream fetch
   const gateway = await startGateway(`http://127.0.0.1:${configuratorPort}`, `http://127.0.0.1:${aftercarePort}`);
 
   try {
-    const response = await rawGet(gateway.baseUrl, "/api/configurator/assets/package-configurator/sub/%2e%2e/neck-shoulder-relief.svg");
+    const response = await rawGet(gateway.baseUrl, "/api/configurator/assets/package-configurator/sub/%2e%2e/neck-shoulder-relief.png");
 
     assert.equal(response.status, 400);
     assert.deepEqual(requests, []);
@@ -288,7 +288,7 @@ test("gateway rejects encoded aftercare asset traversal before upstream fetch", 
   const gateway = await startGateway(`http://127.0.0.1:${configuratorPort}`, `http://127.0.0.1:${aftercarePort}`);
 
   try {
-    const response = await rawGet(gateway.baseUrl, "/api/aftercare/assets/aftercare-shop/sub/%2e%2e/heated-neck-wrap.svg");
+    const response = await rawGet(gateway.baseUrl, "/api/aftercare/assets/aftercare-shop/sub/%2e%2e/heated-neck-wrap.png");
 
     assert.equal(response.status, 400);
     assert.deepEqual(requests, []);

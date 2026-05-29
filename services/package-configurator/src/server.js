@@ -30,6 +30,29 @@ function asMoney(value) {
   return Number.parseFloat(value || 0);
 }
 
+function computePackagePrice({ basePrice, durationDelta, intensityDelta, addOnDeltas }) {
+  return asMoney(basePrice) +
+    asMoney(durationDelta) +
+    asMoney(intensityDelta) +
+    (Array.isArray(addOnDeltas) ? addOnDeltas : []).reduce((sum, delta) => sum + asMoney(delta), 0);
+}
+
+function joinNames(names) {
+  const list = (Array.isArray(names) ? names : []).filter(Boolean);
+  if (list.length === 0) return "";
+  if (list.length === 1) return list[0];
+  if (list.length === 2) return `${list[0]} and ${list[1]}`;
+  return `${list.slice(0, -1).join(", ")}, and ${list[list.length - 1]}`;
+}
+
+function buildConfigurationSummary({ packageName, minutes, intensityLabel, addOnNames }) {
+  const base = `A ${Number(minutes)}-minute ${packageName} at ${String(intensityLabel).toLowerCase()} pressure`;
+  const addOns = Array.isArray(addOnNames) && addOnNames.length > 0
+    ? ` with ${joinNames(addOnNames)}`
+    : "";
+  return `${base}${addOns}.`;
+}
+
 function mapPackage(row) {
   return {
     id: row.id,
@@ -39,6 +62,7 @@ function mapPackage(row) {
     description: row.description,
     basePrice: asMoney(row.base_price),
     baseMinutes: Number(row.base_minutes),
+    imageUrl: toPublicPackageImageUrl(row.minio_object),
   };
 }
 
@@ -68,6 +92,7 @@ function mapAddon(row) {
     name: row.name,
     description: row.description,
     priceDelta: asMoney(row.price_delta),
+    imageUrl: toPublicPackageImageUrl(row.minio_object),
   };
 }
 
@@ -78,63 +103,6 @@ function sendError(res, status, error) {
 async function query(sql, params = []) {
   const [rows] = await getPool().query(sql, params);
   return rows;
-}
-
-async function getConfigurationById(id) {
-  const rows = await query(
-    `SELECT c.id, c.summary,
-            p.slug AS package_slug, p.name AS package_name, p.base_price,
-            d.minutes, d.label AS duration_label, d.price_delta AS duration_delta,
-            i.slug AS intensity_slug, i.label AS intensity_label, i.price_delta AS intensity_delta,
-            ci.image_key
-       FROM configurations c
-       JOIN packages p ON p.id = c.package_id
-       JOIN durations d ON d.id = c.duration_id
-       JOIN intensities i ON i.id = c.intensity_id
-       LEFT JOIN configuration_images ci ON ci.configuration_id = c.id
-      WHERE c.id = ?
-      LIMIT 1`,
-    [id]
-  );
-  if (!rows[0]) return null;
-
-  const addons = await query(
-    `SELECT a.id, a.slug, a.name, a.description, a.price_delta
-       FROM configuration_addons ca
-       JOIN add_ons a ON a.id = ca.addon_id
-      WHERE ca.configuration_id = ?
-      ORDER BY a.id`,
-    [id]
-  );
-
-  return mapConfiguration(rows[0], addons);
-}
-
-function mapConfiguration(row, addons = []) {
-  const price = asMoney(row.base_price) + asMoney(row.duration_delta) +
-    asMoney(row.intensity_delta) + addons.reduce((sum, addon) => sum + asMoney(addon.price_delta), 0);
-  return {
-    id: row.id,
-    package: {
-      slug: row.package_slug,
-      name: row.package_name,
-    },
-    duration: {
-      minutes: Number(row.minutes),
-      label: row.duration_label,
-    },
-    intensity: {
-      slug: row.intensity_slug,
-      label: row.intensity_label,
-    },
-    addOns: addons.map((addon) => ({
-      slug: addon.slug,
-      name: addon.name,
-    })),
-    price,
-    imageUrl: row.image_key ? toPublicPackageImageUrl(row.image_key) : null,
-    summary: row.summary,
-  };
 }
 
 app.get("/health", (_req, res) => {
@@ -173,65 +141,82 @@ app.get("/options/add-ons", async (_req, res) => {
   }
 });
 
-app.get("/configurations", async (_req, res) => {
-  try {
-    const rows = await query("SELECT id FROM configurations ORDER BY id");
-    res.json(await Promise.all(rows.map((row) => getConfigurationById(row.id))));
-  } catch (error) {
-    sendError(res, 500, error.message);
-  }
-});
-
-app.get("/configurations/:id", async (req, res) => {
-  const id = Number.parseInt(req.params.id, 10);
-  if (!Number.isInteger(id) || id <= 0) {
-    return sendError(res, 400, "configuration id must be a positive integer");
-  }
-  try {
-    const configuration = await getConfigurationById(id);
-    if (!configuration) return sendError(res, 404, "configuration not found");
-    res.json(configuration);
-  } catch (error) {
-    sendError(res, 500, error.message);
-  }
-});
-
 app.post("/configuration/calculate", async (req, res) => {
   const body = req.body || {};
   if (!body.package) {
-    return res.status(400).json({ error: "package is required" });
+    return sendError(res, 400, "package is required");
+  }
+  if (!body.duration) {
+    return sendError(res, 400, "duration is required");
+  }
+  if (!body.intensity) {
+    return sendError(res, 400, "intensity is required");
   }
 
   const minutes = Number.parseInt(body.duration, 10);
+  if (!Number.isInteger(minutes) || minutes <= 0) {
+    return sendError(res, 400, "duration must be a positive number of minutes");
+  }
+
   const addOns = Array.isArray(body.addOns) ? body.addOns : [];
 
   try {
-    const rows = await query(
-      `SELECT c.id
-         FROM configurations c
-         JOIN packages p ON p.id = c.package_id
-         JOIN durations d ON d.id = c.duration_id
-         JOIN intensities i ON i.id = c.intensity_id
-        WHERE p.slug = ? AND d.minutes = ? AND i.slug = ?
-        ORDER BY c.id
-        LIMIT 1`,
-      [body.package, minutes, body.intensity]
-    );
-    if (!rows[0]) return sendError(res, 404, "configuration not found");
+    const packageRows = await query("SELECT * FROM packages WHERE slug = ? LIMIT 1", [body.package]);
+    if (!packageRows[0]) return sendError(res, 404, "package not found");
 
-    const configuration = await getConfigurationById(rows[0].id);
+    const durationRows = await query("SELECT * FROM durations WHERE minutes = ? LIMIT 1", [minutes]);
+    if (!durationRows[0]) return sendError(res, 404, "duration not found");
+
+    const intensityRows = await query("SELECT * FROM intensities WHERE slug = ? LIMIT 1", [body.intensity]);
+    if (!intensityRows[0]) return sendError(res, 404, "intensity not found");
+
+    let selectedAddOns = [];
     if (addOns.length > 0) {
-      const selected = await query(
-        `SELECT id, slug, name, description, price_delta
-           FROM add_ons
-          WHERE slug IN (?)
-          ORDER BY id`,
-        [addOns]
-      );
-      configuration.addOns = selected.map((addon) => ({ slug: addon.slug, name: addon.name }));
-      configuration.price += selected.reduce((sum, addon) => sum + asMoney(addon.price_delta), 0);
+      selectedAddOns = await query("SELECT * FROM add_ons WHERE slug IN (?) ORDER BY id", [addOns]);
+      if (selectedAddOns.length !== new Set(addOns).size) {
+        return sendError(res, 404, "add-on not found");
+      }
     }
-    res.json(configuration);
+
+    const pkg = mapPackage(packageRows[0]);
+    const duration = mapDuration(durationRows[0]);
+    const intensity = mapIntensity(intensityRows[0]);
+    const mappedAddOns = selectedAddOns.map(mapAddon);
+    const price = computePackagePrice({
+      basePrice: pkg.basePrice,
+      durationDelta: duration.priceDelta,
+      intensityDelta: intensity.priceDelta,
+      addOnDeltas: mappedAddOns.map((addOn) => addOn.priceDelta),
+    });
+
+    res.json({
+      package: {
+        slug: pkg.slug,
+        name: pkg.name,
+        baseImageUrl: pkg.imageUrl,
+      },
+      duration: {
+        minutes: duration.minutes,
+        label: duration.label,
+      },
+      intensity: {
+        slug: intensity.slug,
+        label: intensity.label,
+      },
+      addOns: mappedAddOns.map((addOn) => ({
+        slug: addOn.slug,
+        name: addOn.name,
+        imageUrl: addOn.imageUrl,
+        priceDelta: addOn.priceDelta,
+      })),
+      price,
+      summary: buildConfigurationSummary({
+        packageName: pkg.name,
+        minutes: duration.minutes,
+        intensityLabel: intensity.label,
+        addOnNames: mappedAddOns.map((addOn) => addOn.name),
+      }),
+    });
   } catch (error) {
     sendError(res, 500, error.message);
   }
@@ -261,3 +246,6 @@ if (require.main === module) {
 }
 
 module.exports = app;
+module.exports.computePackagePrice = computePackagePrice;
+module.exports.joinNames = joinNames;
+module.exports.buildConfigurationSummary = buildConfigurationSummary;
