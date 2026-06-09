@@ -89,7 +89,7 @@ async function startBackend() {
   };
 }
 
-test("home page preserves presentation structure with YouTube hero background", async () => {
+test("home page preserves presentation structure with local hero video background", async () => {
   const backend = await startBackend();
 
   try {
@@ -102,10 +102,17 @@ test("home page preserves presentation structure with YouTube hero background", 
     assert.doesNotMatch(html, /\/minio\//);
     assert.match(html, /href="\/static\/ci\/wellness-ci\.css"/);
     assert.match(html, /site-nav--transparent/);
-    assert.match(html, /id="heroYoutubePlayer"/);
-    assert.match(html, /data-video-id="A9PhV0B2nmg"/);
-    assert.match(html, /youtube\.com\/iframe_api/);
-    assert.match(html, /youtube-nocookie\.com/);
+    assert.match(html, /<video[^>]*class="hero-video"[^>]*>/);
+    assert.match(html, /<video[^>]*autoplay[^>]*>/);
+    assert.match(html, /<video[^>]*muted[^>]*>/);
+    assert.match(html, /<video[^>]*loop[^>]*>/);
+    assert.match(html, /<video[^>]*playsinline[^>]*>/);
+    assert.match(html, /<video[^>]*poster="\/static\/images\/home-hero\.png"[^>]*>/);
+    assert.match(html, /<source src="\/media\/home\/home-video\.mp4" type="video\/mp4">/);
+    assert.doesNotMatch(html, /heroYoutubePlayer/);
+    assert.doesNotMatch(html, /A9PhV0B2nmg/);
+    assert.doesNotMatch(html, /youtube\.com\/iframe_api/);
+    assert.doesNotMatch(html, /youtube-nocookie\.com/);
     [
       "/static/images/home-hero.png",
       "/static/images/wellness-ai-hero.png",

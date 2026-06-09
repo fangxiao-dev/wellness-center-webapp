@@ -26,10 +26,7 @@
   }
 
   .hero-media,
-  .hero-poster,
-  .hero-youtube-wrap,
-  .hero-youtube-wrap iframe,
-  #heroYoutubePlayer {
+  .hero-video {
     position: absolute;
     inset: 0;
   }
@@ -39,40 +36,10 @@
     pointer-events: none;
   }
 
-  .hero-poster {
+  .hero-video {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    opacity: 1;
-    transition: opacity 700ms ease;
-  }
-
-  .hero-youtube-wrap {
-    opacity: 0;
-    transition: opacity 900ms ease;
-  }
-
-  .hero.is-youtube-ready .hero-poster {
-    opacity: 0;
-  }
-
-  .hero.is-youtube-ready .hero-youtube-wrap {
-    opacity: 1;
-  }
-
-  #heroYoutubePlayer {
-    top: 50%;
-    left: 50%;
-    width: max(100vw, 177.78vh);
-    height: max(100vh, 56.25vw);
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-  }
-
-  .hero-youtube-wrap iframe {
-    width: 100%;
-    height: 100%;
-    border: 0;
     pointer-events: none;
   }
 
@@ -539,7 +506,7 @@
     opacity: 0.46;
   }
 
-  .heritage-yt {
+  .heritage-media {
     position: relative;
     width: 100%;
     aspect-ratio: 16 / 9;
@@ -548,20 +515,19 @@
     overflow: hidden;
   }
 
-  .heritage-yt iframe {
-    position: absolute;
-    inset: 0;
+  .heritage-media img {
     width: 100%;
     height: 100%;
-    border: none;
+    object-fit: cover;
+    display: block;
   }
 
-  .yt-stage-section {
+  .media-stage-section {
     background: #fff;
     padding: clamp(48px, 7vw, 96px) 0;
   }
 
-  .yt-stage-section .yt-stage-header {
+  .media-stage-section .media-stage-header {
     margin-bottom: 2rem;
   }
 
@@ -1040,10 +1006,9 @@
 
 <section class="hero">
   <div class="hero-media" aria-hidden="true">
-    <img class="hero-poster" src="<%= homeImageBase %>/home-hero.png" alt="" loading="eager">
-    <div class="hero-youtube-wrap">
-      <div id="heroYoutubePlayer" data-video-id="A9PhV0B2nmg"></div>
-    </div>
+    <video class="hero-video" autoplay muted loop playsinline poster="<%= homeImageBase %>/home-hero.png">
+      <source src="/media/home/home-video.mp4" type="video/mp4">
+    </video>
   </div>
 
   <div class="hero-overlay">
@@ -1189,14 +1154,14 @@
     </div>
   </section>
 
-  <section class="yt-stage-section">
+  <section class="media-stage-section">
     <div class="page-shell">
-      <div class="yt-stage-header">
+      <div class="media-stage-header">
         <p class="section-kicker">Scaffold media stage</p>
         <h2 class="section-title">Ready for your future wellness assets.</h2>
         <p class="section-copy">This area keeps the rhythm and proportions of the original while using lightweight placeholders.</p>
       </div>
-      <div class="heritage-yt">
+      <div class="heritage-media">
         <img src="<%= homeImageBase %>/center-impression.png" alt="Serenity Wellness Center media slot" loading="lazy">
       </div>
     </div>
@@ -1605,121 +1570,6 @@
 </main>
 
 <script>
-  (function () {
-    const hero = document.querySelector('.hero');
-    const playerEl = document.getElementById('heroYoutubePlayer');
-    if (!hero || !playerEl) return;
-
-    const videoId = playerEl.dataset.videoId;
-    const loopStartSeconds = 0;
-    const loopEndSeconds = 15;
-    let player = null;
-    let loopTimer = 0;
-
-    function setVideoReady(isReady) {
-      hero.classList.toggle('is-youtube-ready', Boolean(isReady));
-    }
-
-    function stopLoopTimer() {
-      if (loopTimer) {
-        window.clearInterval(loopTimer);
-        loopTimer = 0;
-      }
-    }
-
-    function startLoopTimer() {
-      stopLoopTimer();
-      loopTimer = window.setInterval(function () {
-        if (!player || typeof player.getCurrentTime !== 'function') return;
-
-        const currentTime = player.getCurrentTime();
-        if (Number.isFinite(currentTime) && currentTime >= loopEndSeconds) {
-          player.seekTo(loopStartSeconds, true);
-          player.playVideo();
-        }
-      }, 100);
-    }
-
-    function requestPlayback() {
-      if (!player) return;
-
-      player.mute();
-      player.playVideo();
-      startLoopTimer();
-    }
-
-    function handleStateChange(event) {
-      const states = window.YT && window.YT.PlayerState;
-      if (!states) return;
-
-      if (event.data === states.PLAYING || event.data === states.BUFFERING) {
-        setVideoReady(true);
-        startLoopTimer();
-      }
-
-      if (event.data === states.ENDED) {
-        player.seekTo(loopStartSeconds, true);
-        requestPlayback();
-      }
-
-      if (event.data === states.PAUSED) {
-        window.setTimeout(function () {
-          if (!player || player.getPlayerState() !== states.PAUSED) return;
-          requestPlayback();
-          window.setTimeout(function () {
-            if (player && player.getPlayerState() === states.PAUSED) {
-              setVideoReady(false);
-            }
-          }, 300);
-        }, 250);
-      }
-    }
-
-    function createHeroPlayer() {
-      player = new window.YT.Player('heroYoutubePlayer', {
-        videoId,
-        host: 'https://www.youtube-nocookie.com',
-        playerVars: {
-          autoplay: 1,
-          controls: 0,
-          disablekb: 1,
-          enablejsapi: 1,
-          fs: 0,
-          iv_load_policy: 3,
-          playsinline: 1,
-          rel: 0,
-          start: loopStartSeconds,
-          origin: window.location.origin,
-        },
-        events: {
-          onReady: requestPlayback,
-          onStateChange: handleStateChange,
-          onAutoplayBlocked: function () {
-            stopLoopTimer();
-            setVideoReady(false);
-          },
-        },
-      });
-    }
-
-    const previousYouTubeReady = window.onYouTubeIframeAPIReady;
-    window.onYouTubeIframeAPIReady = function () {
-      if (typeof previousYouTubeReady === 'function') {
-        previousYouTubeReady();
-      }
-      createHeroPlayer();
-    };
-
-    if (window.YT && window.YT.Player) {
-      createHeroPlayer();
-    } else {
-      const tag = document.createElement('script');
-      tag.src = 'https://www.youtube.com/iframe_api';
-      tag.async = true;
-      document.head.appendChild(tag);
-    }
-  })();
-
   (function () {
     const experience = document.querySelector('.experience-section');
     const merchCarousel = document.querySelector('[data-merch-carousel]');
