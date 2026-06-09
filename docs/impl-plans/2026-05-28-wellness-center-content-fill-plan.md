@@ -253,8 +253,8 @@ tagline 可以走这种方向：
 
 ### 建议
 
-首页首屏视频使用 YouTube IFrame Player API，不放在 MinIO，也不需要本地 `mp4`。  
-首页展示图保存在 `web/public/images`，并由 Docker 初始化流程 mirror 到 MinIO 的 `home/*` prefix；运行时页面通过 `/api/configurator/assets/home/*` 读取，不直接暴露 MinIO。  
+当前媒体边界以 `docs/exchange/media-boundary-orchestration-plan-20260609.md` 和 README 为准：首页首屏视频使用 `/media/home/*.mp4` 的窄代理，展示图使用 `/static/images/*`。
+不要再把首页展示图 mirror 到 MinIO 的 home prefix，也不要让运行时页面通过 configurator 的 home asset route 读取展示图。
 最终展示时建议使用真实照片或生成的 bitmap 图片替换静态 placeholder，尤其是 `home-hero.*` fallback poster。  
 第一阶段可以保持原文件名不变，这样不需要改代码。  
 当前真实素材已经使用 `.png`。如果后续改成 `.jpg` 或 `.webp`，需要同步更新 `web/views/home.ejs`、SQL `minio_object` 和相关测试里的引用。

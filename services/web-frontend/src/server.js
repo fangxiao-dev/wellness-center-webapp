@@ -43,6 +43,10 @@ if (!repoRoot) {
   throw new Error("Could not locate shared web/public directory");
 }
 
+app.use(/^\/static\/images\/[^/]+\.mp4$/i, (_req, res) => {
+  res.status(404).end();
+});
+
 app.use("/static", express.static(path.join(repoRoot, "web", "public")));
 
 app.get("/health", (_req, res) => {

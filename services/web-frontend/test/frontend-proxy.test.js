@@ -107,6 +107,11 @@ test("serves static assets locally and proxies dynamic requests to backend", asy
     assert.equal(staticResponse.status, 200);
     assert.match(await staticResponse.text(), /:root/);
 
+    const staticVideoResponse = await fetch(`${frontend.baseUrl}/static/images/home-video.mp4`, {
+      method: "HEAD",
+    });
+    assert.equal(staticVideoResponse.status, 404);
+
     const proxyResponse = await fetch(`${frontend.baseUrl}/aftercare-shop?x=1`, {
       method: "POST",
       headers: {
