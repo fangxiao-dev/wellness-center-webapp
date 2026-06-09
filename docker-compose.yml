@@ -30,8 +30,14 @@ services:
     environment:
       PORT: 4100
       WEB_BACKEND_URL: http://web-backend:4102
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-minio}
+      MINIO_PORT: ${MINIO_PORT:-9000}
+      MINIO_BUCKET: ${MINIO_BUCKET:-wellness-media}
     depends_on:
-      - web-backend
+      web-backend:
+        condition: service_started
+      minio-init:
+        condition: service_completed_successfully
     volumes:
       - ./web:/app/web
 
@@ -260,7 +266,10 @@ services:
       mc mirror --overwrite /seed/package-configurator local/${MINIO_BUCKET}/package-configurator;
       mc mirror --overwrite /seed/aftercare-shop local/${MINIO_BUCKET}/aftercare-shop;
       mc mirror --overwrite /seed/center local/${MINIO_BUCKET}/center;
-      mc mirror --overwrite /seed/home-images local/${MINIO_BUCKET}/home;
+      for file in /seed/home-images/*.mp4; do
+        [ -f "$$file" ] || continue;
+        mc cp "$$file" "local/${MINIO_BUCKET}/home/$$(basename "$$file")";
+      done;
       echo 'Done.';
       "
 
