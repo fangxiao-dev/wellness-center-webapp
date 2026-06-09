@@ -43,8 +43,23 @@ if (!repoRoot) {
   throw new Error("Could not locate shared web/public directory");
 }
 
-app.use(/^\/static\/images\/[^/]+\.mp4$/i, (_req, res) => {
-  res.status(404).end();
+app.use(/^\/static\/images(?:\/.*)?$/i, (req, res, next) => {
+  const rawPath = req.originalUrl.split("?")[0];
+  let decodedPath;
+
+  try {
+    decodedPath = decodeURIComponent(rawPath);
+  } catch (_error) {
+    res.status(404).end();
+    return;
+  }
+
+  if (/^\/static\/images\/[^/]+\.mp4$/i.test(decodedPath)) {
+    res.status(404).end();
+    return;
+  }
+
+  next();
 });
 
 app.use("/static", express.static(path.join(repoRoot, "web", "public")));

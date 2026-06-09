@@ -227,7 +227,7 @@ tagline 可以走这种方向：
 供应商图只有在有授权时才建议使用。  
 免费图库更适合生活方式图，不一定适合统一的商品 catalog 图。
 
-## 首页展示素材与 YouTube 首屏视频
+## 首页展示素材与本地首屏视频
 
 ### 涉及文件
 
@@ -243,7 +243,7 @@ tagline 可以走这种方向：
 
 | 文件 | 推荐内容 |
 |---|---|
-| `home-hero.*` | 第一屏 YouTube 加载前的 fallback poster，必须一眼看出是 Wellness Center / massage。 |
+| `home-hero.*` | 第一屏本地视频的 poster，必须一眼看出是 Wellness Center / massage。 |
 | `wellness-stage-loop.*` | 不再作为首页首屏必填视频素材；如保留中段本地视频位，可作为 package stage 或 treatment room 的备用素材。 |
 | `wellness-ai-hero.*` | 咨询场景、intake form、治疗师和用户沟通。 |
 | `aftercare-preview.*` | 多个 aftercare 商品组合图。 |
@@ -404,7 +404,7 @@ web/public/images/*
 3. 替换 `assets/package-configurator` 下的 3 张 package 图。
 4. 替换 `assets/aftercare-shop` 下的 6 张商品图。
 5. 替换 `assets/center` 下的中心图。
-6. 替换 `web/public/images` 下的首页静态展示图，其中 `home-hero.*` 作为 YouTube 首屏 fallback poster。
+6. 替换 `web/public/images` 下的首页静态展示图，其中 `home-hero.*` 作为本地首屏视频 poster。
 7. 优化 package 和 product seed 的描述、价格和使用提示。
 8. 清理可见页面文案，并决定 UI 语言。
 9. 清理 AI/home 里的迁移语义，例如 `carModel`、`car-reveal`、`vehicle-*`。
