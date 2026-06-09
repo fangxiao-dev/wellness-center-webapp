@@ -1,9 +1,9 @@
 const assert = require("node:assert/strict");
-const { once } = require("node:events");
-const { spawn } = require("node:child_process");
 const http = require("node:http");
 const path = require("node:path");
 const test = require("node:test");
+
+const frontendServerPath = path.resolve(__dirname, "..", "src", "server.js");
 
 function listen(server) {
   return new Promise((resolve) => {
@@ -11,67 +11,28 @@ function listen(server) {
   });
 }
 
-async function waitForHealth(baseUrl) {
-  const deadline = Date.now() + 5000;
-  let lastError;
-
-  while (Date.now() < deadline) {
-    try {
-      const response = await fetch(`${baseUrl}/health`, {
-        signal: AbortSignal.timeout(250),
-      });
-      if (response.ok) return;
-    } catch (err) {
-      lastError = err;
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, 100));
-  }
-
-  throw lastError || new Error("frontend did not become healthy");
-}
-
-async function stopChild(child) {
-  if (child.exitCode !== null || child.signalCode !== null) return;
-  child.kill();
-  await once(child, "exit").catch(() => {});
-}
-
 function closeServer(server) {
   return new Promise((resolve) => server.close(resolve));
 }
 
 async function startFrontend(backendUrl) {
-  const portProbe = http.createServer((_req, res) => res.end());
-  const port = await listen(portProbe);
-  await new Promise((resolve) => portProbe.close(resolve));
-  const child = spawn(process.execPath, ["src/server.js"], {
-    cwd: process.cwd(),
-    env: {
-      ...process.env,
-      PORT: String(port),
-      WEB_BACKEND_URL: backendUrl,
-      REPO_ROOT: path.resolve(process.cwd(), "..", ".."),
-    },
-    stdio: ["ignore", "ignore", "pipe"],
-  });
-  let stderr = "";
-  child.stderr.on("data", (chunk) => {
-    stderr += chunk.toString();
-  });
-
+  const originalBackendUrl = process.env.WEB_BACKEND_URL;
+  process.env.WEB_BACKEND_URL = backendUrl;
+  delete require.cache[frontendServerPath];
+  const app = require(frontendServerPath);
+  const server = http.createServer(app);
+  const port = await listen(server);
   const baseUrl = `http://127.0.0.1:${port}`;
-  try {
-    await waitForHealth(baseUrl);
-  } catch (err) {
-    await stopChild(child);
-    throw new Error(`${err.message}${stderr ? `\n${stderr}` : ""}`);
-  }
 
   return {
     baseUrl,
     async stop() {
-      await stopChild(child);
+      if (originalBackendUrl === undefined) {
+        delete process.env.WEB_BACKEND_URL;
+      } else {
+        process.env.WEB_BACKEND_URL = originalBackendUrl;
+      }
+      await closeServer(server);
     },
   };
 }

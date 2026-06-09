@@ -51,5 +51,11 @@
         </nav>
       </div>
     </footer>
+    <%
+      const mapsKey = (typeof mapsApiKey !== 'undefined' && mapsApiKey) ? mapsApiKey : "";
+      const mapsKeyJson = JSON.stringify(mapsKey).replace(/</g, "\\u003c");
+    %>
+    <script>window.SERENITY_MAPS_KEY = <%- mapsKeyJson %>;</script>
+    <script src="/static/app.js" defer></script>
   </body>
 </html>

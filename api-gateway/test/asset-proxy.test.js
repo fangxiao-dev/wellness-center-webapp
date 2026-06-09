@@ -1,8 +1,9 @@
 const assert = require("node:assert/strict");
-const { once } = require("node:events");
-const { spawn } = require("node:child_process");
 const http = require("node:http");
+const path = require("node:path");
 const test = require("node:test");
+
+const gatewayServerPath = path.resolve(__dirname, "..", "src", "server.js");
 
 function listen(server) {
   return new Promise((resolve) => {
@@ -44,73 +45,61 @@ function extractCookieValue(setCookie, name) {
   return match ? match[1] : null;
 }
 
-async function waitForHealth(baseUrl) {
-  const deadline = Date.now() + 5000;
-  let lastError;
-
-  while (Date.now() < deadline) {
-    try {
-      const response = await fetch(`${baseUrl}/health`, { signal: AbortSignal.timeout(250) });
-      if (response.ok) return;
-    } catch (err) {
-      lastError = err;
-    }
-    await new Promise((resolve) => setTimeout(resolve, 100));
-  }
-
-  throw lastError || new Error("gateway did not become healthy");
-}
-
-async function stopChild(child) {
-  if (child.exitCode !== null || child.signalCode !== null) return;
-  child.kill();
-  await once(child, "exit").catch(() => {});
-}
-
 function closeServer(server) {
   if (typeof server.closeAllConnections === "function") {
     server.closeAllConnections();
   }
-  server.close();
-  return Promise.resolve();
+  return new Promise((resolve) => server.close(resolve));
 }
 
-async function startGateway(configuratorUrl, aftercareUrl, cartUrl = "http://127.0.0.1:1") {
-  const portProbe = http.createServer((_req, res) => res.end());
-  const port = await listen(portProbe);
-  await new Promise((resolve) => portProbe.close(resolve));
-
-  const child = spawn(process.execPath, ["src/server.js"], {
-    cwd: process.cwd(),
-    env: {
-      ...process.env,
-      PORT: String(port),
-      CONFIGURATOR_URL: configuratorUrl,
-      AFTERCARE_URL: aftercareUrl,
-      CART_URL: cartUrl,
-    },
-    stdio: ["ignore", "ignore", "pipe"],
-  });
-
-  let stderr = "";
-  child.stderr.on("data", (chunk) => {
-    stderr += chunk.toString();
-  });
-
-  const baseUrl = `http://127.0.0.1:${port}`;
-  try {
-    await waitForHealth(baseUrl);
-  } catch (err) {
-    await stopChild(child);
-    throw new Error(`${err.message}${stderr ? `\n${stderr}` : ""}`);
+async function startGateway(configuratorUrl, aftercareUrl, cartUrl = "http://127.0.0.1:1", extraEnv = {}) {
+  const envOverrides = {
+    CONFIGURATOR_URL: configuratorUrl,
+    AFTERCARE_URL: aftercareUrl,
+    CART_URL: cartUrl,
+    ...extraEnv,
+  };
+  const originalEnv = {};
+  for (const key of Object.keys(envOverrides)) {
+    originalEnv[key] = process.env[key];
+    process.env[key] = envOverrides[key];
   }
+
+  delete require.cache[gatewayServerPath];
+  const app = require(gatewayServerPath);
+  const server = http.createServer(app);
+  const port = await listen(server);
+  const baseUrl = `http://127.0.0.1:${port}`;
 
   return {
     baseUrl,
     async stop() {
-      await stopChild(child);
+      await closeServer(server);
+      for (const [key, value] of Object.entries(originalEnv)) {
+        if (value === undefined) {
+          delete process.env[key];
+        } else {
+          process.env[key] = value;
+        }
+      }
     },
   };
+}
+
+function parseCookieAttributes(setCookie, name) {
+  const header = String(setCookie || "");
+  const parts = header.split(";").map((part) => part.trim());
+  const [cookiePair, ...attributePairs] = parts;
+  const [cookieName, value] = cookiePair.split("=");
+  if (cookieName !== name) return null;
+
+  const attributes = {};
+  for (const pair of attributePairs) {
+    const [rawKey, ...rawValue] = pair.split("=");
+    attributes[rawKey.toLowerCase()] = rawValue.length ? rawValue.join("=") : true;
+  }
+
+  return { value, attributes };
 }
 
 test("gateway uses a newly issued session id for first cart write", async () => {
@@ -177,6 +166,78 @@ test("gateway uses a newly issued session id for first cart write", async () => 
       `/cart/${sessionId}/items`,
       `/cart/${sessionId}`,
     ]);
+  } finally {
+    await gateway.stop();
+    await closeServer(cart);
+    await closeServer(configurator);
+    await closeServer(aftercare);
+  }
+});
+
+test("gateway first cart request sets an explicit 24 hour lax httpOnly session cookie for local HTTP", async () => {
+  const cart = http.createServer((req, res) => {
+    assert.match(req.url, /^\/cart\/[^/]+$/);
+    res.setHeader("content-type", "application/json");
+    res.end(JSON.stringify({ items: [], total: 0 }));
+  });
+  const configurator = http.createServer((_req, res) => res.writeHead(404).end());
+  const aftercare = http.createServer((_req, res) => res.writeHead(404).end());
+  const cartPort = await listen(cart);
+  const configuratorPort = await listen(configurator);
+  const aftercarePort = await listen(aftercare);
+  const gateway = await startGateway(
+    `http://127.0.0.1:${configuratorPort}`,
+    `http://127.0.0.1:${aftercarePort}`,
+    `http://127.0.0.1:${cartPort}`,
+    { NODE_ENV: "development" }
+  );
+
+  try {
+    const response = await fetch(`${gateway.baseUrl}/api/cart`);
+    const sessionCookie = parseCookieAttributes(response.headers.get("set-cookie"), "sessionId");
+
+    assert.equal(response.status, 200);
+    assert.ok(sessionCookie);
+    assert.ok(sessionCookie.value);
+    assert.equal(sessionCookie.attributes.httponly, true);
+    assert.equal(sessionCookie.attributes.samesite, "Lax");
+    assert.equal(sessionCookie.attributes["max-age"], "86400");
+    assert.ok(sessionCookie.attributes.expires);
+    assert.equal(sessionCookie.attributes.secure, undefined);
+  } finally {
+    await gateway.stop();
+    await closeServer(cart);
+    await closeServer(configurator);
+    await closeServer(aftercare);
+  }
+});
+
+test("gateway enables secure session cookies in production-like environments", async () => {
+  const cart = http.createServer((_req, res) => {
+    res.setHeader("content-type", "application/json");
+    res.end(JSON.stringify({ items: [], total: 0 }));
+  });
+  const configurator = http.createServer((_req, res) => res.writeHead(404).end());
+  const aftercare = http.createServer((_req, res) => res.writeHead(404).end());
+  const cartPort = await listen(cart);
+  const configuratorPort = await listen(configurator);
+  const aftercarePort = await listen(aftercare);
+  const gateway = await startGateway(
+    `http://127.0.0.1:${configuratorPort}`,
+    `http://127.0.0.1:${aftercarePort}`,
+    `http://127.0.0.1:${cartPort}`,
+    { NODE_ENV: "production" }
+  );
+
+  try {
+    const response = await fetch(`${gateway.baseUrl}/api/cart`);
+    const sessionCookie = parseCookieAttributes(response.headers.get("set-cookie"), "sessionId");
+
+    assert.equal(response.status, 200);
+    assert.ok(sessionCookie);
+    assert.equal(sessionCookie.attributes.secure, true);
+    assert.equal(sessionCookie.attributes.httponly, true);
+    assert.equal(sessionCookie.attributes.samesite, "Lax");
   } finally {
     await gateway.stop();
     await closeServer(cart);

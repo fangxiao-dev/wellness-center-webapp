@@ -248,7 +248,8 @@ async function initVisitContext() {
     summary.innerHTML = `
       <h2>${escapeHtml(location.name || "Serenity Wellness Center")}</h2>
       <p>${escapeHtml(location.address || data.address || "")}</p>
-      <p>${escapeHtml(data.arrivalTip || data.tip || "")}</p>
+      <p>${escapeHtml(location.openingNote || data.openingNote || "")}</p>
+      <p>${escapeHtml(location.arrivalTip || data.arrivalTip || data.tip || "")}</p>
       <p>${escapeHtml(data.weather?.summary || data.weatherSummary || "")}</p>
     `;
     const hasMaps = await loadGoogleMaps(window.SERENITY_MAPS_KEY);
@@ -264,7 +265,9 @@ async function initVisitContext() {
         title: location.name || "Serenity Wellness Center",
       });
     } else {
-      map.textContent = location.address || "Map unavailable until Google Maps key is configured.";
+      map.textContent = location.address
+        ? `Google Maps key is not configured. Visit location: ${location.address}`
+        : "Google Maps key is not configured. Map unavailable, but visit details are listed above.";
     }
   } catch (err) {
     summary.textContent = err.message;

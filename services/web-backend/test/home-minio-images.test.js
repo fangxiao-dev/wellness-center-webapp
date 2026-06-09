@@ -108,7 +108,7 @@ test("home page preserves presentation structure with YouTube hero background", 
     assert.match(html, /youtube-nocookie\.com/);
     assert.match(html, /\/api\/configurator\/assets\/home\/home-hero\.png/);
     assert.match(html, /class="hero-overlay"/);
-    assert.match(html, /class="vehicle-hero model-showcase"/);
+    assert.match(html, /class="package-showcase package-stage-showcase"/);
     assert.match(html, /class="package-stage-grid"/);
     assert.match(html, /class="merch-preview-grid"/);
     assert.doesNotMatch(html, /\/api\/merch\//);

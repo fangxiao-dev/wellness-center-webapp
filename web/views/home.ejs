@@ -136,7 +136,7 @@
     padding: clamp(76px, 9vw, 124px) 0 0;
   }
 
-  .vehicle-hero {
+  .package-showcase {
     margin-left: calc(50% - 50vw);
     position: relative;
     width: 100vw;
@@ -148,7 +148,7 @@
     padding: clamp(64px, 8vw, 112px) 0;
   }
 
-  .vehicle-backdrop {
+  .package-showcase-backdrop {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -159,7 +159,7 @@
     transform: scale(1.04);
   }
 
-  .vehicle-hero::after {
+  .package-showcase::after {
     content: "";
     position: absolute;
     inset: 0;
@@ -217,7 +217,7 @@
     gap: clamp(18px, 3vw, 32px);
   }
 
-  .vehicle-hotspot {
+  .package-hotspot {
     position: relative;
     min-height: clamp(420px, 46vw, 620px);
     display: grid;
@@ -231,7 +231,7 @@
     box-shadow: 0 30px 70px rgba(0, 0, 0, 0.32);
   }
 
-  .vehicle-hotspot img {
+  .package-hotspot img {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -241,7 +241,7 @@
     transition: transform 0.35s ease, filter 0.35s ease;
   }
 
-  .vehicle-hotspot::after {
+  .package-hotspot::after {
     content: "";
     position: absolute;
     inset: 0;
@@ -250,18 +250,18 @@
       linear-gradient(90deg, rgba(7, 11, 16, 0.34), rgba(7, 11, 16, 0.02) 60%);
   }
 
-  .vehicle-hotspot:hover img,
-  .vehicle-hotspot:focus-visible img {
+  .package-hotspot:hover img,
+  .package-hotspot:focus-visible img {
     filter: saturate(1.08) contrast(1.02);
     transform: scale(1.055);
   }
 
-  .vehicle-hotspot:focus-visible {
+  .package-hotspot:focus-visible {
     outline: 3px solid rgba(143, 192, 255, 0.7);
     outline-offset: 4px;
   }
 
-  .vehicle-label {
+  .package-hotspot-label {
     position: relative;
     z-index: 1;
     display: grid;
@@ -269,7 +269,7 @@
     padding: clamp(22px, 3vw, 34px);
   }
 
-  .vehicle-label small {
+  .package-hotspot-label small {
     color: rgba(255, 255, 255, 0.74);
     font-size: 0.72rem;
     font-weight: 800;
@@ -277,7 +277,7 @@
     text-transform: uppercase;
   }
 
-  .vehicle-label strong {
+  .package-hotspot-label strong {
     max-width: 420px;
     font-size: clamp(1.6rem, 3vw, 2.75rem);
     font-weight: 760;
@@ -285,14 +285,14 @@
     line-height: 1.02;
   }
 
-  .vehicle-label span {
+  .package-hotspot-label span {
     max-width: 460px;
     color: rgba(255, 255, 255, 0.78);
     font-size: 0.98rem;
     line-height: 1.55;
   }
 
-  .vehicle-label em {
+  .package-hotspot-label em {
     width: fit-content;
     min-height: 42px;
     display: inline-flex;
@@ -310,7 +310,7 @@
     backdrop-filter: blur(14px);
   }
 
-  .vehicle-label em::after {
+  .package-hotspot-label em::after {
     content: "";
     width: 8px;
     height: 8px;
@@ -852,7 +852,7 @@
     height: 40px;
   }
 
-  .route-car-marker {
+  .visit-location-marker {
     position: absolute;
     width: 44px;
     height: 68px;
@@ -863,13 +863,13 @@
     filter: drop-shadow(0 7px 12px rgba(0, 0, 0, 0.64));
   }
 
-  .route-car-marker svg {
+  .visit-location-marker svg {
     display: block;
     width: 100%;
     height: 100%;
   }
 
-  .route-car-marker.hidden {
+  .visit-location-marker.hidden {
     display: none;
   }
 
@@ -945,7 +945,7 @@
       margin-top: 28px;
     }
 
-    .vehicle-hero {
+    .package-showcase {
       padding: 54px 0;
     }
 
@@ -953,7 +953,7 @@
       width: min(100% - 28px, 1180px);
     }
 
-    .vehicle-hotspot {
+    .package-hotspot {
       min-height: 360px;
     }
 
@@ -980,7 +980,7 @@
       height: clamp(220px, 60vw, 300px);
     }
 
-    .vehicle-label {
+    .package-hotspot-label {
       padding: 22px;
     }
 
@@ -1090,8 +1090,8 @@
         </a>
       </div>
 
-      <section class="vehicle-hero model-showcase" aria-label="Package stage">
-        <img class="vehicle-backdrop" src="<%= homeImageBase %>/wellness-ai-hero.png" alt="Serenity package stage" loading="lazy">
+      <section class="package-showcase package-stage-showcase" aria-label="Package stage">
+        <img class="package-showcase-backdrop" src="<%= homeImageBase %>/wellness-ai-hero.png" alt="Serenity package stage" loading="lazy">
         <div class="package-stage-inner">
           <div class="package-stage-head">
             <div class="stage-caption">
@@ -1102,18 +1102,18 @@
           </div>
 
           <div class="package-stage-grid">
-            <a class="vehicle-hotspot" href="/package-configurator/neck-shoulder-relief/60/medium/aroma-oil" aria-label="Configure Neck and Shoulder Relief">
+            <a class="package-hotspot" href="/package-configurator/neck-shoulder-relief/60/medium/aroma-oil" aria-label="Configure Neck and Shoulder Relief">
               <img src="<%= homeImageBase %>/package-relief.png" alt="" aria-hidden="true" loading="lazy">
-              <span class="vehicle-label">
+              <span class="package-hotspot-label">
                 <small>Relief Package</small>
                 <strong>Neck & Shoulder Relief</strong>
                 <span>For neck, shoulders, and upper back after long work or commute days.</span>
                 <em>Configure</em>
               </span>
             </a>
-            <a class="vehicle-hotspot" href="/package-configurator/warm-recovery-massage/90/deep/hot-stone" aria-label="Configure Warm Recovery Massage">
+            <a class="package-hotspot" href="/package-configurator/warm-recovery-massage/90/deep/hot-stone" aria-label="Configure Warm Recovery Massage">
               <img src="<%= homeImageBase %>/package-recovery.png" alt="" aria-hidden="true" loading="lazy">
-              <span class="vehicle-label">
+              <span class="package-hotspot-label">
                 <small>Recovery Package</small>
                 <strong>Warm Recovery Massage</strong>
                 <span>Warmth, quiet pressure, and longer recovery for an unhurried visit.</span>
@@ -1265,7 +1265,7 @@
               '<path d="M14 32h18v18a18 18 0 0 1-18-18z" fill="#1c69d4"/>' +
               '<circle cx="32" cy="32" r="18" fill="none" stroke="#0b0f14" stroke-width="2"/>' +
             '</svg>';
-          const SPORTS_CAR_SVG =
+          const VISIT_LOCATION_SVG =
             '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 112" aria-hidden="true">' +
               '<rect x="14" y="10" width="44" height="92" rx="15" fill="#1c69d4" stroke="#fff" stroke-width="4"/>' +
               '<rect x="22" y="22" width="28" height="22" rx="5" fill="#d9f0ff" opacity=".92"/>' +
@@ -1279,7 +1279,7 @@
             '</svg>';
 
           let map, directionsService, directionsRenderer;
-          let carMarker, destinationMarker;
+          let visitMarker, destinationMarker;
           let animationFrame = null;
           let destinations = [];
           let currentLocationOrigin = null;
@@ -1288,13 +1288,13 @@
             return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
           }
 
-          function createSportsCarMarker(initialPosition, targetMap) {
+          function createVisitLocationMarker(initialPosition, targetMap) {
             function toLatLng(position) {
               if (position && typeof position.lat === "function") return position;
               return new google.maps.LatLng(position.lat, position.lng);
             }
 
-            class SportsCarOverlay extends google.maps.OverlayView {
+            class VisitLocationOverlay extends google.maps.OverlayView {
               constructor(position) {
                 super();
                 this.position = toLatLng(position);
@@ -1304,8 +1304,8 @@
 
               onAdd() {
                 this.div = document.createElement("div");
-                this.div.className = "route-car-marker hidden";
-                this.div.innerHTML = SPORTS_CAR_SVG;
+                this.div.className = "visit-location-marker hidden";
+                this.div.innerHTML = VISIT_LOCATION_SVG;
                 this.getPanes().overlayMouseTarget.appendChild(this.div);
               }
 
@@ -1345,7 +1345,7 @@
               }
             }
 
-            const overlay = new SportsCarOverlay(initialPosition);
+            const overlay = new VisitLocationOverlay(initialPosition);
             overlay.setMap(targetMap);
             return overlay;
           }
@@ -1374,8 +1374,8 @@
             });
             directionsRenderer.setMap(map);
 
-            carMarker = createSportsCarMarker(DEFAULT_CENTER, map);
-            carMarker.hide();
+            visitMarker = createVisitLocationMarker(DEFAULT_CENTER, map);
+            visitMarker.hide();
 
             loadDestinations();
           }
@@ -1388,8 +1388,8 @@
             const routeBtn = document.getElementById("routeBtn");
 
             try {
-              const response = await fetch("/api/destinations");
-              if (!response.ok) throw new Error("Destinations request failed");
+              const response = await fetch("/api/visit-context/locations");
+              if (!response.ok) throw new Error("Visit locations request failed");
               destinations = await response.json();
 
               routeBtn.disabled = destinations.length === 0;
@@ -1436,11 +1436,11 @@
             });
           }
 
-          function animateCar(path) {
+          function animateVisitMarker(path) {
             if (!path || path.length < 2) return;
             if (animationFrame) cancelAnimationFrame(animationFrame);
 
-            carMarker.show();
+            visitMarker.show();
 
             const DRIVE_DURATION = 8000;
             const ZOOM_DURATION = 1500;
@@ -1472,12 +1472,12 @@
               if (elapsed < DRIVE_DURATION) {
                 const progress = easeInOutCubic(elapsed / DRIVE_DURATION);
                 const pos = positionAt(progress);
-                carMarker.setPosition({ lat: pos.lat, lng: pos.lng });
-                carMarker.setRotation(pos.bearing);
+                visitMarker.setPosition({ lat: pos.lat, lng: pos.lng });
+                visitMarker.setRotation(pos.bearing);
                 animationFrame = requestAnimationFrame(step);
               } else {
                 const destination = selectedDestination();
-                carMarker.setPosition(path[path.length - 1]);
+                visitMarker.setPosition(path[path.length - 1]);
                 animationFrame = null;
                 zoomIn(performance.now(), path[path.length - 1], destination ? destination.name : "Serenity Ziel");
               }
@@ -1570,9 +1570,9 @@
 
                   if (route.bounds) {
                     map.fitBounds(route.bounds, { top: 380, right: 120, bottom: 160, left: 120 });
-                    google.maps.event.addListenerOnce(map, "idle", () => animateCar(route.overview_path));
+                    google.maps.event.addListenerOnce(map, "idle", () => animateVisitMarker(route.overview_path));
                   } else {
-                    animateCar(route.overview_path);
+                    animateVisitMarker(route.overview_path);
                   }
                 }
               });
