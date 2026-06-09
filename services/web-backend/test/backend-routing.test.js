@@ -168,6 +168,70 @@ test("aftercare listing SSR fetches products through the API gateway", async () 
   }
 });
 
+test("aftercare product detail SSR fetches the product through the API gateway", async () => {
+  const requests = [];
+  const apiGateway = http.createServer((req, res) => {
+    requests.push(req.url);
+
+    if (req.url === "/api/aftercare/products/heated-neck-wrap") {
+      res.setHeader("content-type", "application/json");
+      res.end(JSON.stringify({
+        id: 1,
+        slug: "heated-neck-wrap",
+        name: "Heated Neck Wrap",
+        category: "heat-care",
+        price: 34.9,
+        imageUrl: "/api/aftercare/assets/aftercare-shop/heated-neck-wrap.png",
+        description: "Reusable warm wrap for shoulder and neck relaxation after a massage session.",
+        usageNote: "Use at home for short warmth intervals.",
+      }));
+      return;
+    }
+
+    res.writeHead(404).end(JSON.stringify({ error: "not found" }));
+  });
+  const apiGatewayPort = await listen(apiGateway);
+  const backend = await startBackend(`http://127.0.0.1:${apiGatewayPort}`);
+
+  try {
+    const response = await fetch(`${backend.baseUrl}/aftercare-shop/heated-neck-wrap`);
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(html, /Heated Neck Wrap/);
+    assert.match(html, /class="aftercare-product-layout"/);
+    assert.match(html, /data-product-detail/);
+    assert.match(html, /data-add/);
+    assert.deepEqual(requests, ["/api/aftercare/products/heated-neck-wrap"]);
+  } finally {
+    await backend.stop();
+    await closeServer(apiGateway);
+  }
+});
+
+test("aftercare product detail returns a clear 404 for missing products", async () => {
+  const requests = [];
+  const apiGateway = http.createServer((req, res) => {
+    requests.push(req.url);
+    res.writeHead(404, { "content-type": "application/json" });
+    res.end(JSON.stringify({ error: "product not found" }));
+  });
+  const apiGatewayPort = await listen(apiGateway);
+  const backend = await startBackend(`http://127.0.0.1:${apiGatewayPort}`);
+
+  try {
+    const response = await fetch(`${backend.baseUrl}/aftercare-shop/not-a-product`);
+    const body = await response.text();
+
+    assert.equal(response.status, 404);
+    assert.match(body, /Aftercare product not found/);
+    assert.deepEqual(requests, ["/api/aftercare/products/not-a-product"]);
+  } finally {
+    await backend.stop();
+    await closeServer(apiGateway);
+  }
+});
+
 test("backend does not expose the legacy minio proxy", async () => {
   const apiGateway = http.createServer((_req, res) => {
     res.writeHead(404).end();
@@ -278,6 +342,51 @@ test("package configurator route renders initial package selection", async () =>
     assert.match(html, /neck-shoulder-relief/);
     assert.match(html, /class="configurator-shell"/);
     assert.match(html, /id="configurator-app"/);
+  } finally {
+    await backend.stop();
+    await closeServer(apiGateway);
+  }
+});
+
+test("package configurator route safely serializes script-breaking initial selection values", async () => {
+  const apiGateway = http.createServer((_req, res) => {
+    res.writeHead(404).end();
+  });
+  const apiGatewayPort = await listen(apiGateway);
+  const backend = await startBackend(`http://127.0.0.1:${apiGatewayPort}`);
+
+  try {
+    const response = await rawGet(
+      backend.baseUrl,
+      "/package-configurator/%3C%2Fscript%3E%3Cscript%3Ealert(1)%3C%2Fscript%3E/60/medium/aroma-oil"
+    );
+    const html = response.body.toString();
+
+    assert.equal(response.status, 200);
+    assert.doesNotMatch(html, /const initialSelection = .*<\/script><script>alert\(1\)<\/script>/);
+    assert.match(html, /\\u003c\/script/);
+  } finally {
+    await backend.stop();
+    await closeServer(apiGateway);
+  }
+});
+
+test("visit context route includes browser script for visit summary behavior", async () => {
+  const apiGateway = http.createServer((_req, res) => {
+    res.writeHead(404).end();
+  });
+  const apiGatewayPort = await listen(apiGateway);
+  const backend = await startBackend(`http://127.0.0.1:${apiGatewayPort}`);
+
+  try {
+    const response = await fetch(`${backend.baseUrl}/visit-context`);
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(html, /id="visit-summary"/);
+    assert.match(html, /id="map"/);
+    assert.match(html, /src="\/static\/app\.js"/);
+    assert.match(html, /SERENITY_MAPS_KEY/);
   } finally {
     await backend.stop();
     await closeServer(apiGateway);

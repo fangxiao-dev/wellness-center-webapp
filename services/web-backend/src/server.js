@@ -35,14 +35,24 @@ app.disable("view cache");
 app.use("/api", express.json());
 
 function renderPage(res, view, locals = {}) {
-  ejs.renderFile(path.join(viewsRoot, `${view}.ejs`), locals, {}, (viewErr, body) => {
+  const viewLocals = { serializeJsonForScript, ...locals };
+  ejs.renderFile(path.join(viewsRoot, `${view}.ejs`), viewLocals, {}, (viewErr, body) => {
     if (viewErr) return res.status(500).send(viewErr.message);
 
-    res.render(path.join("layouts", "main"), { ...locals, body }, (layoutErr, html) => {
+    res.render(path.join("layouts", "main"), { ...viewLocals, body }, (layoutErr, html) => {
       if (layoutErr) return res.status(500).send(layoutErr.message);
       return res.send(html);
     });
   });
+}
+
+function serializeJsonForScript(value) {
+  return JSON.stringify(value)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
 }
 
 function readSetCookieHeaders(headers) {
@@ -158,6 +168,15 @@ async function fetchJson(pathname, fallback) {
   return response.json();
 }
 
+async function fetchJsonResponse(pathname) {
+  const response = await fetch(new URL(pathname, apiGateway));
+  const contentType = response.headers.get("content-type") || "";
+  const payload = contentType.includes("application/json")
+    ? await response.json()
+    : { error: await response.text() };
+  return { response, payload };
+}
+
 app.all(/^\/api(?:\/.*)?$/, forwardToApiGateway);
 
 app.get("/health", (_req, res) => {
@@ -203,6 +222,29 @@ app.get("/aftercare-shop", async (_req, res) => {
     });
   } catch (err) {
     res.status(502).send("aftercare-shop service unavailable: " + err.message);
+  }
+});
+
+app.get("/aftercare-shop/:productId", async (req, res) => {
+  try {
+    const productId = encodeURIComponent(req.params.productId);
+    const { response, payload } = await fetchJsonResponse(`/api/aftercare/products/${productId}`);
+
+    if (response.status === 404) {
+      return res.status(404).send("Aftercare product not found.");
+    }
+
+    if (!response.ok) {
+      return res.status(502).send("aftercare-shop service unavailable: " + (payload.error || response.statusText));
+    }
+
+    return renderPage(res, "aftercare-product", {
+      title: `${payload.name} | Aftercare | Serenity Wellness Center`,
+      activePage: "merch",
+      product: payload,
+    });
+  } catch (err) {
+    return res.status(502).send("aftercare-shop service unavailable: " + err.message);
   }
 });
 

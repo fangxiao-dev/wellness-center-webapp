@@ -41,4 +41,8 @@ app.use(
   })
 );
 
-app.listen(port, () => console.log(`web-frontend listening on port ${port}`));
+if (require.main === module) {
+  app.listen(port, () => console.log(`web-frontend listening on port ${port}`));
+}
+
+module.exports = app;

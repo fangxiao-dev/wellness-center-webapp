@@ -10,14 +10,28 @@ const AFTERCARE = process.env.AFTERCARE_URL || "http://aftercare-shop:4104";
 const CART = process.env.CART_URL || "http://shopping-cart:4106";
 const AI = process.env.AI_URL || "http://ai-feature:4105";
 const VISIT_CONTEXT = process.env.VISIT_CONTEXT_URL || "http://visit-context-service:4107";
+const SESSION_COOKIE_MAX_AGE_MS = 60 * 60 * 24 * 1000;
 
 app.use(express.json());
 app.use(cookieParser());
 
+function isProductionLikeEnvironment() {
+  return ["production", "prod", "staging"].includes(String(process.env.NODE_ENV || "").toLowerCase());
+}
+
+function sessionCookieOptions() {
+  return {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: isProductionLikeEnvironment(),
+    maxAge: SESSION_COOKIE_MAX_AGE_MS,
+  };
+}
+
 app.use((req, res, next) => {
   if (!req.cookies.sessionId) {
     req.cookies.sessionId = crypto.randomUUID();
-    res.cookie("sessionId", req.cookies.sessionId, { httpOnly: true });
+    res.cookie("sessionId", req.cookies.sessionId, sessionCookieOptions());
   }
   next();
 });

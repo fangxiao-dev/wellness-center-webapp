@@ -31,7 +31,7 @@
     position: absolute; inset: 0;
     width: 100%; height: 100%;
     object-fit: cover;
-    /* position adjusted to show the cars clearly, not the light studio floor */
+    /* position adjusted to show the wellness media clearly, not the light studio floor */
     object-position: center 42%;
     filter: brightness(0.58) saturate(0.80);
   }
@@ -125,8 +125,8 @@
   .result.visible { display: block; animation: fadeUp 0.5s ease both; }
   @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
 
-  /* ── Car reveal: car fills full screen, content overlays right side ── */
-  .car-reveal {
+  /* ── Package reveal: media fills full screen, content overlays right side ── */
+  .recommendation-reveal {
     position: relative;
     height: 100vh; min-height: 520px;
     overflow: visible; color: #fff;
@@ -134,21 +134,21 @@
     left: 50%;
     transform: translateX(-50%);
   }
-  .car-reveal-bg {
+  .recommendation-reveal-bg {
     position: absolute; inset: 0; z-index: 0;
     background: #eee9e2;
     overflow: hidden;
   }
-  .car-reveal-bg img {
+  .recommendation-reveal-bg img {
     width: 100%; height: 100%;
     object-fit: cover; object-position: center center;
-    animation: carRevealIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: packageRevealIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
-  @keyframes carRevealIn {
+  @keyframes packageRevealIn {
     from { opacity: 0; transform: scale(1.04); }
     to   { opacity: 1; transform: none; }
   }
-  .car-img-shimmer {
+  .recommendation-img-shimmer {
     position: absolute; inset: 0;
     background: linear-gradient(90deg, #e2ddd6 25%, #f0ece6 50%, #e2ddd6 75%);
     background-size: 200% 100%; animation: shimmer 1.4s infinite;
@@ -156,44 +156,44 @@
   @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 
   /* dark gradient on the right for text legibility */
-  .car-reveal::after {
+  .recommendation-reveal::after {
     content: "";
     position: absolute; inset: 0; z-index: 1;
     background: linear-gradient(to left, rgba(5,10,18,0.82) 0%, rgba(5,10,18,0.55) 45%, rgba(5,10,18,0.0) 75%);
     pointer-events: none;
   }
-  .car-reveal-panel {
+  .recommendation-reveal-panel {
     position: absolute; z-index: 2;
     right: 0; top: 0; bottom: 0;
     width: clamp(340px, 38vw, 500px);
     display: flex; flex-direction: column; justify-content: center;
     padding: 56px 48px 56px 16px;
   }
-  .car-reveal-eyebrow {
+  .recommendation-reveal-eyebrow {
     font-size: 0.76rem; font-weight: 700; letter-spacing: 0.18em;
     text-transform: uppercase; color: rgba(255,255,255,0.65); margin-bottom: 14px;
   }
-  .car-reveal-model {
+  .recommendation-reveal-package {
     font-size: clamp(2.05rem, 4vw, 4.15rem); font-weight: 700; letter-spacing: 0;
     line-height: 1.02; margin-bottom: 32px;
     text-shadow: 0 2px 16px rgba(0,0,0,0.5);
   }
-  .car-reveal-specs {
+  .recommendation-reveal-specs {
     display: flex; flex-direction: column; gap: 16px;
     border-top: 1px solid rgba(255,255,255,0.18);
     padding-top: 24px; margin-bottom: 36px;
   }
-  .car-reveal-spec { display: flex; flex-direction: column; gap: 3px; }
-  .car-reveal-spec-label {
+  .recommendation-reveal-spec { display: flex; flex-direction: column; gap: 3px; }
+  .recommendation-reveal-spec-label {
     font-size: 0.76rem; letter-spacing: 0.18em;
     text-transform: uppercase; color: rgba(255,255,255,0.65);
   }
-  .car-reveal-spec-value {
+  .recommendation-reveal-spec-value {
     font-size: clamp(1rem, 1.55vw, 1.14rem); font-weight: 700; color: rgba(255,255,255,0.92);
     word-break: break-word;
   }
-  .car-reveal-btns { display: flex; flex-direction: column; gap: 12px; }
-  .car-reveal-cta {
+  .recommendation-reveal-btns { display: flex; flex-direction: column; gap: 12px; }
+  .recommendation-reveal-cta {
     display: inline-flex; align-items: center; justify-content: center; gap: 10px;
     padding: 15px 32px;
     background: var(--accent); border: none;
@@ -202,8 +202,8 @@
     letter-spacing: 0.07em; text-transform: uppercase;
     transition: background 0.2s ease, transform 0.2s ease;
   }
-  .car-reveal-cta:hover { background: var(--accent-dark); transform: translateY(-2px); }
-  .car-reveal .merch-trigger-btn {
+  .recommendation-reveal-cta:hover { background: var(--accent-dark); transform: translateY(-2px); }
+  .recommendation-reveal .merch-trigger-btn {
     background: none; border: 1px solid rgba(255,255,255,0.28);
     color: rgba(255,255,255,0.72); border-radius: var(--radius);
     font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
@@ -212,11 +212,10 @@
     display: inline-flex; align-items: center; justify-content: center; gap: 6px;
     transition: all 0.2s;
   }
-  .car-reveal .merch-trigger-btn:hover { border-color: rgba(255,255,255,0.6); color: #fff; }
+  .recommendation-reveal .merch-trigger-btn:hover { border-color: rgba(255,255,255,0.6); color: #fff; }
 
-  /* ── Why bar: overlaid bottom-left of car reveal ── */
-  /* ── Why bar: overlaid bottom-left of car image ── */
-  .car-reveal-why-bar {
+  /* ── Why bar: overlaid bottom-left of recommendation media ── */
+  .recommendation-reveal-why-bar {
     position: absolute; z-index: 3;
     bottom: 0; left: 0;
     right: clamp(340px, 38vw, 500px);
@@ -397,11 +396,11 @@
   @media (max-width: 640px) {
     .ai-hero-content { padding: 100px 16px 80px; }
     .ai-hero-section h1 { font-size: 2rem; }
-    .car-reveal { height: auto; }
-    .car-reveal-model { font-size: 3rem; }
-    .car-reveal-image-wrap { height: 240px; flex: none; margin: 0 -16px 0; width: calc(100% + 32px); }
-    .car-reveal-footer { padding: 14px 0 18px; }
-    .car-reveal-cta { padding: 13px 28px; font-size: 0.85rem; }
+    .recommendation-reveal { height: auto; }
+    .recommendation-reveal-package { font-size: 3rem; }
+    .recommendation-reveal-image-wrap { height: 240px; flex: none; margin: 0 -16px 0; width: calc(100% + 32px); }
+    .recommendation-reveal-footer { padding: 14px 0 18px; }
+    .recommendation-reveal-cta { padding: 13px 28px; font-size: 0.85rem; }
     .merch-grid { grid-template-columns: 1fr; gap: 14px; }
     .merch-product-card { height: clamp(220px, 60vw, 300px); }
     .input-footer { flex-direction: column; align-items: stretch; }
@@ -430,7 +429,7 @@
 
 <div class="ai-results">
   <div class="result" id="result">
-    <div id="carReveal"></div>
+    <div id="recommendationReveal"></div>
     <div class="ai-text-card" id="resultText"></div>
     <div id="merchSection"></div>
   </div>
@@ -451,46 +450,46 @@
 
   function renderResults(data) {
     const packageRecommendation = data.packageRecommendation || {};
-    const packageLink = data.packageLink || data.carLink || "";
+    const packageLink = data.packageLink || "";
     const packageAddOns = Array.isArray(packageRecommendation.addOns) ? packageRecommendation.addOns : [];
     const aftercareLinks = data.aftercareLinks || data.merchLinks || [];
 
     // ── Package reveal ─────────────────────────────────────────────
-    let carHtml = "";
-    let carModel = null;
-    let carColor = null;
+    let recommendationHtml = "";
+    let packageSlug = null;
+    let packageDuration = null;
     let modelLabel = "Your wellness package";
     if (packageLink) {
-      carModel = data.carModel || packageRecommendation.package || null;
-      carColor = data.carColor || (packageRecommendation.duration ? `${packageRecommendation.duration} min` : null);
-      const carWheels = data.carWheels || packageAddOns.join(", ");
-      const carInterior = data.carInterior || packageRecommendation.intensity || null;
-      if (!carModel) {
+      packageSlug = data.packageSlug || packageRecommendation.package || null;
+      packageDuration = data.packageDuration || (packageRecommendation.duration ? `${packageRecommendation.duration} min` : null);
+      const packageAddOnsLabel = data.packageAddOns || packageAddOns.join(", ");
+      const packageIntensity = data.packageIntensity || packageRecommendation.intensity || null;
+      if (!packageSlug) {
         try {
           const u = new URL(packageLink, location.origin);
-          carModel = u.searchParams.get("model") || "";
-          carColor = u.searchParams.get("color") || "";
+          packageSlug = u.searchParams.get("package") || "";
+          packageDuration = u.searchParams.get("duration") || "";
         } catch {}
       }
       const formatPackage = (m) => String(m || "").replace(/-/g, " ");
-      modelLabel = carModel ? `Serenity ${escapeHtml(formatPackage(carModel))}` : "Your wellness package";
-      const colorLabel   = escapeHtml(carColor || "");
+      modelLabel = packageSlug ? `Serenity ${escapeHtml(formatPackage(packageSlug))}` : "Your wellness package";
+      const durationLabel = escapeHtml(packageDuration || "");
       const specsHtml = [
-        colorLabel ? `<span class="car-reveal-spec"><span class="car-reveal-spec-label">Duration</span><span class="car-reveal-spec-value">${colorLabel}</span></span>` : "",
-        carWheels  ? `<span class="car-reveal-spec"><span class="car-reveal-spec-label">Add-ons</span><span class="car-reveal-spec-value">${escapeHtml(carWheels)}</span></span>` : "",
-        carInterior? `<span class="car-reveal-spec"><span class="car-reveal-spec-label">Intensity</span><span class="car-reveal-spec-value">${escapeHtml(carInterior)}</span></span>` : "",
+        durationLabel ? `<span class="recommendation-reveal-spec"><span class="recommendation-reveal-spec-label">Duration</span><span class="recommendation-reveal-spec-value">${durationLabel}</span></span>` : "",
+        packageAddOnsLabel ? `<span class="recommendation-reveal-spec"><span class="recommendation-reveal-spec-label">Add-ons</span><span class="recommendation-reveal-spec-value">${escapeHtml(packageAddOnsLabel)}</span></span>` : "",
+        packageIntensity ? `<span class="recommendation-reveal-spec"><span class="recommendation-reveal-spec-label">Intensity</span><span class="recommendation-reveal-spec-value">${escapeHtml(packageIntensity)}</span></span>` : "",
       ].filter(Boolean).join('');
-      carHtml = `
-        <div class="car-reveal">
-          <div class="car-reveal-bg" id="carImgWrap">
-            <div class="car-img-shimmer"></div>
+      recommendationHtml = `
+        <div class="recommendation-reveal">
+          <div class="recommendation-reveal-bg" id="recommendationImgWrap">
+            <div class="recommendation-img-shimmer"></div>
           </div>
-          <div class="car-reveal-panel">
-            <div class="car-reveal-eyebrow">Your recommendation</div>
-            <div class="car-reveal-model">${modelLabel}</div>
-            ${specsHtml ? `<div class="car-reveal-specs">${specsHtml}</div>` : ""}
-            <div class="car-reveal-btns">
-              <a class="car-reveal-cta" href="${escapeHtml(packageLink)}">
+          <div class="recommendation-reveal-panel">
+            <div class="recommendation-reveal-eyebrow">Your recommendation</div>
+            <div class="recommendation-reveal-package">${modelLabel}</div>
+            ${specsHtml ? `<div class="recommendation-reveal-specs">${specsHtml}</div>` : ""}
+            <div class="recommendation-reveal-btns">
+              <a class="recommendation-reveal-cta" href="${escapeHtml(packageLink)}">
                 View configuration &nbsp;→
               </a>
               <button class="merch-trigger-btn" id="merchRevealBtn" type="button">
@@ -499,7 +498,7 @@
               </button>
             </div>
           </div>
-          <div class="car-reveal-why-bar">
+          <div class="recommendation-reveal-why-bar">
             <div class="why-panel" id="whyPanel">
               <div class="why-panel-inner" id="whyText"></div>
             </div>
@@ -510,7 +509,7 @@
           </div>
         </div>`;
     }
-    document.getElementById("carReveal").innerHTML = carHtml;
+    document.getElementById("recommendationReveal").innerHTML = recommendationHtml;
 
     document.getElementById("merchRevealBtn")?.addEventListener("click", () => {
       const section = document.querySelector(".merch-section");
@@ -520,8 +519,8 @@
       }
     });
 
-    const revealWrap = document.getElementById("carImgWrap");
-    if (revealWrap && carModel) {
+    const revealWrap = document.getElementById("recommendationImgWrap");
+    if (revealWrap && packageSlug) {
       const img = new Image();
       img.onload = () => { revealWrap.innerHTML = ""; revealWrap.appendChild(img); };
       img.onerror = () => { revealWrap.innerHTML = ""; };
@@ -529,7 +528,7 @@
       img.alt = modelLabel;
     }
 
-    // ── Why toggle: overlaid bottom-left of car image ─────────────
+    // ── Why toggle: overlaid bottom-left of recommendation media ──
     document.getElementById("resultText").style.display = "none";
     const whyText = document.getElementById("whyText");
     const whyToggle = document.getElementById("whyToggle");

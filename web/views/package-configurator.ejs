@@ -485,7 +485,7 @@
 </div>
 
 <script>
-  const initialSelection = <%- JSON.stringify(initialSelection || null) %>;
+  const initialSelection = <%- serializeJsonForScript(initialSelection || null) %>;
 
   const state = {
     packages: [],

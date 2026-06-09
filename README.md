@@ -51,6 +51,8 @@ Open:
 http://localhost:4100
 ```
 
+Accepted SSR pages include `/`, `/package-configurator`, `/package-configurator/:package/:duration/:intensity/:addon`, `/ai-feature`, `/aftercare-shop`, `/aftercare-shop/:productId`, `/shopping-cart`, `/visit-context`, and `/impressum`.
+
 Run the smoke test without live AI:
 
 ```powershell
@@ -61,6 +63,21 @@ Run with Gemini configured:
 
 ```powershell
 .\scripts\smoke-test.ps1
+```
+
+## Test Commands
+
+Run all service tests with this verification sequence:
+
+```powershell
+npm test --prefix api-gateway
+npm test --prefix services/web-frontend
+npm test --prefix services/web-backend
+npm test --prefix services/package-configurator
+npm test --prefix services/aftercare-shop
+npm test --prefix services/visit-context-service
+npm test --prefix services/ai-feature
+npm test --prefix services/shopping-cart
 ```
 
 ## MinIO Media Prefixes
