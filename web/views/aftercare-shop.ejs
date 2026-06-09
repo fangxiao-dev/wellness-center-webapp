@@ -1,0 +1,131 @@
+<style>
+  /* Aftercare-shop-specific layout. Wellness UI tokens, fonts, page-shell, site-nav,
+     site-footer, section-*, .btn*, .field/.input, .card* live in
+     /static/ci/wellness-ci.css. */
+
+  .aftercare-shop-layout { max-width: 1200px; margin: 0 auto; padding: 40px 20px 80px; }
+  .shop-header { margin-bottom: 40px; }
+  .shop-header h1 { font-size: 2.8rem; font-weight: 800; letter-spacing: -0.03em; margin: 0 0 8px; }
+  .shop-header p { color: var(--muted); font-size: 1.1rem; }
+
+  .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 22px; }
+
+  .product-card {
+    display: flex; flex-direction: column;
+    border: 1px solid var(--line); border-radius: 14px; background: #fff; overflow: hidden;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+  .product-card:hover { box-shadow: 0 16px 40px rgba(0,0,0,0.1); transform: translateY(-2px); }
+  .product-card-media { aspect-ratio: 4 / 3; background: #f1f5f9; }
+  .product-card-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .product-card-body { display: flex; flex-direction: column; gap: 6px; padding: 16px 16px 18px; flex: 1; }
+  .product-card-category { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); }
+  .product-card-name { font-size: 1.05rem; font-weight: 700; margin: 0; line-height: 1.25; }
+  .product-card-desc { font-size: 0.86rem; color: var(--muted); line-height: 1.45; margin: 0; flex: 1; }
+  .product-card-price { font-size: 1.1rem; font-weight: 800; margin-top: 4px; }
+  .product-card-actions { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+  .product-card-detail-link { align-self: flex-start; color: var(--ink); font-size: 0.86rem; font-weight: 800; text-decoration: none; }
+  .product-card-detail-link:hover { color: var(--accent); }
+  .qty-stepper { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .qty-stepper button { width: 36px; height: 40px; border: 0; background: #fff; font-size: 1.1rem; cursor: pointer; color: var(--ink); }
+  .qty-stepper button:hover { background: #f1f5f9; }
+  .qty-stepper input { width: 40px; height: 40px; border: 0; text-align: center; font-weight: 700; font-size: 0.95rem; -moz-appearance: textfield; }
+  .qty-stepper input::-webkit-outer-spin-button, .qty-stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .product-card-actions .btn { flex: 1; min-height: 44px; }
+  .product-card-status { min-height: 18px; font-size: 0.8rem; font-weight: 700; margin-top: 6px; }
+
+  @media (max-width: 640px) { .shop-header h1 { font-size: 2.2rem; } }
+</style>
+
+<div class="aftercare-shop-layout">
+  <header class="shop-header">
+    <h1>Aftercare</h1>
+    <p>Aftercare products for calm, mobility, and recovery after your visit.</p>
+  </header>
+
+  <div class="product-grid">
+    <% products.forEach(function(product) { %>
+      <article class="product-card" id="product-<%= product.slug || product.id %>" data-product-card
+               data-id="<%= product.id %>"
+               data-name="<%= product.name %>"
+               data-price="<%= product.price %>"
+               data-image="<%= product.imageUrl %>">
+        <div class="product-card-media">
+          <img src="<%= product.imageUrl %>" alt="<%= product.name %>" loading="lazy" />
+        </div>
+        <div class="product-card-body">
+          <span class="product-card-category"><%= product.category %></span>
+          <h2 class="product-card-name"><%= product.name %></h2>
+          <% if (product.description) { %><p class="product-card-desc"><%= product.description %></p><% } %>
+          <a class="product-card-detail-link" href="/aftercare-shop/<%= product.slug || product.id %>">View details</a>
+          <span class="product-card-price"><%= parseFloat(product.price).toLocaleString("en-US", { style: "currency", currency: "EUR" }) %></span>
+          <div class="product-card-actions">
+            <div class="qty-stepper">
+              <button type="button" data-qty-dec aria-label="Decrease quantity">&minus;</button>
+              <input type="number" min="1" value="1" data-qty aria-label="Quantity" />
+              <button type="button" data-qty-inc aria-label="Increase quantity">+</button>
+            </div>
+            <button class="btn btn-primary" type="button" data-add>Add to cart</button>
+          </div>
+          <div class="product-card-status" data-status aria-live="polite"></div>
+        </div>
+      </article>
+    <% }) %>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll("[data-product-card]").forEach((card) => {
+    const qtyInput = card.querySelector("[data-qty]");
+    const status = card.querySelector("[data-status]");
+
+    const clampQty = () => {
+      const value = Math.max(1, parseInt(qtyInput.value, 10) || 1);
+      qtyInput.value = value;
+      return value;
+    };
+
+    card.querySelector("[data-qty-dec]").addEventListener("click", () => { qtyInput.value = Math.max(1, clampQty() - 1); });
+    card.querySelector("[data-qty-inc]").addEventListener("click", () => { qtyInput.value = clampQty() + 1; });
+    qtyInput.addEventListener("change", clampQty);
+
+    card.querySelector("[data-add]").addEventListener("click", async () => {
+      status.style.color = "#047857";
+      status.textContent = "Adding...";
+      try {
+        const response = await fetch("/api/cart/items", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "aftercare",
+            name: card.dataset.name,
+            price: parseFloat(card.dataset.price),
+            imageUrl: card.dataset.image,
+            quantity: clampQty(),
+            details: { productId: Number(card.dataset.id) },
+          }),
+        });
+        if (!response.ok) throw new Error("cart request failed");
+        status.textContent = "Added to cart.";
+      } catch (error) {
+        status.style.color = "#b91c1c";
+        status.textContent = "Cart is currently unavailable.";
+      }
+    });
+  });
+
+  if (location.hash) {
+    let target = null;
+    try {
+      target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+    } catch (_error) {}
+    if (target) {
+      setTimeout(() => {
+        target.scrollIntoView({ behavior: "smooth", block: "center" });
+        target.style.outline = "3px solid var(--accent)";
+        target.style.borderRadius = "14px";
+        setTimeout(() => { target.style.outline = ""; }, 1800);
+      }, 100);
+    }
+  }
+</script>

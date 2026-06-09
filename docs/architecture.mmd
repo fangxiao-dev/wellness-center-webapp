@@ -1,0 +1,43 @@
+flowchart LR
+    user["User"]
+    frontend["Web Frontend\n/static + browser entry proxy"]
+    backend["Web Backend\nEJS rendering + /api proxy"]
+    gateway["API Gateway\nAPI routing + session cookie"]
+
+    subgraph services["Services"]
+        configurator["Package Configurator"]
+        aftercare["Aftercare Shop"]
+        ai["AI Feature"]
+        visit["Visit Context Service"]
+        cart["Shopping Cart"]
+    end
+
+    subgraph data["Infrastructure"]
+        mysqlConfigurator["MySQL Configurator DB"]
+        mysqlAftercare["MySQL Aftercare DB"]
+        mysqlVisit["MySQL Visit Context DB"]
+        redis["Redis"]
+        minio["MinIO"]
+    end
+
+    subgraph external["External APIs"]
+        gemini["Gemini API"]
+        google["Google Maps Platform"]
+    end
+
+    user --> frontend --> backend --> gateway
+    gateway --> configurator
+    gateway --> aftercare
+    gateway --> ai
+    gateway --> visit
+    gateway --> cart
+    configurator --> mysqlConfigurator
+    configurator --> minio
+    aftercare --> mysqlAftercare
+    aftercare --> minio
+    visit --> mysqlVisit
+    visit --> google
+    ai --> gemini
+    ai --> configurator
+    ai --> aftercare
+    cart --> redis

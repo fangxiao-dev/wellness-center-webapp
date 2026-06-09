@@ -1,0 +1,270 @@
+services:
+  api-gateway:
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+    expose:
+      - "4101"
+    environment:
+      PORT: 4101
+      CONFIGURATOR_URL: http://package-configurator:4103
+      AFTERCARE_URL: http://aftercare-shop:4104
+      CART_URL: http://shopping-cart:4106
+      AI_URL: http://ai-feature:4105
+      VISIT_CONTEXT_URL: http://visit-context-service:4107
+    depends_on:
+      - package-configurator
+      - aftercare-shop
+      - shopping-cart
+      - ai-feature
+      - visit-context-service
+    volumes:
+      - ./api-gateway/src:/app/api-gateway/src
+
+  web-frontend:
+    build:
+      context: .
+      dockerfile: services/web-frontend/Dockerfile
+    ports:
+      - "4100:4100"
+    environment:
+      PORT: 4100
+      WEB_BACKEND_URL: http://web-backend:4102
+    depends_on:
+      - web-backend
+    volumes:
+      - ./web:/app/web
+
+  web-backend:
+    build:
+      context: .
+      dockerfile: services/web-backend/Dockerfile
+    expose:
+      - "4102"
+    environment:
+      PORT: 4102
+      API_GATEWAY_URL: http://api-gateway:4101
+      GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
+    depends_on:
+      - api-gateway
+    volumes:
+      - ./web:/app/web
+
+  package-configurator:
+    build:
+      context: ./services/package-configurator
+    expose:
+      - "4103"
+    environment:
+      PORT: 4103
+      MYSQL_HOST: mysql-configurator
+      MYSQL_PORT: ${MYSQL_PORT}
+      MYSQL_USER: ${DBE_CLOUDDEV_CONFIGURATOR}
+      MYSQL_PASSWORD: ${DBE_CLOUDDEV_CONFIGURATOR_PASSWORD}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      MINIO_PORT: ${MINIO_PORT}
+      MINIO_BUCKET: ${MINIO_BUCKET}
+    depends_on:
+      mysql-configurator-seed:
+        condition: service_completed_successfully
+
+  aftercare-shop:
+    build:
+      context: ./services/aftercare-shop
+    expose:
+      - "4104"
+    environment:
+      PORT: 4104
+      MYSQL_HOST: mysql-aftercare
+      MYSQL_PORT: ${MYSQL_PORT}
+      MYSQL_USER: ${DBE_CLOUDDEV_AFTERCARE}
+      MYSQL_PASSWORD: ${DBE_CLOUDDEV_AFTERCARE_PASSWORD}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      MINIO_PORT: ${MINIO_PORT}
+      MINIO_BUCKET: ${MINIO_BUCKET}
+    depends_on:
+      mysql-aftercare-seed:
+        condition: service_completed_successfully
+
+  shopping-cart:
+    build:
+      context: ./services/shopping-cart
+    expose:
+      - "4106"
+    environment:
+      PORT: 4106
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+    depends_on:
+      - redis
+
+  ai-feature:
+    build:
+      context: ./services/ai-feature
+    expose:
+      - "4105"
+    environment:
+      PORT: 4105
+      CONFIGURATOR_URL: http://package-configurator:4103
+      AFTERCARE_URL: http://aftercare-shop:4104
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      GEMINI_FALLBACK_MODEL: ${GEMINI_FALLBACK_MODEL:-gemini-2.5-flash-lite}
+    depends_on:
+      - package-configurator
+      - aftercare-shop
+
+  visit-context-service:
+    build:
+      context: ./services/visit-context-service
+    expose:
+      - "4107"
+    environment:
+      PORT: 4107
+      MYSQL_HOST: mysql-visit-context
+      MYSQL_PORT: ${MYSQL_PORT}
+      MYSQL_USER: ${DBE_CLOUDDEV_VISIT_CONTEXT}
+      MYSQL_PASSWORD: ${DBE_CLOUDDEV_VISIT_CONTEXT_PASSWORD}
+      GOOGLE_WEATHER_API_KEY: ${GOOGLE_WEATHER_API_KEY}
+    depends_on:
+      mysql-visit-context-seed:
+        condition: service_completed_successfully
+
+  mysql-configurator:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DBE_CLOUDDEV_CONFIGURATOR_ROOT_PASSWORD}
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${DBE_CLOUDDEV_CONFIGURATOR_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    volumes:
+      - mysql_configurator_data:/var/lib/mysql
+
+  mysql-configurator-seed:
+    image: mysql:8.4
+    depends_on:
+      mysql-configurator:
+        condition: service_healthy
+    environment:
+      MYSQL_HOST: mysql-configurator
+      ROOT_PASSWORD: ${DBE_CLOUDDEV_CONFIGURATOR_ROOT_PASSWORD}
+      APP_USER: ${DBE_CLOUDDEV_CONFIGURATOR}
+      APP_PASSWORD: ${DBE_CLOUDDEV_CONFIGURATOR_PASSWORD}
+      APP_DATABASE: wellness_package_configurator
+      SEED_FILE: /seed/02_package_configurator.sql
+    volumes:
+      - ./infrastructure/mysql/init:/seed:ro
+      - ./infrastructure/mysql/seed-service.sh:/seed-service.sh:ro
+    entrypoint: ["/bin/sh", "/seed-service.sh"]
+
+  mysql-aftercare:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DBE_CLOUDDEV_AFTERCARE_ROOT_PASSWORD}
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${DBE_CLOUDDEV_AFTERCARE_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    volumes:
+      - mysql_aftercare_data:/var/lib/mysql
+
+  mysql-aftercare-seed:
+    image: mysql:8.4
+    depends_on:
+      mysql-aftercare:
+        condition: service_healthy
+    environment:
+      MYSQL_HOST: mysql-aftercare
+      ROOT_PASSWORD: ${DBE_CLOUDDEV_AFTERCARE_ROOT_PASSWORD}
+      APP_USER: ${DBE_CLOUDDEV_AFTERCARE}
+      APP_PASSWORD: ${DBE_CLOUDDEV_AFTERCARE_PASSWORD}
+      APP_DATABASE: wellness_aftercare_shop
+      SEED_FILE: /seed/01_aftercare_shop.sql
+    volumes:
+      - ./infrastructure/mysql/init:/seed:ro
+      - ./infrastructure/mysql/seed-service.sh:/seed-service.sh:ro
+    entrypoint: ["/bin/sh", "/seed-service.sh"]
+
+  mysql-visit-context:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DBE_CLOUDDEV_VISIT_CONTEXT_ROOT_PASSWORD}
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${DBE_CLOUDDEV_VISIT_CONTEXT_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    volumes:
+      - mysql_visit_context_data:/var/lib/mysql
+
+  mysql-visit-context-seed:
+    image: mysql:8.4
+    depends_on:
+      mysql-visit-context:
+        condition: service_healthy
+    environment:
+      MYSQL_HOST: mysql-visit-context
+      ROOT_PASSWORD: ${DBE_CLOUDDEV_VISIT_CONTEXT_ROOT_PASSWORD}
+      APP_USER: ${DBE_CLOUDDEV_VISIT_CONTEXT}
+      APP_PASSWORD: ${DBE_CLOUDDEV_VISIT_CONTEXT_PASSWORD}
+      APP_DATABASE: wellness_visit_context
+      SEED_FILE: /seed/03_visit_context.sql
+    volumes:
+      - ./infrastructure/mysql/init:/seed:ro
+      - ./infrastructure/mysql/seed-service.sh:/seed-service.sh:ro
+    entrypoint: ["/bin/sh", "/seed-service.sh"]
+
+  redis:
+    image: redis:8-alpine
+
+  minio:
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    ports:
+      - "9001:9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    volumes:
+      - ./infrastructure/minio/data:/data
+
+  minio-init:
+    image: minio/mc:RELEASE.2025-08-13T08-35-41Z
+    depends_on:
+      minio:
+        condition: service_healthy
+    volumes:
+      - ./assets/package-configurator:/seed/package-configurator:ro
+      - ./assets/aftercare-shop:/seed/aftercare-shop:ro
+      - ./assets/center:/seed/center:ro
+      - ./web/public/images:/seed/home-images:ro
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:${MINIO_PORT} ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD}; do
+        sleep 2;
+      done;
+      mc mb --ignore-existing local/${MINIO_BUCKET};
+      mc anonymous set download local/${MINIO_BUCKET};
+      mc mirror --overwrite /seed/package-configurator local/${MINIO_BUCKET}/package-configurator;
+      mc mirror --overwrite /seed/aftercare-shop local/${MINIO_BUCKET}/aftercare-shop;
+      mc mirror --overwrite /seed/center local/${MINIO_BUCKET}/center;
+      mc mirror --overwrite /seed/home-images local/${MINIO_BUCKET}/home;
+      echo 'Done.';
+      "
+
+volumes:
+  mysql_configurator_data:
+  mysql_aftercare_data:
+  mysql_visit_context_data:

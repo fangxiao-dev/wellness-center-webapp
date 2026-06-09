@@ -1,0 +1,860 @@
+<style>
+  /* Configurator-specific layout. Wellness UI tokens, fonts, page-shell, site-nav,
+     site-footer, section-*, .btn*, .field/.input, .card* live in
+     /static/ci/wellness-ci.css. */
+
+  :root {
+    --config-nav-top: 24px;
+    --config-nav-height: 64px;
+    --summary-top: calc(var(--config-nav-top) + var(--config-nav-height) + 16px);
+  }
+
+  body {
+    background: #111827;
+  }
+
+  .site-nav--solid {
+    position: fixed;
+    top: var(--config-nav-top);
+    left: 50%;
+    z-index: 20;
+    width: min(1180px, calc(100% - 40px));
+    min-height: var(--config-nav-height);
+    margin: 0;
+    transform: translateX(-50%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius);
+    background: var(--dark);
+    color: #fff;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+  }
+
+  .config-stage {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    background:
+      linear-gradient(180deg, rgba(17, 24, 39, 0.08), rgba(17, 24, 39, 0.18)),
+      #f3f4f6;
+  }
+
+  .config-layer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+    display: block;
+    opacity: 0;
+    transition: opacity 0.28s ease;
+  }
+
+  .config-layer.is-visible {
+    opacity: 1;
+  }
+
+  #addonLayers {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .config-layer.addon {
+    z-index: 2;
+  }
+
+  .config-placeholder {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    color: #6b7280;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .config-caption {
+    position: fixed;
+    left: 50%;
+    bottom: 28px;
+    z-index: 8;
+    max-width: calc(100% - 40px);
+    transform: translateX(-50%);
+    padding: 8px 18px;
+    border-radius: 999px;
+    background: rgba(11, 18, 32, 0.62);
+    color: #fff;
+    font-size: 0.86rem;
+    font-weight: 700;
+    line-height: 1.25;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .summary-panel {
+    position: fixed;
+    top: var(--summary-top);
+    left: 50%;
+    z-index: 10;
+    width: min(1180px, calc(100% - 40px));
+    min-height: 96px;
+    padding: 14px 24px;
+    border: 1px solid rgba(17, 24, 39, 0.1);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 18px 60px rgba(0, 0, 0, 0.25);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 18px;
+    align-items: center;
+    transform: translateX(-50%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  .summary-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 24px;
+    min-width: 0;
+  }
+
+  .summary-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  .summary-key {
+    color: #6b7280;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .summary-value {
+    max-width: 240px;
+    color: #111827;
+    font-size: 0.92rem;
+    font-weight: 800;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .summary-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .price-tag {
+    min-width: 106px;
+    text-align: right;
+  }
+
+  .price-tag span {
+    display: block;
+    color: #6b7280;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .price-main {
+    color: #111827;
+    font-size: 1.1rem;
+    font-weight: 800;
+    line-height: 1.35;
+    white-space: nowrap;
+  }
+
+  .add-control {
+    display: flex;
+    min-width: 144px;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .add-btn {
+    min-height: 46px;
+    width: 100%;
+    padding: 0 22px;
+    border: 0;
+    border-radius: 999px;
+    background: #2d74d8;
+    color: #fff;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 800;
+    transition: background 0.2s ease, transform 0.2s ease;
+  }
+
+  .add-btn:hover:not(:disabled) {
+    background: #245fb1;
+    transform: translateY(-1px);
+  }
+
+  .add-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .add-status {
+    min-height: 16px;
+    color: #047857;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .config-panel {
+    position: fixed;
+    top: calc(var(--summary-top) + 120px);
+    right: max(20px, calc(50% - 590px));
+    z-index: 9;
+    width: 380px;
+    max-height: calc(100vh - var(--summary-top) - 156px);
+    overflow-y: auto;
+    padding: 22px;
+    border: 1px solid rgba(17, 24, 39, 0.1);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 18px 60px rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  .config-section + .config-section {
+    margin-top: 22px;
+  }
+
+  .config-section h2 {
+    margin: 0 0 10px;
+    color: #4b5563;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .option-col,
+  .option-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .option-col {
+    flex-direction: column;
+  }
+
+  .option-row {
+    flex-wrap: wrap;
+  }
+
+  .opt-btn {
+    flex: 1 1 0;
+    min-height: 46px;
+    min-width: 0;
+    padding: 10px 14px;
+    border: 1px solid rgba(17, 24, 39, 0.14);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--ink);
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 800;
+    line-height: 1.2;
+    text-align: center;
+    transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+  }
+
+  .opt-btn:hover {
+    border-color: #111827;
+    transform: translateY(-1px);
+  }
+
+  .opt-btn.active {
+    border-color: #111827;
+    background: #111827;
+    color: #fff;
+  }
+
+  .opt-delta {
+    display: block;
+    margin-top: 3px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    opacity: 0.72;
+  }
+
+  .addon-chip {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 58px;
+    padding: 8px 12px;
+    border: 1px solid rgba(17, 24, 39, 0.14);
+    border-radius: 10px;
+    background: #fff;
+    color: #111827;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: left;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+  }
+
+  .addon-chip:hover {
+    border-color: #111827;
+    transform: translateY(-1px);
+  }
+
+  .addon-chip.active {
+    border-color: #111827;
+    box-shadow: inset 0 0 0 2px #111827;
+  }
+
+  .addon-chip img {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 auto;
+    border-radius: 8px;
+    background: #f1f5f9;
+    object-fit: cover;
+  }
+
+  .addon-meta {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .addon-name {
+    font-size: 0.9rem;
+    font-weight: 800;
+  }
+
+  .addon-delta {
+    color: #6b7280;
+    font-size: 0.76rem;
+    font-weight: 700;
+  }
+
+  @media (max-width: 980px) {
+    :root {
+      --config-nav-height: 144px;
+    }
+
+    .summary-panel {
+      grid-template-columns: 1fr;
+    }
+
+    .summary-actions {
+      justify-content: space-between;
+    }
+
+    .config-panel {
+      position: relative;
+      top: auto;
+      right: auto;
+      width: auto;
+      max-height: none;
+      margin: calc(var(--summary-top) + 138px) 20px 96px;
+    }
+  }
+
+  @media (max-width: 760px) {
+    :root {
+      --config-nav-top: 14px;
+      --config-nav-height: 160px;
+      --summary-top: calc(var(--config-nav-top) + var(--config-nav-height) + 14px);
+    }
+
+    .summary-panel {
+      width: calc(100% - 28px);
+      padding: 12px 16px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .summary-value {
+      max-width: 100%;
+    }
+
+    .summary-actions {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .price-tag {
+      text-align: left;
+    }
+
+    .add-control {
+      min-width: 0;
+    }
+
+    .config-panel {
+      margin: calc(var(--summary-top) + 292px) 14px 96px;
+      padding: 18px;
+    }
+
+    .option-row {
+      flex-direction: column;
+    }
+
+    .config-caption {
+      bottom: 18px;
+    }
+  }
+</style>
+
+<div class="configurator-shell" id="configurator-app">
+  <div class="config-stage" aria-hidden="true">
+    <img class="config-layer base" id="baseLayer" src="" alt="" />
+    <div id="addonLayers"></div>
+  </div>
+  <div class="config-placeholder" id="placeholder">Loading preview...</div>
+  <div class="config-caption" id="caption"></div>
+
+  <div class="summary-panel" aria-live="polite">
+    <div class="summary-grid">
+      <div class="summary-cell">
+        <span class="summary-key">Package</span>
+        <span class="summary-value" id="sumPackage">Select a package</span>
+      </div>
+      <div class="summary-cell">
+        <span class="summary-key">Duration</span>
+        <span class="summary-value" id="sumDuration">Select a duration</span>
+      </div>
+      <div class="summary-cell">
+        <span class="summary-key">Intensity</span>
+        <span class="summary-value" id="sumIntensity">Select an intensity</span>
+      </div>
+      <div class="summary-cell">
+        <span class="summary-key">Add-ons</span>
+        <span class="summary-value" id="sumAddons">None</span>
+      </div>
+    </div>
+    <div class="summary-actions">
+      <div class="price-tag">
+        <span>Total</span>
+        <div class="price-main" id="price">EUR 0.00</div>
+      </div>
+      <div class="add-control">
+        <button class="add-btn" type="button" id="addBtn" disabled>Add package</button>
+        <div class="add-status" id="addStatus"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="config-panel" aria-label="Configure your package">
+    <section class="config-section">
+      <h2>Package</h2>
+      <div class="option-col" id="packageBtns"></div>
+    </section>
+    <section class="config-section">
+      <h2>Duration</h2>
+      <div class="option-row" id="durationBtns"></div>
+    </section>
+    <section class="config-section">
+      <h2>Intensity</h2>
+      <div class="option-row" id="intensityBtns"></div>
+    </section>
+    <section class="config-section">
+      <h2>Add-ons</h2>
+      <div class="option-col" id="addonBtns"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+  const initialSelection = <%- serializeJsonForScript(initialSelection || null) %>;
+
+  const state = {
+    packages: [],
+    durations: [],
+    intensities: [],
+    addOns: [],
+    selection: {
+      package: null,
+      duration: null,
+      intensity: null,
+      addOns: new Set()
+    },
+    config: null
+  };
+
+  function formatPrice(value) {
+    return Number(value || 0).toLocaleString("en-US", {
+      style: "currency",
+      currency: "EUR"
+    });
+  }
+
+  function getPackageImageUrl(pkgOrConfigPackage) {
+    if (!pkgOrConfigPackage) return "";
+    return pkgOrConfigPackage.baseImageUrl ||
+      pkgOrConfigPackage.imageUrl ||
+      `/api/configurator/assets/package-configurator/${encodeURIComponent(pkgOrConfigPackage.slug)}.png`;
+  }
+
+  function getAddonImageUrl(addOn) {
+    if (!addOn) return "";
+    return addOn.imageUrl ||
+      `/api/configurator/assets/package-configurator/addons/${encodeURIComponent(addOn.slug)}.png`;
+  }
+
+  function clearChildren(node) {
+    while (node.firstChild) node.removeChild(node.firstChild);
+  }
+
+  async function fetchJson(url, options) {
+    const response = await fetch(url, options);
+    if (!response.ok) throw new Error(`Request failed: ${url}`);
+    return response.json();
+  }
+
+  function makeDeltaLabel(value, includedText) {
+    const amount = Number(value || 0);
+    return amount > 0 ? `+${formatPrice(amount)}` : includedText;
+  }
+
+  function renderOptionButton(container, label, delta, isActive, onClick) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "opt-btn" + (isActive ? " active" : "");
+
+    const title = document.createElement("span");
+    title.textContent = label;
+    button.appendChild(title);
+
+    if (delta) {
+      const deltaNode = document.createElement("span");
+      deltaNode.className = "opt-delta";
+      deltaNode.textContent = delta;
+      button.appendChild(deltaNode);
+    }
+
+    button.addEventListener("click", onClick);
+    container.appendChild(button);
+  }
+
+  function renderPackages() {
+    const container = document.getElementById("packageBtns");
+    clearChildren(container);
+
+    state.packages.forEach((pkg) => {
+      renderOptionButton(
+        container,
+        pkg.name,
+        pkg.basePrice ? `From ${formatPrice(pkg.basePrice)}` : "",
+        state.selection.package === pkg.slug,
+        () => {
+          if (state.selection.package === pkg.slug) return;
+          state.selection.package = pkg.slug;
+          renderPackages();
+          recalculate();
+        }
+      );
+    });
+  }
+
+  function renderDurations() {
+    const container = document.getElementById("durationBtns");
+    clearChildren(container);
+
+    state.durations.forEach((duration) => {
+      renderOptionButton(
+        container,
+        duration.label,
+        makeDeltaLabel(duration.priceDelta, "Included"),
+        state.selection.duration === Number(duration.minutes),
+        () => {
+          if (state.selection.duration === Number(duration.minutes)) return;
+          state.selection.duration = Number(duration.minutes);
+          renderDurations();
+          recalculate();
+        }
+      );
+    });
+  }
+
+  function renderIntensities() {
+    const container = document.getElementById("intensityBtns");
+    clearChildren(container);
+
+    state.intensities.forEach((intensity) => {
+      renderOptionButton(
+        container,
+        intensity.label,
+        makeDeltaLabel(intensity.priceDelta, "Included"),
+        state.selection.intensity === intensity.slug,
+        () => {
+          if (state.selection.intensity === intensity.slug) return;
+          state.selection.intensity = intensity.slug;
+          renderIntensities();
+          recalculate();
+        }
+      );
+    });
+  }
+
+  function renderAddons() {
+    const container = document.getElementById("addonBtns");
+    clearChildren(container);
+
+    state.addOns.forEach((addOn) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "addon-chip" + (state.selection.addOns.has(addOn.slug) ? " active" : "");
+
+      const img = document.createElement("img");
+      img.src = getAddonImageUrl(addOn);
+      img.alt = "";
+      img.loading = "lazy";
+      button.appendChild(img);
+
+      const meta = document.createElement("span");
+      meta.className = "addon-meta";
+
+      const name = document.createElement("span");
+      name.className = "addon-name";
+      name.textContent = addOn.name;
+      meta.appendChild(name);
+
+      const delta = document.createElement("span");
+      delta.className = "addon-delta";
+      delta.textContent = makeDeltaLabel(addOn.priceDelta, "Included");
+      meta.appendChild(delta);
+
+      button.appendChild(meta);
+      button.addEventListener("click", () => {
+        if (state.selection.addOns.has(addOn.slug)) {
+          state.selection.addOns.delete(addOn.slug);
+        } else {
+          state.selection.addOns.add(addOn.slug);
+        }
+        renderAddons();
+        renderAddonLayers();
+        recalculate();
+      });
+
+      container.appendChild(button);
+    });
+  }
+
+  function getSelectedAddonImageSource(slug) {
+    const fromConfig = state.config && Array.isArray(state.config.addOns)
+      ? state.config.addOns.find((addOn) => addOn.slug === slug)
+      : null;
+    const fromOptions = state.addOns.find((addOn) => addOn.slug === slug);
+    return getAddonImageUrl(fromConfig || fromOptions);
+  }
+
+  function renderAddonLayers() {
+    const container = document.getElementById("addonLayers");
+    clearChildren(container);
+
+    Array.from(state.selection.addOns).forEach((slug) => {
+      const img = document.createElement("img");
+      img.className = "config-layer addon is-visible";
+      img.src = getSelectedAddonImageSource(slug);
+      img.alt = "";
+      container.appendChild(img);
+    });
+  }
+
+  function updateBaseLayer() {
+    const base = document.getElementById("baseLayer");
+    const placeholder = document.getElementById("placeholder");
+    const configPackage = state.config && state.config.package;
+    const selectedPackage = state.packages.find((pkg) => pkg.slug === state.selection.package);
+    const baseUrl = getPackageImageUrl(configPackage || selectedPackage);
+
+    if (!baseUrl) {
+      base.removeAttribute("src");
+      base.classList.remove("is-visible");
+      placeholder.style.display = "grid";
+      return;
+    }
+
+    placeholder.style.display = "none";
+    if (base.getAttribute("src") !== baseUrl) {
+      base.classList.remove("is-visible");
+      base.onload = () => {
+        base.classList.add("is-visible");
+      };
+      base.src = baseUrl;
+    } else {
+      base.classList.add("is-visible");
+    }
+  }
+
+  function updateUI() {
+    const addButton = document.getElementById("addBtn");
+    const caption = document.getElementById("caption");
+    const cfg = state.config;
+
+    updateBaseLayer();
+    renderAddonLayers();
+
+    if (!cfg) {
+      document.getElementById("sumPackage").textContent = "Unavailable";
+      document.getElementById("sumDuration").textContent = "Unavailable";
+      document.getElementById("sumIntensity").textContent = "Unavailable";
+      document.getElementById("sumAddons").textContent = "None";
+      document.getElementById("price").textContent = "Unavailable";
+      caption.textContent = "";
+      addButton.disabled = true;
+      return;
+    }
+
+    document.getElementById("sumPackage").textContent = cfg.package.name;
+    document.getElementById("sumDuration").textContent = cfg.duration.label;
+    document.getElementById("sumIntensity").textContent = cfg.intensity.label;
+    document.getElementById("sumAddons").textContent = cfg.addOns.length
+      ? cfg.addOns.map((addOn) => addOn.name).join(", ")
+      : "None";
+    document.getElementById("price").textContent = formatPrice(cfg.price);
+    caption.textContent = `${cfg.duration.label} · ${cfg.intensity.label}`;
+    addButton.disabled = false;
+  }
+
+  async function recalculate() {
+    if (!state.selection.package || !state.selection.duration || !state.selection.intensity) return;
+
+    try {
+      state.config = await fetchJson("/api/configurator/configuration/calculate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          package: state.selection.package,
+          duration: state.selection.duration,
+          intensity: state.selection.intensity,
+          addOns: Array.from(state.selection.addOns)
+        })
+      });
+    } catch (error) {
+      console.error(error);
+      state.config = null;
+    }
+
+    updateUI();
+  }
+
+  function applyInitialSelection() {
+    const requested = initialSelection || {};
+    const requestedDuration = Number.parseInt(requested.duration, 10);
+
+    state.selection.package = state.packages.some((pkg) => pkg.slug === requested.package)
+      ? requested.package
+      : (state.packages[0] && state.packages[0].slug) || null;
+
+    state.selection.duration = state.durations.some((duration) => Number(duration.minutes) === requestedDuration)
+      ? requestedDuration
+      : (state.durations[0] && Number(state.durations[0].minutes)) || null;
+
+    state.selection.intensity = state.intensities.some((intensity) => intensity.slug === requested.intensity)
+      ? requested.intensity
+      : (state.intensities[0] && state.intensities[0].slug) || null;
+
+    if (Array.isArray(requested.addOns)) {
+      requested.addOns.forEach((slug) => {
+        if (state.addOns.some((addOn) => addOn.slug === slug)) {
+          state.selection.addOns.add(slug);
+        }
+      });
+    }
+  }
+
+  async function init() {
+    try {
+      const [packages, durations, intensities, addOns] = await Promise.all([
+        fetchJson("/api/configurator/packages"),
+        fetchJson("/api/configurator/options/durations"),
+        fetchJson("/api/configurator/options/intensities"),
+        fetchJson("/api/configurator/options/add-ons")
+      ]);
+
+      state.packages = packages;
+      state.durations = durations;
+      state.intensities = intensities;
+      state.addOns = addOns;
+
+      applyInitialSelection();
+      renderPackages();
+      renderDurations();
+      renderIntensities();
+      renderAddons();
+      updateBaseLayer();
+      await recalculate();
+    } catch (error) {
+      console.error(error);
+      document.getElementById("placeholder").textContent = "Failed to load configurator.";
+      document.getElementById("price").textContent = "Unavailable";
+    }
+  }
+
+  document.getElementById("addBtn").addEventListener("click", async () => {
+    const cfg = state.config;
+    if (!cfg) return;
+
+    const addButton = document.getElementById("addBtn");
+    const status = document.getElementById("addStatus");
+    addButton.disabled = true;
+    status.style.color = "#047857";
+    status.textContent = "Adding...";
+
+    try {
+      const response = await fetch("/api/cart/items", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "package",
+          name: cfg.package.name,
+          price: Number(cfg.price || 0),
+          imageUrl: getPackageImageUrl(cfg.package),
+          quantity: 1,
+          details: {
+            package: cfg.package.slug,
+            duration: cfg.duration.minutes,
+            intensity: cfg.intensity.slug,
+            addOns: cfg.addOns.map((addOn) => addOn.slug),
+            summary: cfg.summary
+          }
+        })
+      });
+
+      if (!response.ok) throw new Error("cart request failed");
+      status.textContent = "Added to cart.";
+    } catch (error) {
+      console.error(error);
+      status.style.color = "#b91c1c";
+      status.textContent = "Cart is currently unavailable.";
+    } finally {
+      addButton.disabled = false;
+      window.setTimeout(() => {
+        status.textContent = "";
+      }, 3000);
+    }
+  });
+
+  init();
+</script>
