@@ -46,7 +46,7 @@ Required services:
 
 - MySQL 8.4 for service-owned relational data
 - Redis 8 for cart/session state
-- MinIO for package, product, and center media
+- MinIO for package, product, center media, and the homepage-only presentation video exception
 
 ### External Integrations
 
@@ -223,13 +223,28 @@ MinIO stores:
 package-configurator/*
 aftercare-shop/*
 center/*
+home/*.mp4
 ```
 
-Browser-visible image paths should go through:
+Browser-visible media has three paths:
+
+```text
+/static/images/*      presentation images served by web-frontend
+/media/home/*.mp4    homepage-only presentation video exception
+/api/*/assets/*      package and aftercare business media
+```
+
+Presentation images under `/static/images/*` are frontend-owned files from `web/public/images`; they are not mirrored into MinIO and are not read through configurator asset routes.
+
+The `/media/home/*.mp4` path is the only browser-visible homepage media exception. It can proxy homepage MP4 objects from the MinIO `home/*.mp4` prefix, but `/media/home` must not become a generic bucket proxy.
+
+Package and aftercare business media must remain behind owning-service APIs when exposed to the browser. Center media is seeded for the stack but is not currently browser-exposed; if it becomes browser-visible, it must also stay behind an owning-service API. Browser-visible business media paths should go through:
 
 ```text
 Browser -> web-frontend -> web-backend -> api-gateway -> owning service -> MinIO
 ```
+
+MinIO is not directly exposed to the browser.
 
 ## Main Data Flows
 
