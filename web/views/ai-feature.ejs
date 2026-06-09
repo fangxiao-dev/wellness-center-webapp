@@ -1,5 +1,5 @@
 <%
-  const aiHeroImg = "/api/configurator/assets/home/wellness-ai-hero.png";
+  const aiHeroImg = "/static/images/wellness-ai-hero.png";
 %>
 <style>
   /* AI-feature-specific layout. Wellness UI tokens, fonts, page-shell, site-nav,
@@ -524,7 +524,7 @@
       const img = new Image();
       img.onload = () => { revealWrap.innerHTML = ""; revealWrap.appendChild(img); };
       img.onerror = () => { revealWrap.innerHTML = ""; };
-      img.src = "/api/configurator/assets/home/wellness-ai-hero.png";
+      img.src = "/static/images/wellness-ai-hero.png";
       img.alt = modelLabel;
     }
 

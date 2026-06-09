@@ -106,13 +106,39 @@ test("home page preserves presentation structure with YouTube hero background", 
     assert.match(html, /data-video-id="A9PhV0B2nmg"/);
     assert.match(html, /youtube\.com\/iframe_api/);
     assert.match(html, /youtube-nocookie\.com/);
-    assert.match(html, /\/api\/configurator\/assets\/home\/home-hero\.png/);
+    [
+      "/static/images/home-hero.png",
+      "/static/images/wellness-ai-hero.png",
+      "/static/images/aftercare-preview.png",
+      "/static/images/center-impression.png",
+      "/static/images/package-relief.png",
+      "/static/images/package-recovery.png",
+      "/static/images/wellness-stage-loop.png",
+    ].forEach((src) => assert.ok(html.includes(src), `expected home HTML to include ${src}`));
+    assert.doesNotMatch(html, /\/api\/configurator\/assets\/home\//);
     assert.match(html, /class="hero-overlay"/);
     assert.match(html, /class="package-showcase package-stage-showcase"/);
     assert.match(html, /class="package-stage-grid"/);
     assert.match(html, /class="merch-preview-grid"/);
     assert.doesNotMatch(html, /\/api\/merch\//);
     assert.doesNotMatch(html, /Bayerische|Motoren|Werke/);
+  } finally {
+    await backend.stop();
+  }
+});
+
+test("AI feature page uses static wellness hero image", async () => {
+  const backend = await startBackend();
+
+  try {
+    const response = await fetch(`${backend.baseUrl}/ai-feature`);
+
+    assert.equal(response.status, 200);
+
+    const html = await response.text();
+
+    assert.ok(html.includes("/static/images/wellness-ai-hero.png"));
+    assert.doesNotMatch(html, /\/api\/configurator\/assets\/home\//);
   } finally {
     await backend.stop();
   }
