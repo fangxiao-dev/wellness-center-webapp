@@ -17,13 +17,13 @@ The solo project was migrated from a group project that is a BMW **car configura
 | Decision | Choice |
 |---|---|
 | Aftercare cards | Inline add-to-cart; image is **not** a link; **delete** the product detail page |
-| Configurator preview | **Layered compositing** — package base scene + transparent add-on prop layers |
-| Visible axes | Package (base layer) and Add-ons (prop layers). Duration & Intensity are non-visual (price + caption only) |
+| Configurator preview | **Layered compositing** — every axis gets its own visual channel (base scene + light grade + glow + props + candles + rail) |
+| Visible axes | **All four are visible.** Package + Intensity → base scene (per `package×intensity`). Duration → light grade + phase rail + candle count. Intensity → pressure glow. Add-ons → prop layers. See the image-assets doc. |
 | Prop placement | **Four separate corners/zones** so all add-ons can show at once without colliding |
 | Add-on selection | **Multi-select** (Hot Stone *and* Aroma Oil, etc.) |
 | Combination matrix | **Removed** — every `package × duration × intensity × add-ons[]` is valid; price computed from deltas (fixes 404s) |
 | UI language | **English** (matches the already-English Aftercare shop; remove German + umlaut-repair code) |
-| Image set | Regenerate 7 scene-consistent images in gpt-image-2 (3 base scenes + 4 prop layers). Aftercare product images are kept as-is. |
+| Image set | Regenerate **14** scene-consistent images (9 base `package×intensity` + 4 add-on props + 1 candle) + free CSS/SVG channels. **All imagery, prompts, prop-zone map and channel specs live in [`2026-06-11-configurator-image-assets-and-visual-channels.md`](2026-06-11-configurator-image-assets-and-visual-channels.md).** Aftercare product images are kept as-is. |
 
 ## Feature 1 — Aftercare Shop: inline add-to-cart
 
@@ -59,21 +59,20 @@ Card root keeps an `id="product-<slug>"` so existing scroll-to-and-highlight beh
 ## Feature 2 — Package Configurator: data model & backend
 
 ### SQL (`infrastructure/mysql/init/02_package_configurator.sql`)
-- `packages` += `minio_object VARCHAR(255)` — base scene image key (one per package).
 - `add_ons` += `minio_object VARCHAR(255)` — transparent prop-layer image key.
+- `packages` does **not** need an image column — the base scene now depends on `package × intensity`, so the service derives the key by convention (below).
 - **Drop** tables `configurations`, `configuration_images`, `configuration_addons` and their seed rows. No combination matrix.
-- Seed values:
-  - packages → `package-configurator/neck-shoulder-relief.png`, `…/stress-reset-massage.png`, `…/warm-recovery-massage.png`
-  - add_ons → `package-configurator/addons/hot-stone.png`, `…/aroma-oil.png`, `…/warm-towel.png`, `…/stretching.png`
+- Seed `add_ons.minio_object` → `package-configurator/addons/{hot-stone,aroma-oil,stretching,warm-towel}.png`.
 
 ### Service (`services/package-configurator/src/server.js`)
-- `mapPackage` → include `imageUrl = toPublicPackageImageUrl(row.minio_object)`.
+- **Base image key convention** (no DB column): `package-configurator/base/{packageSlug}-{intensitySlug}.png`, with fallback to `package-configurator/base/{packageSlug}.png` if the intensity-specific object is missing. See the image-assets doc §7.
 - `/options/add-ons` → each add-on includes `imageUrl` (prop layer) + existing `priceDelta`.
 - Remove `getConfigurationById` / `mapConfiguration` / `/configurations*` matrix endpoints (or keep `/packages`, `/options/*` only).
 - Rewrite `POST /configuration/calculate`:
   - Input: `{ package: slug, duration: minutes, intensity: slug, addOns: [slug...] }`.
   - Validate package/duration/intensity/add-on rows all exist (400/404 with clear message if a slug is unknown — but any *combination* is allowed).
   - `price = base_price + duration.price_delta + intensity.price_delta + Σ addon.price_delta`.
+  - `baseImageUrl` composed from `package + intensity` per the convention above.
   - `summary` built from a template, e.g. *"A 60-minute Stress Reset Massage at medium pressure with Aroma Oil and Warm Towel Finish."*
   - Response:
     ```json
@@ -86,28 +85,30 @@ Card root keeps an `id="product-<slug>"` so existing scroll-to-and-highlight beh
       "summary": ""
     }
     ```
+- Note: the free CSS/SVG channels (duration light grade, phase rail, candle count, intensity glow) are **client-side**, derived from the returned `duration.minutes` / `intensity.slug` — no extra backend fields.
 
 ### MinIO seeding
-`docker-compose.yml` `minio-init` already runs `mc mirror --overwrite ./assets/package-configurator → local/${MINIO_BUCKET}/package-configurator` **recursively**, so `assets/package-configurator/addons/*.png` lands at `package-configurator/addons/*` automatically. **No compose change needed.**
+`docker-compose.yml` `minio-init` already runs `mc mirror --overwrite ./assets/package-configurator → local/${MINIO_BUCKET}/package-configurator` **recursively**, so the `base/`, `addons/`, and `props/` subfolders mirror automatically. **No compose change needed.**
 
 ## Feature 3 — Package Configurator: layout & frontend
 
 `web/views/package-configurator.ejs` rewrite.
 
-### Preview = stacked layers
+### Preview = stacked channels (full spec in the image-assets doc §1, §6)
 ```
-z0  package base scene   (full-bleed <img>, swaps when package changes)
-z1  add-on layer: hot-stone      (full-frame transparent PNG; fade in/out on toggle)
-z2  add-on layer: aroma-oil
-z3  add-on layer: warm-towel
-z4  add-on layer: stretching
+z0  base scene            ← package × intensity (<img>, swaps on either change)
+z1  duration light grade  ← CSS overlay + filter (free)
+z2  pressure glow         ← CSS radial on the hands, by intensity (free)
+z3  add-on prop layers    ← 4 transparent PNGs, fixed corners, toggle on select
+z4  candle sprites        ← props/candle.png ×1/2/3 by duration (free, 1 image)
+z5  phase rail (chrome)   ← DOM/SVG strip under the preview, lit by duration (free)
 ```
-Each add-on PNG is a **full-frame transparent overlay** with its prop pre-placed in its own corner/zone, so stacking = compositing (no coordinate math, no collisions). A **caption chip** over the image shows the non-visual choices ("60 min · Medium").
+Each axis owns a non-competing channel, so every option is visible. Channel values (filter/gradient per duration, glow radius/opacity per intensity, lit-segment and candle counts) are the contract in the image-assets doc §6.
 
 ### Controls (single clean panel, no wheel-hijacking)
 - **Package** — selectable cards, single-select → swaps base layer.
-- **Duration** — segmented `45 / 60 / 90 min (+€)` → updates price + caption only.
-- **Intensity** — `Gentle / Medium / Deep (+€)` → price + caption only.
+- **Duration** — segmented `45 / 60 / 90 min (+€)` → price + light grade + phase rail + candle count.
+- **Intensity** — `Gentle / Medium / Deep (+€)` → price + base scene (gesture) + pressure glow.
 - **Add-ons** — multi-select chips, each with prop thumbnail + name + `+€` → toggles its layer.
 - **Summary bar** (fixed, top): Package · Duration · Intensity · Add-ons (list) · Total · **Add package** → `POST /api/cart/items` `type: "package"`.
 
@@ -117,33 +118,21 @@ Delete: `initializeConfigPanelScroll` (wheel/touch panel hijacking), `colorFromN
 ### Routing
 - Keep `GET /package-configurator`. Replace the 4-segment legacy path `/:package/:duration/:intensity/:addon` with a clean optional deep-link form (e.g. `/package-configurator?package=<slug>`), or drop deep-linking if unused by AI recommendations. Confirm `getInitialPackageSelection` consumers during planning.
 
-## Image generation prompts (gpt-image-2)
+## Image generation
 
-**Shared style anchor — prepend to every prompt:**
-> Calm, premium wellness-studio photography. Soft natural daylight from the upper-left, gentle shadows, shallow depth of field. Warm neutral palette: oatmeal, sand, soft sage, pale wood. Quiet, uncluttered, spa-grade. Slightly elevated 3/4 camera angle. Photorealistic, no text, no logos, no faces in focus. Landscape 3:2, 1536×1024.
+All imagery — the gpt-image-2 Context prompt, the 14 per-image prompts (9 base `package×intensity`, 4 add-on props, 1 candle), the prop-zone map, and the free CSS/SVG channel specs — lives in its own document:
 
-**Base scenes** (opaque; keep the **lower foreground band and right edge uncluttered** so corner props can be added):
+➡ **[`2026-06-11-configurator-image-assets-and-visual-channels.md`](2026-06-11-configurator-image-assets-and-visual-channels.md)**
 
-1. `package-configurator/neck-shoulder-relief.png` — [ANCHOR] A serene massage treatment room. On a linen-covered table, a close upper-back and shoulder massage in progress, therapist's hands on the shoulders, framed from the upper body only. Lower foreground and right edge kept clear and uncluttered. Folded towels, a eucalyptus sprig. Focused, professional.
-2. `package-configurator/stress-reset-massage.png` — [ANCHOR] The same room, same camera angle and lighting, calmer/dimmer mood. A relaxation massage scene — candle glow, person resting face-down fully relaxed, soft towel over the lower back. Lower foreground and right edge kept clear. Evening calm.
-3. `package-configurator/warm-recovery-massage.png` — [ANCHOR] The same room, same angle and lighting, warmer golden tone. A warm-recovery scene suggesting heat therapy — warm towels, a hint of steam, cozy amber light. Lower foreground and right edge kept clear. Restorative, not clinical.
-
-**Add-on prop layers** (PNG, **fully transparent background**, prop in its assigned corner, matching base angle/scale/light — generate base first and instruct gpt-image-2 to match its lighting):
-
-4. `package-configurator/addons/hot-stone.png` — [ANCHOR] Transparent background PNG. A neat stack of smooth dark basalt hot stones with slight steam, resting on a pale-wood surface in the **lower-left** corner of the frame, lit from upper-left. Only the stones + contact shadow visible; everything else fully transparent.
-5. `package-configurator/addons/aroma-oil.png` — [ANCHOR] Transparent background PNG. A small amber glass aroma-oil bottle with dropper and a lavender sprig in the **lower-center** of the frame, lit from upper-left. Only the bottle, lavender + contact shadow visible; everything else fully transparent.
-6. `package-configurator/addons/warm-towel.png` — [ANCHOR] Transparent background PNG. A neatly rolled warm white spa towel with a faint wisp of steam in the **lower-right** corner of the frame, lit from upper-left. Only the towel + contact shadow visible; everything else fully transparent.
-7. `package-configurator/addons/stretching.png` — [ANCHOR] Transparent background PNG. A soft sage-green fabric stretching band, loosely coiled/draped, along the **right edge at mid-height** of the frame, lit from upper-left. Only the band + contact shadow visible; everything else fully transparent.
-
-**Notes:** matching transparent-prop scale/light to the base is the fiddly part — expect a couple of regenerations. The 4 corners (lower-left / lower-center / lower-right / right-mid) keep all props non-overlapping when shown together.
+This spec and the implementation plan do not duplicate prompts; they reference that file.
 
 ## Out of scope
 Payment, booking, new services, home-page video, regenerating aftercare/home/center imagery, visit-context changes.
 
 ## Verification
-- `docker compose up --build` starts all services; MinIO seeds `package-configurator/addons/*`.
+- `docker compose up --build` starts all services; MinIO seeds `package-configurator/{base,addons,props}/*`.
 - `/aftercare-shop`: image not clickable; quantity + Add to cart posts to cart; no detail route (`/aftercare-shop/<slug>` no longer renders a detail page); deep links scroll-highlight the card.
-- `/package-configurator`: any package × duration × intensity × add-on(s) computes a price (no 404); base image swaps per package; each active add-on shows its prop layer in its corner; caption shows duration/intensity; Add package posts to cart.
+- `/package-configurator`: any package × duration × intensity × add-on(s) computes a price (no 404); base image swaps per `package×intensity`; duration changes the light grade + phase rail + candle count; intensity changes the pressure glow; each active add-on shows its prop layer in its corner; Add package posts to cart.
 - AI recommendation aftercare links land on the shop anchor.
 - Affected unit/smoke tests updated and green; `.\scripts\smoke-test.ps1 -SkipAi` passes.
 - No visible German labels or car/BMW scaffold identity on these two pages.
