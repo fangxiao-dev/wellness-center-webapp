@@ -14,12 +14,13 @@
 - Main workspace / trunk checkout: `D:\CodeSpace\dbe-cloud-soloproject`.
 - Branch: `codex/wellness-gap-migration-wave1`.
 - Code checkpoint commit: `c303e44d6bd6abe558feb3c23ae8b9fd09af8007` (`c303e44 feat(wellness): complete gap migration`).
-- Fresh state immediately after code checkpoint: `git status --short --branch` printed only `## codex/wellness-gap-migration-wave1`.
-- Local `main`: `2eaddb07611d67dc21689ab31dc83fdf47db8db0`; worktree branch is `1 12` vs local `main` by `git rev-list --left-right --count HEAD...main`.
-- `origin/main`: `ccf6b33484b2ac25844ed8f823c3d6082db502c2`; worktree branch is `2 0` vs `origin/main`.
+- Latest committed HEAD when this handoff was refreshed: `33df08e1be71b2c2f2fafa6e83e55a5e375add6e` (`33df08e docs(exchange): refresh wellness rebase handoff`).
+- Fresh state before the final handoff freshness edit: `git status --short --branch` printed only `## codex/wellness-gap-migration-wave1`.
+- Local `main`: `2eaddb07611d67dc21689ab31dc83fdf47db8db0`; worktree branch is `2 12` vs local `main` by `git rev-list --left-right --count HEAD...main`.
+- `origin/main`: `ccf6b33484b2ac25844ed8f823c3d6082db502c2`; worktree branch is `4 0` vs `origin/main`.
 - Main workspace status: `main...origin/main [ahead 14]`.
 - Important: local `main` is the intended rebase base and is newer than `origin/main`; owner explicitly chose "push local main first" before feature PR creation.
-- This handoff file is refreshed after `c303e44`; if a small handoff-refresh commit follows, child should trust `git log -1 --oneline` over this paragraph for exact latest HEAD.
+- Current handoff source session has one intentional dirty file: `docs/exchange/handoffs/handoff-wellness-gap-migration-current.md`. Child must first run `git status --short --branch` and `git log -1 --oneline`; if only this handoff file is dirty, protect it before rebase with a small docs commit or confirm it is already committed.
 
 ## Completed / Not Completed
 - Completed Wave 1 local issue drafts:
@@ -84,7 +85,8 @@
 - Worktree was created from `941fbbc` while local `main` moved ahead; do not assume the feature branch includes local main's later docs/changes.
 
 ## External State
-- No GitHub issues were published.
+- No new GitHub issues were created or published.
+- No GitHub issue comments or closes were performed.
 - No PR was created.
 - No push, merge, or issue/comment external action was performed.
 - Docker local runtime was rebuilt under project name `dbe-cloud-soloproject` and was running from the worktree-built images when this handoff was written. Re-check container state before relying on it.
@@ -131,6 +133,7 @@
 ## Next Action
 - Read the handoff skill and auto-handoff rule, then verify workspace with `git status --short --branch` and `git log -1 --oneline`.
 - Continue in `D:\CodeSpace\dbe-cloud-soloproject\.worktrees\wellness-gap-migration-wave1`.
+- If the only dirty file is this rolling handoff, protect the freshness edit with a small docs commit before rebase.
 - Use subagents before mutating rebase/publish state:
   - Have a reviewer/explorer inspect rebase risk and exact current git state.
   - Have a reviewer inspect conflict resolution before final verification if conflicts occur.
