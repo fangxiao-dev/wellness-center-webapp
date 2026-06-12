@@ -153,7 +153,7 @@ function getInitialPackageSelection(req) {
   if (!req.params.package) return null;
   const addOns = !req.params.addon || req.params.addon === "none"
     ? []
-    : req.params.addon.split(",").filter(Boolean);
+    : req.params.addon.split(",").map((addon) => addon.trim()).filter(Boolean);
   return {
     package: req.params.package,
     duration: req.params.duration,
