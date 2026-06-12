@@ -14,19 +14,21 @@ A car configurator works because **every option changes a visible variable**. Ma
 
 | Option axis | Visual channel | Implementation | Asset cost |
 |---|---|---|---|
-| **Package** | base scene (body area) | generated image | shared with intensity below |
-| **Intensity** | hand gesture / pressure depth in the base scene **+** a pressure glow on the hands | base image (per package×intensity) **+** CSS radial | base images + free CSS |
+| **Package** | base scene — **distinct camera angle & client pose per package** so the body area reads clearly (seated neck/shoulder vs. full-back lying vs. warm full-body) | generated image | **3 images** |
+| **Intensity** | a **pressure glow** on the therapist's hands — an *effect*, never baked into the photo | CSS radial | free |
 | **Duration** | global light / time-of-day grade **+** phase timeline rail **+** lit candle count | CSS filter+gradient **+** DOM rail **+** 1 candle sprite | mostly free + 1 image |
 | **Add-ons** | discrete physical props in fixed corners | transparent PNG layers | 4 images |
 
-**Channel separation is the whole trick:** Duration owns *global* light (whole frame), Intensity owns *local* light (a glow on the hands) + gesture, Add-ons own *discrete objects*. They never visually collide, so the user always knows which control did what.
+**Why this revision:** the earlier "9 base images (package×intensity)" plan failed in practice — intensity is not legibly different in a photo (gentle vs. medium looked identical), and three packages sharing the *same* face-down upper-body framing could not distinguish the body areas. Fix: **intensity becomes a pure CSS effect**, and each package gets a **deliberately different camera & pose** so the part of the body being worked on is unmistakable.
+
+**Channel separation is the whole trick:** Package owns *composition/pose*, Duration owns *global* light, Intensity owns a *local* glow, Add-ons own *discrete objects*. They never visually collide, so the user always knows which control did what.
 
 ### Composite layer stack (bottom → top)
 ```
-z0  base scene            ← package × intensity (generated)
+z0  base scene            ← package (generated; distinct camera/pose per package)
 z1  duration light grade  ← CSS overlay + filter (free)
-z2  pressure glow         ← CSS radial on the hands (free)
-z3  add-on prop layers    ← 4 transparent PNGs, fixed corners (generated)
+z2  pressure glow         ← CSS radial on the hands, position per package (free)
+z3  add-on prop layers    ← 4 transparent PNGs, fixed screen corners (generated)
 z4  candle sprites        ← 1 candle PNG, rendered ×1/2/3 by duration (generated)
 z5  phase rail (chrome)   ← DOM/SVG under the preview (free)
 ```
@@ -64,97 +66,65 @@ Five non-overlapping zones so every prop can show at once without colliding:
 
 ```text
 WORLD BIBLE — reuse for EVERY image in this set.
-SCENE: One single, fixed premium wellness massage studio. Every image is the
-SAME room, SAME furniture, SAME camera position and framing. Treat earlier
-images in this set as the ground truth and match them exactly.
-CAMERA: slightly elevated 3/4 angle, ~35mm look, fixed framing. The linen-
-covered massage table runs left-to-right across the lower-middle of the frame;
-the client lies face-down, head toward the left, modestly draped with a towel.
-Shallow depth of field, soft background.
+STUDIO: One single premium wellness massage studio — the SAME room, materials,
+furniture finish, lighting style and palette across all images. Treat the first
+generated image as the ground truth for room/material/light, and keep that
+consistent. (Camera angle and the client's pose DO change per package — they are
+specified in each base prompt below. Only the *world* stays constant, not the
+framing.)
 LIGHT (KEEP NEUTRAL): soft, even, neutral DAYTIME studio light from the upper-
 left; gentle shadows; balanced white point. Do NOT bake in warm/orange/candle-
 lit grading, color casts, or heavy vignette — the scene must stay neutral so it
-can be color-graded later.
+can be color-graded later by CSS.
 PALETTE: oatmeal, sand, soft sage, warm grey, pale wood, white linen. Muted,
 calm, spa-grade.
-CLEAR ZONES (leave EMPTY and unobstructed in base scenes so props can be added
-later): (1) upper-left shelf/windowsill, (2) lower-left foreground surface,
-(3) lower-center foreground, (4) lower-right foreground, (5) right edge at mid-
-height.
+CLEAR ZONES (leave EMPTY and unobstructed in base scenes so screen-space props
+can be overlaid later): (1) upper-left area, (2) lower-left foreground, (3)
+lower-center foreground, (4) lower-right foreground, (5) right edge at mid-
+height. Keep the subject and action away from these zones.
 STYLE: photorealistic editorial wellness photography; clean, quiet, uncluttered;
 no text, no logos, no brand marks; no faces in sharp focus; tasteful and modest.
 FORMAT: landscape 3:2, 1536×1024.
 ```
 
-**Generation workflow (critical for a 14-image set):** generate `base/neck-shoulder-relief-medium.png` first, pick the best room+camera, then use it as the **reference image** for the other 13 ("same room and camera, change only …"). The consistency of the whole set depends on this step.
+**Generation workflow:** generate `base/stress-reset-massage.png` first to lock the room/material/light, then use it as the **reference image** for the other two ("same room, materials and lighting — change the camera and pose as described"). The props (§5) should also reference a base so their scale/light match.
 
 ---
 
-## 4. Base scene prompts — 9 images (package × intensity, neutral light)
+## 4. Base scene prompts — 3 images (one per package, distinct camera & pose)
 
-Each prompt = `[CONTEXT]` + the `<<delta>>`. Files: `package-configurator/base/{package-slug}-{intensity-slug}.png`.
-
-**Package body-area** (set by package) and **gesture** (set by intensity) are the only deltas.
+Each prompt = `[CONTEXT]` + the `<<delta>>`. Files: `package-configurator/base/{package-slug}.png`. Intensity is **not** in the image (it is the CSS glow, §6.4). The cameras and poses are deliberately different so each body area reads at a glance.
 
 ```text
-base/neck-shoulder-relief-gentle.png
-[CONTEXT] <<Framing tightens on the UPPER BACK, shoulders and neck. The
-therapist's hands rest with flat, relaxed palms and soft fingers, light surface
-contact only, no skin compression — a calm, feather-light touch. Neutral light;
-all five clear zones empty.>>
+base/neck-shoulder-relief.png
+[CONTEXT] <<NECK & SHOULDER focus — SEATED. The client sits upright on a low
+massage stool / forward-leaning massage chair, facing away, shoulders and upper
+back visible, head slightly forward and relaxed; modestly clothed in a soft robe
+slipped to the shoulders. The therapist stands behind and works the neck,
+trapezius and shoulders with both hands. Closer, upper-body, eye-level 3/4
+framing. The body area being treated (neck/shoulders) is unmistakable. Neutral
+light; keep the five clear zones empty.>>
 ```
 ```text
-base/neck-shoulder-relief-medium.png
-[CONTEXT] <<Upper back, shoulders and neck. Engaged palms and thumbs at the
-shoulders with moderate, purposeful pressure; slight skin compression visible
-under the hands. Neutral light; clear zones empty.>>
+base/stress-reset-massage.png
+[CONTEXT] <<FULL-BACK relaxation — LYING. The client lies face-down on a linen-
+covered massage table that runs left-to-right, head toward the left, the whole
+back visible and modestly draped at the hips. The therapist, standing to the
+side, performs long gliding strokes along the full back. Wider, slightly
+elevated 3/4 framing that shows the entire back and table. Calm, serene,
+restful. Neutral light; keep the five clear zones empty.>>
 ```
 ```text
-base/neck-shoulder-relief-deep.png
-[CONTEXT] <<Upper back, shoulders and neck. Deeper pressure using the thumb and
-heel of the hand on the shoulder muscles; clear muscle compression and a deeper
-contact shadow where pressure is applied — focused and therapeutic, not painful.
-Neutral light; clear zones empty.>>
-```
-```text
-base/stress-reset-massage-gentle.png
-[CONTEXT] <<Calmer, restful FULL-BACK relaxation scene. Flat relaxed palms
-gliding lightly along the mid-back, soft long strokes, feather-light contact.
-Serene and quiet. Neutral light; clear zones empty.>>
-```
-```text
-base/stress-reset-massage-medium.png
-[CONTEXT] <<Full-back relaxation. Palms and thumbs gliding along the mid and
-lower back with moderate pressure, slight compression under the hands. Balanced,
-restful. Neutral light; clear zones empty.>>
-```
-```text
-base/stress-reset-massage-deep.png
-[CONTEXT] <<Full-back relaxation. Deeper gliding pressure with the heel of the
-hand / forearm along the back muscles, clear compression and deeper shadow.
-Focused but still calm. Neutral light; clear zones empty.>>
-```
-```text
-base/warm-recovery-massage-gentle.png
-[CONTEXT] <<Full-back warmth-focused recovery scene; a soft white towel draped
-over the lower back (no steam, no warm color cast — keep light neutral). Flat
-relaxed palms resting lightly on the back, soft contact. Neutral light; clear
-zones empty.>>
-```
-```text
-base/warm-recovery-massage-medium.png
-[CONTEXT] <<Full-back warm recovery; soft towel over the lower back. Palms and
-thumbs with moderate pressure on the back, slight compression. Neutral light;
-clear zones empty.>>
-```
-```text
-base/warm-recovery-massage-deep.png
-[CONTEXT] <<Full-back warm recovery; soft towel over the lower back. Deeper
-pressure with heel of hand / forearm, clear muscle compression and deeper
-shadow. Neutral light; clear zones empty.>>
+base/warm-recovery-massage.png
+[CONTEXT] <<WARM full-body recovery — LYING, viewed more from the FOOT END /
+opposite side so the framing clearly differs from the other two. The client lies
+face-down, warm white towels draped over the back and legs (no steam, no warm
+color cast — keep light neutral); the therapist works the lower back / legs.
+Cozy, restorative, comfortable (not clinical). A lower, lengthwise camera along
+the body. Neutral light; keep the five clear zones empty.>>
 ```
 
-> **Cost escape hatch:** the gesture difference between intensities is subtle in a photo and 9 consistent images are demanding. The CSS pressure glow (§6) already expresses intensity on its own — if the 9-image set proves too costly/inconsistent, drop to 3 base scenes (`base/{package}.png`, neutral, medium gesture) and let the glow carry intensity. The frontend key convention below degrades cleanly (fall back to `base/{package}.png` when the intensity-specific file 404s).
+> Intensity is expressed entirely by the CSS pressure glow (§6.4) — no per-intensity images. This is the deliberate result of the revision noted in §1: gentle/medium/deep were not legibly different in a photo, and per-package camera/pose now carries the meaningful visual difference.
 
 ---
 
@@ -232,13 +202,21 @@ Lit fill `#2F7A66` (sage); unlit `rgba(120,120,120,.30)`.
 Render `props/candle.png` N times along the upper-left shelf zone: 45 → 1, 60 → 2, 90 → 3. Space copies ~36px apart horizontally.
 
 ### 6.4 Intensity → pressure glow
-A `.config-glow` radial overlay centered on the therapist's hands. Approx center **46% x / 40% y** (tune to the chosen base framing).
+A `.config-glow` radial overlay centered on the therapist's hands. Because each package has a different camera/pose, the hands sit in a different place — so the glow **center is per package** (tune to the final art):
 
-| Intensity | radial glow |
+| Package | approx glow center (x y) |
 |---|---|
-| gentle | `radial-gradient(circle 220px at 46% 40%, rgba(245,205,150,.16), transparent)` |
-| medium | `radial-gradient(circle 180px at 46% 40%, rgba(245,195,130,.26), transparent)` |
-| deep | `radial-gradient(circle 140px at 46% 40%, rgba(240,170,100,.34), transparent)`, plus an inner shadow ring `rgba(60,30,10,.18)` for pressure depth |
+| neck-shoulder-relief (seated) | `52% 32%` |
+| stress-reset-massage (full-back) | `50% 45%` |
+| warm-recovery-massage (foot-end) | `48% 52%` |
+
+Intensity then sets the glow's radius/opacity at that center:
+
+| Intensity | radial glow (substitute the package center for `CX CY`) |
+|---|---|
+| gentle | `radial-gradient(circle 220px at CX CY, rgba(245,205,150,.16), transparent)` |
+| medium | `radial-gradient(circle 180px at CX CY, rgba(245,195,130,.26), transparent)` |
+| deep | `radial-gradient(circle 140px at CX CY, rgba(240,170,100,.34), transparent)`, plus an inner shadow ring `rgba(60,30,10,.18)` for pressure depth |
 
 ---
 
@@ -246,14 +224,14 @@ A `.config-glow` radial overlay centered on the therapist's hands. Approx center
 
 | File | Source | Count |
 |---|---|---|
-| `assets/package-configurator/base/{package}-{intensity}.png` | generated (§4) | 9 |
+| `assets/package-configurator/base/{package}.png` | generated (§4) | 3 |
 | `assets/package-configurator/addons/{hot-stone,aroma-oil,warm-towel,stretching}.png` | generated (§5) | 4 |
 | `assets/package-configurator/props/candle.png` | generated (§5) | 1 |
-| **Total generated** | | **14** |
+| **Total generated** | | **8** |
 | light grade / phase rail / pressure glow | CSS / SVG (§6) | 0 |
 
-**Base-image key convention (no DB image column needed):** the service composes the key as `package-configurator/base/{packageSlug}-{intensitySlug}.png` from the selected package + intensity, with fallback to `package-configurator/base/{packageSlug}.png` if the intensity-specific object is missing.
+**Base-image key convention (no DB image column needed):** the service composes the key as `package-configurator/base/{packageSlug}.png` from the selected package. Intensity does **not** affect the base image (it is the CSS glow, §6.4).
 
 `mc mirror` of `assets/package-configurator/` is recursive, so `base/`, `addons/`, and `props/` subfolders mirror to MinIO automatically — no `docker-compose.yml` change.
 
-> **Note:** this design supersedes the original "7-image, single-base-per-package" image plan. The implementation plan's data-model tasks reflect the `package × intensity` base keying and the extra free CSS/SVG channels.
+> **Revision note:** this supersedes the earlier "9 base images (package×intensity)" plan. Base scenes are now **3** (one per package, distinct camera/pose); intensity is a pure CSS effect. The spec and implementation plan reflect `baseImageKey(packageSlug)` (no intensity) and the per-package glow center.

@@ -18,12 +18,12 @@ The solo project was migrated from a group project that is a BMW **car configura
 |---|---|
 | Aftercare cards | Inline add-to-cart; image is **not** a link; **delete** the product detail page |
 | Configurator preview | **Layered compositing** — every axis gets its own visual channel (base scene + light grade + glow + props + candles + rail) |
-| Visible axes | **All four are visible.** Package + Intensity → base scene (per `package×intensity`). Duration → light grade + phase rail + candle count. Intensity → pressure glow. Add-ons → prop layers. See the image-assets doc. |
+| Visible axes | **All four are visible.** Package → base scene (distinct camera/pose per package). Duration → light grade + phase rail + candle count. Intensity → pressure glow only (effect, not baked into the photo). Add-ons → prop layers. See the image-assets doc. |
 | Prop placement | **Four separate corners/zones** so all add-ons can show at once without colliding |
 | Add-on selection | **Multi-select** (Hot Stone *and* Aroma Oil, etc.) |
 | Combination matrix | **Removed** — every `package × duration × intensity × add-ons[]` is valid; price computed from deltas (fixes 404s) |
 | UI language | **English** (matches the already-English Aftercare shop; remove German + umlaut-repair code) |
-| Image set | Regenerate **14** scene-consistent images (9 base `package×intensity` + 4 add-on props + 1 candle) + free CSS/SVG channels. **All imagery, prompts, prop-zone map and channel specs live in [`2026-06-11-configurator-image-assets-and-visual-channels.md`](2026-06-11-configurator-image-assets-and-visual-channels.md).** Aftercare product images are kept as-is. |
+| Image set | Regenerate **8** images (3 base — one per package, distinct camera/pose — + 4 add-on props + 1 candle) + free CSS/SVG channels. **All imagery, prompts, prop-zone map and channel specs live in [`2026-06-11-configurator-image-assets-and-visual-channels.md`](2026-06-11-configurator-image-assets-and-visual-channels.md).** Aftercare product images are kept as-is. |
 
 ## Feature 1 — Aftercare Shop: inline add-to-cart
 
@@ -60,12 +60,12 @@ Card root keeps an `id="product-<slug>"` so existing scroll-to-and-highlight beh
 
 ### SQL (`infrastructure/mysql/init/02_package_configurator.sql`)
 - `add_ons` += `minio_object VARCHAR(255)` — transparent prop-layer image key.
-- `packages` does **not** need an image column — the base scene now depends on `package × intensity`, so the service derives the key by convention (below).
+- `packages` does **not** need an image column — the service derives the base key by convention from the package slug (below).
 - **Drop** tables `configurations`, `configuration_images`, `configuration_addons` and their seed rows. No combination matrix.
 - Seed `add_ons.minio_object` → `package-configurator/addons/{hot-stone,aroma-oil,stretching,warm-towel}.png`.
 
 ### Service (`services/package-configurator/src/server.js`)
-- **Base image key convention** (no DB column): `package-configurator/base/{packageSlug}-{intensitySlug}.png`, with fallback to `package-configurator/base/{packageSlug}.png` if the intensity-specific object is missing. See the image-assets doc §7.
+- **Base image key convention** (no DB column): `package-configurator/base/{packageSlug}.png` — one scene per package; intensity does **not** affect the base image (it is the CSS glow). See the image-assets doc §7.
 - `/options/add-ons` → each add-on includes `imageUrl` (prop layer) + existing `priceDelta`.
 - Remove `getConfigurationById` / `mapConfiguration` / `/configurations*` matrix endpoints (or keep `/packages`, `/options/*` only).
 - Rewrite `POST /configuration/calculate`:
@@ -96,7 +96,7 @@ Card root keeps an `id="product-<slug>"` so existing scroll-to-and-highlight beh
 
 ### Preview = stacked channels (full spec in the image-assets doc §1, §6)
 ```
-z0  base scene            ← package × intensity (<img>, swaps on either change)
+z0  base scene            ← package (<img>, swaps on package change; distinct camera/pose)
 z1  duration light grade  ← CSS overlay + filter (free)
 z2  pressure glow         ← CSS radial on the hands, by intensity (free)
 z3  add-on prop layers    ← 4 transparent PNGs, fixed corners, toggle on select
@@ -108,7 +108,7 @@ Each axis owns a non-competing channel, so every option is visible. Channel valu
 ### Controls (single clean panel, no wheel-hijacking)
 - **Package** — selectable cards, single-select → swaps base layer.
 - **Duration** — segmented `45 / 60 / 90 min (+€)` → price + light grade + phase rail + candle count.
-- **Intensity** — `Gentle / Medium / Deep (+€)` → price + base scene (gesture) + pressure glow.
+- **Intensity** — `Gentle / Medium / Deep (+€)` → price + pressure glow (does not change the base scene).
 - **Add-ons** — multi-select chips, each with prop thumbnail + name + `+€` → toggles its layer.
 - **Summary bar** (fixed, top): Package · Duration · Intensity · Add-ons (list) · Total · **Add package** → `POST /api/cart/items` `type: "package"`.
 
@@ -120,7 +120,7 @@ Delete: `initializeConfigPanelScroll` (wheel/touch panel hijacking), `colorFromN
 
 ## Image generation
 
-All imagery — the gpt-image-2 Context prompt, the 14 per-image prompts (9 base `package×intensity`, 4 add-on props, 1 candle), the prop-zone map, and the free CSS/SVG channel specs — lives in its own document:
+All imagery — the gpt-image-2 Context prompt, the 8 per-image prompts (3 base, one per package with a distinct camera/pose; 4 add-on props; 1 candle), the prop-zone map, and the free CSS/SVG channel specs — lives in its own document:
 
 ➡ **[`2026-06-11-configurator-image-assets-and-visual-channels.md`](2026-06-11-configurator-image-assets-and-visual-channels.md)**
 
@@ -132,7 +132,7 @@ Payment, booking, new services, home-page video, regenerating aftercare/home/cen
 ## Verification
 - `docker compose up --build` starts all services; MinIO seeds `package-configurator/{base,addons,props}/*`.
 - `/aftercare-shop`: image not clickable; quantity + Add to cart posts to cart; no detail route (`/aftercare-shop/<slug>` no longer renders a detail page); deep links scroll-highlight the card.
-- `/package-configurator`: any package × duration × intensity × add-on(s) computes a price (no 404); base image swaps per `package×intensity`; duration changes the light grade + phase rail + candle count; intensity changes the pressure glow; each active add-on shows its prop layer in its corner; Add package posts to cart.
+- `/package-configurator`: any package × duration × intensity × add-on(s) computes a price (no 404); base image swaps per package (distinct camera/pose); duration changes the light grade + phase rail + candle count; intensity changes the pressure glow; each active add-on shows its prop layer in its corner; Add package posts to cart.
 - AI recommendation aftercare links land on the shop anchor.
 - Affected unit/smoke tests updated and green; `.\scripts\smoke-test.ps1 -SkipAi` passes.
 - No visible German labels or car/BMW scaffold identity on these two pages.

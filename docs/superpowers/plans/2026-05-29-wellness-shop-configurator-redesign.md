@@ -4,7 +4,7 @@
 
 **Goal:** Make `/aftercare-shop` an inline add-to-cart product grid (no detail page, image not a link), and turn `/package-configurator` into an honest layered-compositing configurator (package base scene + toggleable transparent add-on prop layers; any duration×intensity×add-ons combination valid).
 
-**Architecture:** MySQL seed drops the 9-row combination matrix. The configurator service computes price from deltas (no combination lookup) and returns a base image composed by convention from `package × intensity`. The EJS preview stacks channels like a car configurator: a base scene (package×intensity), a CSS light grade + phase rail + candle count (duration), a CSS pressure glow (intensity), and transparent add-on prop layers. The aftercare page becomes self-contained product cards posting directly to the cart. Deep links from AI/home repoint to a scroll anchor; the AI→configurator deep link is preserved with renamed params.
+**Architecture:** MySQL seed drops the 9-row combination matrix. The configurator service computes price from deltas (no combination lookup) and returns a base image composed by convention from the package slug. The EJS preview stacks channels like a car configurator: a base scene (one per package, distinct camera/pose), a CSS light grade + phase rail + candle count (duration), a CSS pressure glow (intensity, effect-only), and transparent add-on prop layers. The aftercare page becomes self-contained product cards posting directly to the cart. Deep links from AI/home repoint to a scroll anchor; the AI→configurator deep link is preserved with renamed params.
 
 **Tech Stack:** Node.js + Express services, `node --test` (built-in) + `node:assert/strict`, EJS views, MySQL (mysql2), MinIO assets via `mc mirror`, vanilla JS frontend.
 
@@ -26,7 +26,7 @@ Image assets & visual channels (all prompts + CSS/SVG channel specs): `docs/supe
 | `web/views/home.ejs` | home aftercare tiles | Repoint links to anchor |
 | `web/views/ai-feature.ejs` | AI recommendation render | Repoint `safeProductPath` to anchor |
 | `infrastructure/mysql/init/02_package_configurator.sql` | configurator seed | Add-on image column, drop matrix tables (base image is by convention) |
-| `services/package-configurator/src/server.js` | configurator API | Pure price/summary helpers; rewrite `calculate`; base image by `package×intensity` |
+| `services/package-configurator/src/server.js` | configurator API | Pure price/summary helpers; rewrite `calculate`; base image by package slug |
 | `services/package-configurator/test/package-configurator.test.js` | configurator tests | Replace with helper unit tests |
 | `web/views/package-configurator.ejs` | configurator UI | Rewrite: layered channels (base/grade/glow/props/candle/rail), multi-select add-ons, remove car code |
 | `assets/package-configurator/{base,addons,props}/*.png` | layered art | Create transparent/neutral placeholders (user replaces — see image-assets doc) |
@@ -339,7 +339,7 @@ CREATE TABLE packages (
   base_minutes INT NOT NULL
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 -- Base scene image is NOT stored here: the service derives it by convention
--- (package-configurator/base/{slug}-{intensity}.png). See image-assets doc §7.
+-- (package-configurator/base/{slug}.png), one scene per package. See image-assets doc §7.
 
 CREATE TABLE durations (
   id INT PRIMARY KEY,
@@ -420,10 +420,10 @@ const test = require("node:test");
 
 const { computePackagePrice, buildConfigurationSummary, baseImageKey } = require("../src/server");
 
-test("baseImageKey composes the package×intensity base object key", () => {
+test("baseImageKey composes the per-package base object key", () => {
   assert.equal(
-    baseImageKey("stress-reset-massage", "deep"),
-    "package-configurator/base/stress-reset-massage-deep.png"
+    baseImageKey("stress-reset-massage"),
+    "package-configurator/base/stress-reset-massage.png"
   );
 });
 
@@ -486,9 +486,9 @@ function computePackagePrice({ basePrice, durationDelta, intensityDelta, addOnDe
   return asMoney(basePrice) + asMoney(durationDelta) + asMoney(intensityDelta) + addOnsTotal;
 }
 
-// Base scene key convention — see image-assets doc §7. No DB image column.
-function baseImageKey(packageSlug, intensitySlug) {
-  return `package-configurator/base/${packageSlug}-${intensitySlug}.png`;
+// Base scene key convention — one scene per package. See image-assets doc §7.
+function baseImageKey(packageSlug) {
+  return `package-configurator/base/${packageSlug}.png`;
 }
 
 function joinNames(names) {
@@ -520,7 +520,7 @@ Expected: PASS (5 tests).
 
 - [ ] **Step 5: Wire the add-on prop image URL**
 
-In `services/package-configurator/src/server.js`, update `mapAddon` (leave `mapPackage` as-is — packages no longer carry an image column; the base scene is composed per `package×intensity` in `calculate`):
+In `services/package-configurator/src/server.js`, update `mapAddon` (leave `mapPackage` as-is — packages no longer carry an image column; the base scene is composed from the package slug in `calculate`):
 
 ```javascript
 function mapAddon(row) {
@@ -585,7 +585,7 @@ app.post("/configuration/calculate", async (req, res) => {
     });
 
     res.json({
-      package: { slug: pkg.slug, name: pkg.name, baseImageUrl: toPublicPackageImageUrl(baseImageKey(pkg.slug, intensity.slug)) },
+      package: { slug: pkg.slug, name: pkg.name, baseImageUrl: toPublicPackageImageUrl(baseImageKey(pkg.slug)) },
       duration: { minutes: Number(duration.minutes), label: duration.label },
       intensity: { slug: intensity.slug, label: intensity.label },
       addOns: addOns.map((addOn) => ({
@@ -907,10 +907,16 @@ git commit -m "refactor: map configurator deep-link params to package domain"
     60: { filter: "saturate(1.06) brightness(0.99)", bg: "linear-gradient(180deg, rgba(245,205,140,.10), rgba(245,190,120,.18))", op: 1 },
     90: { filter: "saturate(1.05) brightness(0.9) contrast(1.04)", bg: "linear-gradient(180deg, rgba(235,175,95,.16), rgba(120,70,30,.22)), radial-gradient(120% 120% at 50% 50%, transparent 55%, rgba(25,15,5,.30))", op: 1 },
   };
+  // Glow center is per package (each scene has a different camera/pose) — see image-assets doc §6.4.
+  const HANDS_POS = {
+    "neck-shoulder-relief": "52% 32%",
+    "stress-reset-massage": "50% 45%",
+    "warm-recovery-massage": "48% 52%",
+  };
   const GLOW = {
-    gentle: "radial-gradient(circle 220px at 46% 40%, rgba(245,205,150,.16), transparent)",
-    medium: "radial-gradient(circle 180px at 46% 40%, rgba(245,195,130,.26), transparent)",
-    deep: "radial-gradient(circle 140px at 46% 40%, rgba(240,170,100,.34), transparent), radial-gradient(circle 90px at 46% 40%, rgba(60,30,10,.18), transparent)",
+    gentle: (c) => `radial-gradient(circle 220px at ${c}, rgba(245,205,150,.16), transparent)`,
+    medium: (c) => `radial-gradient(circle 180px at ${c}, rgba(245,195,130,.26), transparent)`,
+    deep: (c) => `radial-gradient(circle 140px at ${c}, rgba(240,170,100,.34), transparent), radial-gradient(circle 90px at ${c}, rgba(60,30,10,.18), transparent)`,
   };
 
   function applyDurationLight(minutes) {
@@ -921,8 +927,10 @@ git commit -m "refactor: map configurator deep-link params to package domain"
     grade.style.opacity = String(g.op);
   }
 
-  function applyIntensityGlow(slug) {
-    document.getElementById("glow").style.background = GLOW[slug] || "transparent";
+  function applyIntensityGlow(packageSlug, intensitySlug) {
+    const center = HANDS_POS[packageSlug] || "50% 42%";
+    const make = GLOW[intensitySlug];
+    document.getElementById("glow").style.background = make ? make(center) : "transparent";
   }
 
   function litPhases(minutes) {
@@ -976,7 +984,7 @@ git commit -m "refactor: map configurator deep-link params to package domain"
     document.getElementById("sumAddons").textContent = cfg.addOns.length ? cfg.addOns.map((a) => a.name).join(", ") : "None";
     document.getElementById("caption").textContent = `${cfg.duration.label} · ${cfg.intensity.label}`;
     applyDurationLight(cfg.duration.minutes);
-    applyIntensityGlow(cfg.intensity.slug);
+    applyIntensityGlow(cfg.package.slug, cfg.intensity.slug);
     renderCandles(cfg.duration.minutes);
     renderPhaseRail(cfg.duration.minutes);
     addBtn.disabled = false;
@@ -1085,7 +1093,7 @@ git commit -m "refactor: map configurator deep-link params to package domain"
 - [ ] **Step 2: Manual verification (requires running stack)**
 
 Run: `docker compose up --build -d` then open `http://localhost:4100/package-configurator`.
-Expected: package buttons render; selecting any package + any duration + any intensity shows a price (no 404); changing **duration** warms/dims the light grade, lights more phase-rail segments, and adds candles (1/2/3); changing **intensity** swaps the base scene and changes the pressure glow; toggling **add-on** chips fades their prop layer in/out; the caption shows "60 min · Medium"; "Add package" posts to the cart. Verify a previously-404 combo (Neck & Shoulder Relief + 45 min + Gentle) now prices correctly. (With placeholder art the base/props/candle are invisible — channels still update; real visuals appear once the image-assets are dropped in.)
+Expected: package buttons render; selecting any package + any duration + any intensity shows a price (no 404); changing **package** swaps the base scene (distinct camera/pose); changing **duration** warms/dims the light grade, lights more phase-rail segments, and adds candles (1/2/3); changing **intensity** changes the pressure glow (base scene unchanged); toggling **add-on** chips fades their prop layer in/out; the caption shows "60 min · Medium"; "Add package" posts to the cart. Verify a previously-404 combo (Neck & Shoulder Relief + 45 min + Gentle) now prices correctly. (With placeholder art the base/props/candle are invisible — channels still update; real visuals appear once the image-assets are dropped in.)
 
 - [ ] **Step 3: Commit**
 
@@ -1098,10 +1106,10 @@ git commit -m "feat: layered-compositing package configurator UI"
 
 ## Task 8: Add image placeholders so the stack runs before real art
 
-The full manifest (14 generated images) is defined in the image-assets doc §7. Create transparent placeholders for all of them so the configurator runs before the user drops in gpt-image-2 output. `mc mirror` is recursive, so files under `assets/package-configurator/{base,addons,props}/` mirror to MinIO with no compose change.
+The full manifest (8 generated images) is defined in the image-assets doc §7. Create transparent placeholders for all of them so the configurator runs before the user drops in gpt-image-2 output. `mc mirror` is recursive, so files under `assets/package-configurator/{base,addons,props}/` mirror to MinIO with no compose change.
 
 **Files (transparent placeholders):**
-- `assets/package-configurator/base/{package}-{intensity}.png` — 9 (3 packages × 3 intensities)
+- `assets/package-configurator/base/{package}.png` — 3 (one per package)
 - `assets/package-configurator/addons/{hot-stone,aroma-oil,warm-towel,stretching}.png` — 4
 - `assets/package-configurator/props/candle.png` — 1
 
@@ -1114,12 +1122,10 @@ $root = "assets/package-configurator"
 $b64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
 $bytes = [Convert]::FromBase64String($b64)
 
-$packages = @("neck-shoulder-relief","stress-reset-massage","warm-recovery-massage")
-$intensities = @("gentle","medium","deep")
 New-Item -ItemType Directory -Force "$root/base" | Out-Null
-foreach ($p in $packages) { foreach ($i in $intensities) {
-  [IO.File]::WriteAllBytes("$root/base/$p-$i.png", $bytes)
-} }
+foreach ($p in @("neck-shoulder-relief","stress-reset-massage","warm-recovery-massage")) {
+  [IO.File]::WriteAllBytes("$root/base/$p.png", $bytes)
+}
 
 New-Item -ItemType Directory -Force "$root/addons" | Out-Null
 foreach ($n in @("hot-stone","aroma-oil","warm-towel","stretching")) {
@@ -1130,7 +1136,7 @@ New-Item -ItemType Directory -Force "$root/props" | Out-Null
 [IO.File]::WriteAllBytes("$root/props/candle.png", $bytes)
 ```
 
-Expected: 14 `.png` files created (each a 1×1 transparent pixel — invisible when scaled, so the layers show nothing until replaced with real art; the CSS/SVG channels still update).
+Expected: 8 `.png` files created (each a 1×1 transparent pixel — invisible when scaled, so the layers show nothing until replaced with real art; the CSS/SVG channels still update).
 
 - [ ] **Step 2: Commit**
 
@@ -1162,7 +1168,7 @@ Expected: PASS.
 - [ ] **Step 3: Manual browser sweep**
 
 - `/aftercare-shop`: image is not clickable for navigation; quantity stepper works; "Add to cart" shows "Added to cart." and the cart count increases; `/aftercare-shop#product-heated-neck-wrap` scrolls to and highlights the card; visiting `/aftercare-shop/heated-neck-wrap` no longer renders a detail page (404/route gone).
-- `/package-configurator`: every package×duration×intensity combination prices without 404; duration drives light grade + phase rail + candle count; intensity drives the base scene + pressure glow; add-on layers composite over the base; "Add package" adds to cart.
+- `/package-configurator`: every package×duration×intensity combination prices without 404; package drives the base scene; duration drives light grade + phase rail + candle count; intensity drives the pressure glow; add-on layers composite over the base; "Add package" adds to cart.
 - AI recommendation aftercare links land on the shop anchor; AI package link opens the configurator pre-selected.
 - No German labels or car/BMW identity on either page.
 
@@ -1177,6 +1183,6 @@ git commit -m "test: verify shop and configurator redesign"
 
 ## Self-Review notes
 
-- **Spec coverage:** F1 (inline cart) → Tasks 2,3; detail removal + repointing → Task 3; F2 (data model/backend, base image by `package×intensity`) → Tasks 4,5; F3 (layout/frontend + visual channels) → Tasks 6,7; assets/MinIO → Task 8; **all image prompts + channel value specs live in the image-assets doc (user-executed)**; language=English applied in Tasks 2,7; tests → Tasks 1,5,9; 404-matrix fix → Tasks 4,5.
-- **Type consistency:** calculate response `{package:{slug,name,baseImageUrl}, duration:{minutes,label}, intensity:{slug,label}, addOns:[{slug,name,imageUrl,priceDelta}], price, summary}` is produced in Task 5 and consumed verbatim in Task 7 (base layer + channels). `baseImageUrl` is composed via `baseImageKey(package, intensity)` (Task 5 helper + unit test). `initialSelection` keys `{package,duration,intensity,addOns}` set in Task 6, read in Task 7 `applyInitialSelection`. Helper names `computePackagePrice`/`buildConfigurationSummary`/`baseImageKey` consistent between Task 5 test and impl. Channel value contract (GRADE/GLOW/phase/candle) matches image-assets doc §6.
+- **Spec coverage:** F1 (inline cart) → Tasks 2,3; detail removal + repointing → Task 3; F2 (data model/backend, base image by package slug) → Tasks 4,5; F3 (layout/frontend + visual channels) → Tasks 6,7; assets/MinIO → Task 8; **all image prompts + channel value specs live in the image-assets doc (user-executed)**; language=English applied in Tasks 2,7; tests → Tasks 1,5,9; 404-matrix fix → Tasks 4,5.
+- **Type consistency:** calculate response `{package:{slug,name,baseImageUrl}, duration:{minutes,label}, intensity:{slug,label}, addOns:[{slug,name,imageUrl,priceDelta}], price, summary}` is produced in Task 5 and consumed verbatim in Task 7 (base layer + channels). `baseImageUrl` is composed via `baseImageKey(package)` (Task 5 helper + unit test). `applyIntensityGlow(package, intensity)` uses the per-package `HANDS_POS` center. `initialSelection` keys `{package,duration,intensity,addOns}` set in Task 6, read in Task 7 `applyInitialSelection`. Helper names `computePackagePrice`/`buildConfigurationSummary`/`baseImageKey` consistent between Task 5 test and impl. Channel value contract (GRADE/GLOW/phase/candle) matches image-assets doc §6.
 - **Known follow-up:** transparent placeholders make the base/prop/candle layers invisible until the user supplies real art (Task 8); the free CSS/SVG channels (light/glow/rail) are visible immediately.
