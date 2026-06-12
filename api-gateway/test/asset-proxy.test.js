@@ -246,6 +246,46 @@ test("gateway enables secure session cookies in production-like environments", a
   }
 });
 
+test("gateway proxies configurator configurations without changing the payload", async () => {
+  const payload = [
+    {
+      id: 7,
+      package: { slug: "stress-reset-massage", name: "Stress Reset Massage" },
+      duration: { minutes: 60, label: "60 min" },
+      intensity: { slug: "medium", label: "Medium" },
+      addOns: [{ slug: "aroma-oil", name: "Aroma Oil" }],
+    },
+  ];
+  const requests = [];
+  const configurator = http.createServer((req, res) => {
+    requests.push(req.url);
+    if (req.method === "GET" && req.url === "/configurations") {
+      res.setHeader("content-type", "application/json");
+      res.end(JSON.stringify(payload));
+      return;
+    }
+    res.writeHead(404).end();
+  });
+  const aftercare = http.createServer((_req, res) => res.writeHead(404).end());
+  const configuratorPort = await listen(configurator);
+  const aftercarePort = await listen(aftercare);
+  const gateway = await startGateway(`http://127.0.0.1:${configuratorPort}`, `http://127.0.0.1:${aftercarePort}`);
+
+  try {
+    const response = await fetch(`${gateway.baseUrl}/api/configurator/configurations`, {
+      signal: AbortSignal.timeout(2000),
+    });
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), payload);
+    assert.deepEqual(requests, ["/configurations"]);
+  } finally {
+    await gateway.stop();
+    await closeServer(configurator);
+    await closeServer(aftercare);
+  }
+});
+
 test("gateway streams configurator asset responses without JSON parsing", async () => {
   const body = Buffer.from([0, 1, 2, 3, 255]);
   const requests = [];
@@ -353,6 +393,94 @@ test("gateway rejects encoded aftercare asset traversal before upstream fetch", 
 
     assert.equal(response.status, 400);
     assert.deepEqual(requests, []);
+  } finally {
+    await gateway.stop();
+    await closeServer(configurator);
+    await closeServer(aftercare);
+  }
+});
+
+test("gateway rejects aftercare object keys through configurator assets before upstream fetch", async () => {
+  const requests = [];
+  const configurator = http.createServer((req, res) => {
+    requests.push(req.url);
+    res.writeHead(200, { "content-type": "image/png" });
+    res.end("should not be fetched");
+  });
+  const aftercare = http.createServer((_req, res) => res.writeHead(404).end());
+  const configuratorPort = await listen(configurator);
+  const aftercarePort = await listen(aftercare);
+  const gateway = await startGateway(`http://127.0.0.1:${configuratorPort}`, `http://127.0.0.1:${aftercarePort}`);
+
+  try {
+    const response = await fetch(`${gateway.baseUrl}/api/configurator/assets/aftercare-shop/heated-neck-wrap.png`, {
+      signal: AbortSignal.timeout(2000),
+    });
+
+    assert.equal(response.status, 400);
+    assert.deepEqual(requests, []);
+  } finally {
+    await gateway.stop();
+    await closeServer(configurator);
+    await closeServer(aftercare);
+  }
+});
+
+test("gateway rejects package object keys through aftercare assets before upstream fetch", async () => {
+  const configurator = http.createServer((_req, res) => res.writeHead(404).end());
+  const requests = [];
+  const aftercare = http.createServer((req, res) => {
+    requests.push(req.url);
+    res.writeHead(200, { "content-type": "image/png" });
+    res.end("should not be fetched");
+  });
+  const configuratorPort = await listen(configurator);
+  const aftercarePort = await listen(aftercare);
+  const gateway = await startGateway(`http://127.0.0.1:${configuratorPort}`, `http://127.0.0.1:${aftercarePort}`);
+
+  try {
+    const response = await fetch(`${gateway.baseUrl}/api/aftercare/assets/package-configurator/neck-shoulder-relief.png`, {
+      signal: AbortSignal.timeout(2000),
+    });
+
+    assert.equal(response.status, 400);
+    assert.deepEqual(requests, []);
+  } finally {
+    await gateway.stop();
+    await closeServer(configurator);
+    await closeServer(aftercare);
+  }
+});
+
+test("gateway rejects homepage media keys through business asset APIs before upstream fetch", async () => {
+  const configuratorRequests = [];
+  const aftercareRequests = [];
+  const configurator = http.createServer((req, res) => {
+    configuratorRequests.push(req.url);
+    res.writeHead(200, { "content-type": "video/mp4" });
+    res.end("should not be fetched");
+  });
+  const aftercare = http.createServer((req, res) => {
+    aftercareRequests.push(req.url);
+    res.writeHead(200, { "content-type": "video/mp4" });
+    res.end("should not be fetched");
+  });
+  const configuratorPort = await listen(configurator);
+  const aftercarePort = await listen(aftercare);
+  const gateway = await startGateway(`http://127.0.0.1:${configuratorPort}`, `http://127.0.0.1:${aftercarePort}`);
+
+  try {
+    const configuratorResponse = await fetch(`${gateway.baseUrl}/api/configurator/assets/home/home-video.mp4`, {
+      signal: AbortSignal.timeout(2000),
+    });
+    const aftercareResponse = await fetch(`${gateway.baseUrl}/api/aftercare/assets/home/home-video.mp4`, {
+      signal: AbortSignal.timeout(2000),
+    });
+
+    assert.equal(configuratorResponse.status, 400);
+    assert.equal(aftercareResponse.status, 400);
+    assert.deepEqual(configuratorRequests, []);
+    assert.deepEqual(aftercareRequests, []);
   } finally {
     await gateway.stop();
     await closeServer(configurator);

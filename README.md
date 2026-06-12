@@ -65,6 +65,19 @@ Run with Gemini configured:
 .\scripts\smoke-test.ps1
 ```
 
+## Configuration and Local Keys
+
+The local demo keeps `.env` out of git. When migrating keys from the group project or another local checkout, copy these same-name values into this project: `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_FALLBACK_MODEL`, `GOOGLE_MAPS_API_KEY`, and `GOOGLE_WEATHER_API_KEY`.
+
+Rename legacy domain prefixes instead of reusing the old names:
+
+- `DBE_CLOUDDEV_MERCH*` -> `DBE_CLOUDDEV_AFTERCARE*`
+- `DBE_CLOUDDEV_ROUTE*` -> `DBE_CLOUDDEV_VISIT_CONTEXT*`
+
+Keep `MINIO_BUCKET=wellness-media`. Do not commit `.env`.
+
+Most scaffold defaults intentionally remain local-demo defaults for the course project so the full chain can start with `docker compose up --build`. Live external integrations still need real keys: AI returns `503` when `GEMINI_API_KEY` is missing or left as `replace_me`; Weather returns seeded fallback data when `GOOGLE_WEATHER_API_KEY` is missing or placeholder.
+
 ## Test Commands
 
 Run all service tests with this verification sequence:
@@ -107,6 +120,14 @@ Browser-visible package and aftercare business media uses `/api/*/assets/*`, rou
 - `aftercare-shop/*`
 - `center/*`
 - `home/*.mp4` for the homepage-only presentation video exception
+
+MinIO owns object storage only. Browser-visible business media must remain behind the owning service API and the runtime chain `Browser -> web-frontend -> web-backend -> api-gateway -> services -> infrastructure`; do not expose the MinIO bucket or internal MinIO URLs directly to browser code.
+
+## Runtime Feature Notes
+
+- Package configuration data is served by `GET /api/configurator/configurations` and is consumed by both the package UI and AI recommendation flow.
+- Visit weather responses include `provider: "fallback"` for seeded local weather data or `provider: "google"` when a valid Google Weather API response is used.
+- Shopping cart checkout is demo-only. It reviews and confirms the anonymous cart UI state; it does not create a payment, order, or fulfillment record.
 
 ## Scaffold Asset Slots
 

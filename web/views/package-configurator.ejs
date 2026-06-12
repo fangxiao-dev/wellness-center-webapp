@@ -595,6 +595,7 @@
   const initialSelection = <%- serializeJsonForScript(initialSelection || null) %>;
 
   const state = {
+    configurations: [],
     packages: [],
     durations: [],
     intensities: [],
@@ -719,6 +720,157 @@
     }
   }
 
+  function normalizeConfigurations(configurations) {
+    return (Array.isArray(configurations) ? configurations : [])
+      .filter((configuration) =>
+        configuration &&
+        configuration.package &&
+        configuration.package.slug &&
+        configuration.duration &&
+        Number.isFinite(Number(configuration.duration.minutes)) &&
+        configuration.intensity &&
+        configuration.intensity.slug
+      )
+      .map((configuration) => ({
+        ...configuration,
+        duration: {
+          ...configuration.duration,
+          minutes: Number(configuration.duration.minutes)
+        },
+        addOns: Array.isArray(configuration.addOns) ? configuration.addOns : []
+      }));
+  }
+
+  function uniqueBy(items, getKey) {
+    const seen = new Set();
+    const unique = [];
+    items.forEach((item) => {
+      const key = getKey(item);
+      if (seen.has(key)) return;
+      seen.add(key);
+      unique.push(item);
+    });
+    return unique;
+  }
+
+  function sortPackages(packages) {
+    return [...packages].sort((a, b) => Number(a.id || 0) - Number(b.id || 0));
+  }
+
+  function sortDurations(durations) {
+    return [...durations].sort((a, b) => Number(a.minutes) - Number(b.minutes));
+  }
+
+  function sortIntensities(intensities) {
+    return [...intensities].sort((a, b) => Number(a.id || 0) - Number(b.id || 0));
+  }
+
+  function sortAddOns(addOns) {
+    return [...addOns].sort((a, b) => Number(a.id || 0) - Number(b.id || 0));
+  }
+
+  function configurationMatchesSelection(configuration, selection) {
+    if (selection.package && configuration.package.slug !== selection.package) return false;
+
+    const selectedDuration = Number(selection.duration);
+    if (selection.duration != null && Number.isFinite(selectedDuration) && configuration.duration.minutes !== selectedDuration) {
+      return false;
+    }
+
+    if (selection.intensity && configuration.intensity.slug !== selection.intensity) return false;
+    return true;
+  }
+
+  function getValidConfigurations(selection = {}) {
+    return state.configurations.filter((configuration) =>
+      configurationMatchesSelection(configuration, selection)
+    );
+  }
+
+  function exactConfigurationForSelection() {
+    return getValidConfigurations({
+      package: state.selection.package,
+      duration: state.selection.duration,
+      intensity: state.selection.intensity
+    })[0] || null;
+  }
+
+  function allowedAddOnsForSelection() {
+    const configuration = exactConfigurationForSelection();
+    return configuration ? sortAddOns(configuration.addOns) : [];
+  }
+
+  function updateAvailableOptions() {
+    state.packages = sortPackages(uniqueBy(
+      getValidConfigurations().map((configuration) => configuration.package),
+      (pkg) => pkg.slug
+    ));
+    state.durations = sortDurations(uniqueBy(
+      getValidConfigurations({ package: state.selection.package })
+        .map((configuration) => configuration.duration),
+      (duration) => duration.minutes
+    ));
+    state.intensities = sortIntensities(uniqueBy(
+      getValidConfigurations({
+        package: state.selection.package,
+        duration: state.selection.duration
+      }).map((configuration) => configuration.intensity),
+      (intensity) => intensity.slug
+    ));
+    state.addOns = allowedAddOnsForSelection();
+  }
+
+  function reconcileSelection() {
+    if (state.configurations.length === 0) {
+      state.selection.package = null;
+      state.selection.duration = null;
+      state.selection.intensity = null;
+      state.selection.addOns = new Set();
+      updateAvailableOptions();
+      return;
+    }
+
+    if (!state.selection.package || !getValidConfigurations({ package: state.selection.package }).length) {
+      state.selection.package = state.configurations[0].package.slug;
+    }
+
+    if (!state.selection.duration || !getValidConfigurations({
+      package: state.selection.package,
+      duration: state.selection.duration
+    }).length) {
+      state.selection.duration = getValidConfigurations({
+        package: state.selection.package
+      })[0].duration.minutes;
+    }
+
+    if (!state.selection.intensity || !exactConfigurationForSelection()) {
+      state.selection.intensity = getValidConfigurations({
+        package: state.selection.package,
+        duration: state.selection.duration
+      })[0].intensity.slug;
+    }
+
+    const allowedSlugs = new Set(allowedAddOnsForSelection().map((addOn) => addOn.slug));
+    state.selection.addOns = new Set(
+      Array.from(state.selection.addOns).filter((slug) => allowedSlugs.has(slug))
+    );
+    updateAvailableOptions();
+  }
+
+  function renderControls() {
+    renderPackages();
+    renderDurations();
+    renderIntensities();
+    renderAddons();
+  }
+
+  function handleSelectionChange() {
+    reconcileSelection();
+    renderControls();
+    updateBaseLayer();
+    recalculate();
+  }
+
   function renderOptionButton(container, label, delta, isActive, onClick) {
     const button = document.createElement("button");
     button.type = "button";
@@ -752,8 +904,7 @@
         () => {
           if (state.selection.package === pkg.slug) return;
           state.selection.package = pkg.slug;
-          renderPackages();
-          recalculate();
+          handleSelectionChange();
         }
       );
     });
@@ -772,8 +923,7 @@
         () => {
           if (state.selection.duration === Number(duration.minutes)) return;
           state.selection.duration = Number(duration.minutes);
-          renderDurations();
-          recalculate();
+          handleSelectionChange();
         }
       );
     });
@@ -792,8 +942,7 @@
         () => {
           if (state.selection.intensity === intensity.slug) return;
           state.selection.intensity = intensity.slug;
-          renderIntensities();
-          recalculate();
+          handleSelectionChange();
         }
       );
     });
@@ -948,46 +1097,30 @@
     const requested = initialSelection || {};
     const requestedDuration = Number.parseInt(requested.duration, 10);
 
-    state.selection.package = state.packages.some((pkg) => pkg.slug === requested.package)
-      ? requested.package
-      : (state.packages[0] && state.packages[0].slug) || null;
-
-    state.selection.duration = state.durations.some((duration) => Number(duration.minutes) === requestedDuration)
-      ? requestedDuration
-      : (state.durations[0] && Number(state.durations[0].minutes)) || null;
-
-    state.selection.intensity = state.intensities.some((intensity) => intensity.slug === requested.intensity)
-      ? requested.intensity
-      : (state.intensities[0] && state.intensities[0].slug) || null;
+    state.selection.package = typeof requested.package === "string" ? requested.package : null;
+    state.selection.duration = Number.isFinite(requestedDuration) ? requestedDuration : null;
+    state.selection.intensity = typeof requested.intensity === "string" ? requested.intensity : null;
+    state.selection.addOns = new Set();
 
     if (Array.isArray(requested.addOns)) {
       requested.addOns.forEach((slug) => {
-        if (state.addOns.some((addOn) => addOn.slug === slug)) {
+        if (typeof slug === "string" && slug) {
           state.selection.addOns.add(slug);
         }
       });
     }
+
+    reconcileSelection();
   }
 
   async function init() {
     try {
-      const [packages, durations, intensities, addOns] = await Promise.all([
-        fetchJson("/api/configurator/packages"),
-        fetchJson("/api/configurator/options/durations"),
-        fetchJson("/api/configurator/options/intensities"),
-        fetchJson("/api/configurator/options/add-ons")
-      ]);
-
-      state.packages = packages;
-      state.durations = durations;
-      state.intensities = intensities;
-      state.addOns = addOns;
+      state.configurations = normalizeConfigurations(
+        await fetchJson("/api/configurator/configurations")
+      );
 
       applyInitialSelection();
-      renderPackages();
-      renderDurations();
-      renderIntensities();
-      renderAddons();
+      renderControls();
       updateBaseLayer();
       await recalculate();
     } catch (error) {

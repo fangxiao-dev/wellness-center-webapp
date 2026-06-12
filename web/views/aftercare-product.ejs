@@ -1,0 +1,106 @@
+<style>
+  .aftercare-product-layout { max-width: 1120px; margin: 0 auto; padding: 36px 20px 80px; }
+  .product-back-link { display: inline-flex; margin-bottom: 22px; color: var(--muted); font-weight: 700; text-decoration: none; }
+  .product-back-link:hover { color: var(--ink); }
+  .product-detail { display: grid; grid-template-columns: minmax(0, 1.02fr) minmax(320px, 0.98fr); gap: 36px; align-items: start; }
+  .product-detail-media { aspect-ratio: 4 / 3; background: #f1f5f9; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .product-detail-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .product-detail-panel { display: flex; flex-direction: column; gap: 16px; }
+  .product-detail-category { font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); }
+  .product-detail-title { font-size: 2.55rem; line-height: 1.05; margin: 0; font-weight: 800; }
+  .product-detail-description { font-size: 1.03rem; line-height: 1.65; color: var(--muted); margin: 0; }
+  .product-detail-note { border-left: 4px solid var(--accent); padding: 10px 0 10px 14px; color: var(--ink); line-height: 1.5; }
+  .product-detail-price { font-size: 1.55rem; font-weight: 800; }
+  .product-detail-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 4px; }
+  .qty-stepper { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .qty-stepper button { width: 42px; height: 44px; border: 0; background: #fff; font-size: 1.12rem; cursor: pointer; color: var(--ink); }
+  .qty-stepper button:hover { background: #f1f5f9; }
+  .qty-stepper input { width: 48px; height: 44px; border: 0; text-align: center; font-weight: 800; font-size: 0.98rem; -moz-appearance: textfield; }
+  .qty-stepper input::-webkit-outer-spin-button, .qty-stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .product-detail-actions .btn { min-height: 44px; }
+  .product-detail-status { min-height: 20px; font-size: 0.9rem; font-weight: 800; }
+
+  @media (max-width: 780px) {
+    .aftercare-product-layout { padding-top: 24px; }
+    .product-detail { grid-template-columns: 1fr; gap: 24px; }
+    .product-detail-title { font-size: 2rem; }
+    .product-detail-actions { align-items: stretch; }
+    .product-detail-actions .btn { flex: 1; }
+  }
+</style>
+
+<div class="aftercare-product-layout">
+  <a class="product-back-link" href="/aftercare-shop">Back to aftercare</a>
+
+  <article class="product-detail" data-product-detail
+           data-id="<%= product.id %>"
+           data-slug="<%= product.slug || product.id %>"
+           data-name="<%= product.name %>"
+           data-price="<%= product.price %>"
+           data-image="<%= product.imageUrl %>">
+    <div class="product-detail-media">
+      <img src="<%= product.imageUrl %>" alt="<%= product.name %>" />
+    </div>
+
+    <div class="product-detail-panel">
+      <span class="product-detail-category"><%= product.category %></span>
+      <h1 class="product-detail-title"><%= product.name %></h1>
+      <% if (product.description) { %>
+        <p class="product-detail-description"><%= product.description %></p>
+      <% } %>
+      <% if (product.usageNote) { %>
+        <p class="product-detail-note"><%= product.usageNote %></p>
+      <% } %>
+      <div class="product-detail-price"><%= parseFloat(product.price).toLocaleString("en-US", { style: "currency", currency: "EUR" }) %></div>
+      <div class="product-detail-actions">
+        <div class="qty-stepper">
+          <button type="button" data-qty-dec aria-label="Decrease quantity">&minus;</button>
+          <input type="number" min="1" value="1" data-qty aria-label="Quantity" />
+          <button type="button" data-qty-inc aria-label="Increase quantity">+</button>
+        </div>
+        <button class="btn btn-primary" type="button" data-add>Add to cart</button>
+      </div>
+      <div class="product-detail-status" data-status aria-live="polite"></div>
+    </div>
+  </article>
+</div>
+
+<script>
+  const productDetail = document.querySelector("[data-product-detail]");
+  const qtyInput = productDetail.querySelector("[data-qty]");
+  const status = productDetail.querySelector("[data-status]");
+
+  const clampQty = () => {
+    const value = Math.max(1, parseInt(qtyInput.value, 10) || 1);
+    qtyInput.value = value;
+    return value;
+  };
+
+  productDetail.querySelector("[data-qty-dec]").addEventListener("click", () => { qtyInput.value = Math.max(1, clampQty() - 1); });
+  productDetail.querySelector("[data-qty-inc]").addEventListener("click", () => { qtyInput.value = clampQty() + 1; });
+  qtyInput.addEventListener("change", clampQty);
+
+  productDetail.querySelector("[data-add]").addEventListener("click", async () => {
+    status.style.color = "#047857";
+    status.textContent = "Adding...";
+    try {
+      const response = await fetch("/api/cart/items", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "aftercare",
+          name: productDetail.dataset.name,
+          price: parseFloat(productDetail.dataset.price),
+          imageUrl: productDetail.dataset.image,
+          quantity: clampQty(),
+          details: { productId: Number(productDetail.dataset.id), slug: productDetail.dataset.slug },
+        }),
+      });
+      if (!response.ok) throw new Error("cart request failed");
+      status.textContent = "Added to cart.";
+    } catch (error) {
+      status.style.color = "#b91c1c";
+      status.textContent = "Cart is currently unavailable.";
+    }
+  });
+</script>

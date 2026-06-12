@@ -6,12 +6,12 @@ Bring the aftercare shop closer to the stronger group shop card treatment while 
 
 ## Acceptance criteria
 
-- [ ] Product listing still SSR-renders products from `/api/aftercare/products`.
-- [ ] Cards use the aftercare API asset path for product images.
-- [ ] Each product still supports detail navigation and add-to-cart.
-- [ ] The visual treatment uses full-image cards with overlay or hover reveal behavior consistent with the existing UI shell.
-- [ ] Browser/backend tests assert product names, image paths, detail links, and add-to-cart controls remain present.
-- [ ] Product detail pages remain functional.
+- [x] Product listing still SSR-renders products from `/api/aftercare/products`.
+- [x] Cards use the aftercare API asset path for product images.
+- [x] Each product still supports detail navigation and add-to-cart.
+- [x] The visual treatment uses full-image cards with overlay or hover reveal behavior consistent with the existing UI shell.
+- [x] Browser/backend tests assert product names, image paths, detail links, and add-to-cart controls remain present.
+- [x] Product detail pages remain functional.
 
 ## Blocked by
 
@@ -27,3 +27,18 @@ Owns aftercare list/detail presentation. Does not change aftercare product schem
 npm test --prefix services/web-backend
 .\scripts\smoke-test.ps1 -SkipAi
 ```
+
+## Completion note
+
+Files changed:
+- `web/views/aftercare-shop.ejs`
+- `web/views/aftercare-product.ejs`
+- `services/web-backend/test/backend-routing.test.js`
+
+Test results:
+- `npm test --prefix services/web-backend` passed.
+- `.\scripts\smoke-test.ps1 -SkipAi` passed.
+- Browser check against `http://localhost:4100/aftercare-shop` and `/aftercare-shop/heated-neck-wrap` confirmed API-backed images, detail links, add-to-cart controls, overlay cards, and detail-page slug metadata.
+
+Remaining risks:
+- Visual verification was limited to the running local stack and DOM/style checks; no screenshot artifact was committed.

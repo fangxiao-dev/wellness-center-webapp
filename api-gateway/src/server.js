@@ -63,7 +63,7 @@ async function proxyBinary(res, request) {
   }
 }
 
-function normalizeAssetPathFromRequest(req, publicPrefix) {
+function normalizeAssetPathFromRequest(req, publicPrefix, ownedObjectPrefix) {
   const rawPath = String(req.originalUrl || "").split("?")[0];
   if (!rawPath.startsWith(`${publicPrefix}/`)) return null;
 
@@ -87,7 +87,9 @@ function normalizeAssetPathFromRequest(req, publicPrefix) {
     }
     encodedSegments.push(encodeURIComponent(decodedSegment));
   }
-  return encodedSegments.join("/");
+  const assetPath = encodedSegments.join("/");
+  if (ownedObjectPrefix && !assetPath.startsWith(`${ownedObjectPrefix}/`)) return null;
+  return assetPath;
 }
 
 function queryString(req, allowedKeys = []) {
@@ -115,6 +117,9 @@ app.get("/api/configurator/options/intensities", (_req, res) => {
 app.get("/api/configurator/options/add-ons", (_req, res) => {
   proxyJson(res, () => fetch(`${CONFIGURATOR}/options/add-ons`));
 });
+app.get("/api/configurator/configurations", (_req, res) => {
+  proxyJson(res, () => fetch(`${CONFIGURATOR}/configurations`));
+});
 app.post("/api/configurator/configuration/calculate", (req, res) => {
   proxyJson(res, () => fetch(`${CONFIGURATOR}/configuration/calculate`, {
     method: "POST",
@@ -123,7 +128,7 @@ app.post("/api/configurator/configuration/calculate", (req, res) => {
   }));
 });
 app.get(/^\/api\/configurator\/assets\/.+$/, (req, res) => {
-  const assetPath = normalizeAssetPathFromRequest(req, "/api/configurator/assets");
+  const assetPath = normalizeAssetPathFromRequest(req, "/api/configurator/assets", "package-configurator");
   if (!assetPath) return res.status(400).json({ error: "invalid asset key" });
   proxyBinary(res, () => fetch(`${CONFIGURATOR}/assets/${assetPath}`));
 });
@@ -135,7 +140,7 @@ app.get("/api/aftercare/products/:productId", (req, res) => {
   proxyJson(res, () => fetch(`${AFTERCARE}/products/${encodeURIComponent(req.params.productId)}`));
 });
 app.get(/^\/api\/aftercare\/assets\/.+$/, (req, res) => {
-  const assetPath = normalizeAssetPathFromRequest(req, "/api/aftercare/assets");
+  const assetPath = normalizeAssetPathFromRequest(req, "/api/aftercare/assets", "aftercare-shop");
   if (!assetPath) return res.status(400).json({ error: "invalid asset key" });
   proxyBinary(res, () => fetch(`${AFTERCARE}/assets/${assetPath}`));
 });

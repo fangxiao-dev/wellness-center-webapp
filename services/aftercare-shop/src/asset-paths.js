@@ -13,11 +13,20 @@ function normalizeObjectKey(key) {
   return segments.map(encodeURIComponent).join("/");
 }
 
+function normalizeAftercareObjectKey(key) {
+  const objectKey = normalizeObjectKey(key);
+  if (!objectKey.startsWith("aftercare-shop/")) {
+    throw new Error("invalid object key");
+  }
+  return objectKey;
+}
+
 function toPublicProductImageUrl(key) {
-  return `/api/aftercare/assets/${normalizeObjectKey(key)}`;
+  return `/api/aftercare/assets/${normalizeAftercareObjectKey(key)}`;
 }
 
 module.exports = {
   normalizeObjectKey,
+  normalizeAftercareObjectKey,
   toPublicProductImageUrl,
 };

@@ -1,6 +1,6 @@
 const express = require("express");
 const mysql = require("mysql2/promise");
-const { normalizeObjectKey, toPublicPackageImageUrl } = require("./asset-paths");
+const { normalizePackageObjectKey, toPublicPackageImageUrl } = require("./asset-paths");
 
 const app = express();
 const port = process.env.PORT || 4103;
@@ -100,6 +100,55 @@ function mapAddon(row) {
   };
 }
 
+function mapConfigurationRows(rows) {
+  const configurationsById = new Map();
+
+  for (const row of rows) {
+    if (!configurationsById.has(row.configuration_id)) {
+      configurationsById.set(row.configuration_id, {
+        id: row.configuration_id,
+        package: {
+          id: row.package_id,
+          slug: row.package_slug,
+          name: row.package_name,
+          goal: row.package_goal,
+          description: row.package_description,
+          basePrice: asMoney(row.package_base_price),
+          baseMinutes: Number(row.package_base_minutes),
+          imageUrl: toPublicPackageImageUrl(row.package_minio_object),
+        },
+        duration: {
+          id: row.duration_id,
+          minutes: Number(row.duration_minutes),
+          label: row.duration_label,
+          priceDelta: asMoney(row.duration_price_delta),
+        },
+        intensity: {
+          id: row.intensity_id,
+          slug: row.intensity_slug,
+          label: row.intensity_label,
+          description: row.intensity_description,
+          priceDelta: asMoney(row.intensity_price_delta),
+        },
+        addOns: [],
+      });
+    }
+
+    if (row.addon_id != null) {
+      configurationsById.get(row.configuration_id).addOns.push({
+        id: row.addon_id,
+        slug: row.addon_slug,
+        name: row.addon_name,
+        description: row.addon_description,
+        priceDelta: asMoney(row.addon_price_delta),
+        imageUrl: toPublicPackageImageUrl(row.addon_minio_object),
+      });
+    }
+  }
+
+  return [...configurationsById.values()];
+}
+
 function sendError(res, status, error) {
   return res.status(status).json({ error });
 }
@@ -145,6 +194,49 @@ app.get("/options/add-ons", async (_req, res) => {
   }
 });
 
+app.get("/configurations", async (_req, res) => {
+  try {
+    const rows = await query(`
+      SELECT
+        c.id AS configuration_id,
+        p.id AS package_id,
+        p.slug AS package_slug,
+        p.name AS package_name,
+        p.goal AS package_goal,
+        p.description AS package_description,
+        p.base_price AS package_base_price,
+        p.base_minutes AS package_base_minutes,
+        p.minio_object AS package_minio_object,
+        d.id AS duration_id,
+        d.minutes AS duration_minutes,
+        d.label AS duration_label,
+        d.price_delta AS duration_price_delta,
+        i.id AS intensity_id,
+        i.slug AS intensity_slug,
+        i.label AS intensity_label,
+        i.description AS intensity_description,
+        i.price_delta AS intensity_price_delta,
+        a.id AS addon_id,
+        a.slug AS addon_slug,
+        a.name AS addon_name,
+        a.description AS addon_description,
+        a.price_delta AS addon_price_delta,
+        a.minio_object AS addon_minio_object
+      FROM configurations c
+      JOIN packages p ON p.id = c.package_id
+      JOIN durations d ON d.id = c.duration_id
+      JOIN intensities i ON i.id = c.intensity_id
+      LEFT JOIN configuration_addons ca ON ca.configuration_id = c.id AND ca.enabled = TRUE
+      LEFT JOIN add_ons a ON a.id = ca.add_on_id
+      WHERE c.enabled = TRUE
+      ORDER BY p.id, d.minutes, i.id, a.id
+    `);
+    res.json(mapConfigurationRows(rows));
+  } catch (error) {
+    sendError(res, 500, error.message);
+  }
+});
+
 app.post("/configuration/calculate", async (req, res) => {
   const body = req.body || {};
   if (!body.package) {
@@ -178,11 +270,33 @@ app.post("/configuration/calculate", async (req, res) => {
     const intensityRows = await query("SELECT * FROM intensities WHERE slug = ? LIMIT 1", [body.intensity]);
     if (!intensityRows[0]) return sendError(res, 404, "intensity not found");
 
+    const configurationRows = await query(
+      "SELECT id FROM configurations WHERE package_id = ? AND duration_id = ? AND intensity_id = ? AND enabled = TRUE LIMIT 1",
+      [packageRows[0].id, durationRows[0].id, intensityRows[0].id]
+    );
+    if (!configurationRows[0]) return sendError(res, 400, "configuration is not available");
+
     let selectedAddOns = [];
     if (addOns.length > 0) {
       selectedAddOns = await query("SELECT * FROM add_ons WHERE slug IN (?) ORDER BY id", [addOns]);
       if (selectedAddOns.length !== addOns.length) {
         return sendError(res, 404, "add-on not found");
+      }
+
+      const allowedAddOns = await query(
+        `
+          SELECT a.*
+          FROM configuration_addons ca
+          JOIN add_ons a ON a.id = ca.add_on_id
+          WHERE ca.configuration_id = ?
+            AND ca.enabled = TRUE
+            AND a.slug IN (?)
+          ORDER BY a.id
+        `,
+        [configurationRows[0].id, addOns]
+      );
+      if (allowedAddOns.length !== selectedAddOns.length) {
+        return sendError(res, 400, "add-on is not available for configuration");
       }
     }
 
@@ -233,7 +347,7 @@ app.post("/configuration/calculate", async (req, res) => {
 app.get(/^\/assets\/(.+)$/, async (req, res) => {
   let objectKey;
   try {
-    objectKey = normalizeObjectKey(req.params[0]);
+    objectKey = normalizePackageObjectKey(req.params[0]);
   } catch (_error) {
     return sendError(res, 400, "invalid asset key");
   }

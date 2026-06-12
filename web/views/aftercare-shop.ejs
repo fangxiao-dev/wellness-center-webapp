@@ -8,31 +8,94 @@
   .shop-header h1 { font-size: 2.8rem; font-weight: 800; letter-spacing: -0.03em; margin: 0 0 8px; }
   .shop-header p { color: var(--muted); font-size: 1.1rem; }
 
-  .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 22px; }
+  .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
 
   .product-card {
-    display: flex; flex-direction: column;
-    border: 1px solid var(--line); border-radius: 14px; background: #fff; overflow: hidden;
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    position: relative;
+    min-height: clamp(300px, 34vw, 400px);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #f1f5f9;
+    overflow: hidden;
+    box-shadow: 0 16px 36px rgba(49, 38, 29, 0.1);
+    isolation: isolate;
+    transition: box-shadow 0.22s ease, transform 0.22s ease;
   }
-  .product-card:hover { box-shadow: 0 16px 40px rgba(0,0,0,0.1); transform: translateY(-2px); }
-  .product-card-media { aspect-ratio: 4 / 3; background: #f1f5f9; }
-  .product-card-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .product-card-body { display: flex; flex-direction: column; gap: 6px; padding: 16px 16px 18px; flex: 1; }
-  .product-card-category { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); }
-  .product-card-name { font-size: 1.05rem; font-weight: 700; margin: 0; line-height: 1.25; }
-  .product-card-desc { font-size: 0.86rem; color: var(--muted); line-height: 1.45; margin: 0; flex: 1; }
-  .product-card-price { font-size: 1.1rem; font-weight: 800; margin-top: 4px; }
-  .product-card-actions { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
-  .qty-stepper { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
-  .qty-stepper button { width: 36px; height: 40px; border: 0; background: #fff; font-size: 1.1rem; cursor: pointer; color: var(--ink); }
-  .qty-stepper button:hover { background: #f1f5f9; }
-  .qty-stepper input { width: 40px; height: 40px; border: 0; text-align: center; font-weight: 700; font-size: 0.95rem; -moz-appearance: textfield; }
+  .product-card:hover,
+  .product-card:focus-within { box-shadow: 0 20px 46px rgba(49, 38, 29, 0.18); transform: translateY(-3px); }
+  .product-card-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.55s ease;
+  }
+  .product-card:hover .product-card-img,
+  .product-card:focus-within .product-card-img { transform: scale(1.06); }
+  .product-card-overlay {
+    position: absolute;
+    inset: auto 0 0;
+    display: grid;
+    gap: 8px;
+    padding: 72px 18px 18px;
+    color: #fffaf2;
+    background: linear-gradient(to top, rgba(24, 31, 28, 0.9) 0%, rgba(24, 31, 28, 0.58) 58%, transparent 100%);
+    transition: padding-bottom 0.24s ease;
+    z-index: 1;
+  }
+  .product-card:hover .product-card-overlay,
+  .product-card:focus-within .product-card-overlay { padding-bottom: 24px; }
+  .product-card-category {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: rgba(255, 250, 242, 0.72);
+  }
+  .product-card-name { font-size: 1.08rem; font-weight: 800; margin: 0; line-height: 1.2; }
+  .product-card-desc {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: 0.86rem;
+    color: rgba(255, 250, 242, 0.78);
+    line-height: 1.42;
+    margin: 0;
+  }
+  .product-card-price { font-size: 1.05rem; font-weight: 800; color: rgba(255, 250, 242, 0.95); }
+  .product-card-detail-link { justify-self: start; color: #fffaf2; font-size: 0.86rem; font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
+  .product-card-detail-link:hover { color: #f5d7bd; }
+  .product-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 4px;
+    transform: translateY(12px);
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  .product-card:hover .product-card-actions,
+  .product-card:focus-within .product-card-actions {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .qty-stepper { display: inline-flex; align-items: center; border: 1px solid rgba(255, 250, 242, 0.42); border-radius: 8px; overflow: hidden; background: rgba(255, 250, 242, 0.94); }
+  .qty-stepper button { width: 36px; height: 40px; border: 0; background: transparent; font-size: 1.1rem; cursor: pointer; color: var(--ink); }
+  .qty-stepper button:hover { background: rgba(255,255,255,0.54); }
+  .qty-stepper input { width: 40px; height: 40px; border: 0; text-align: center; font-weight: 700; font-size: 0.95rem; -moz-appearance: textfield; background: transparent; color: var(--ink); }
   .qty-stepper input::-webkit-outer-spin-button, .qty-stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-  .product-card-actions .btn { flex: 1; min-height: 44px; }
-  .product-card-status { min-height: 18px; font-size: 0.8rem; font-weight: 700; margin-top: 6px; }
+  .product-card-actions .btn { flex: 1; min-height: 42px; border-radius: 8px; white-space: nowrap; }
+  .product-card-status { min-height: 18px; font-size: 0.8rem; font-weight: 800; }
 
-  @media (max-width: 640px) { .shop-header h1 { font-size: 2.2rem; } }
+  @media (max-width: 640px) {
+    .shop-header h1 { font-size: 2.2rem; }
+    .product-grid { gap: 14px; }
+    .product-card { min-height: clamp(280px, 82vw, 360px); }
+    .product-card-actions { opacity: 1; transform: none; }
+  }
 </style>
 
 <div class="aftercare-shop-layout">
@@ -43,19 +106,24 @@
 
   <div class="product-grid">
     <% products.forEach(function(product) { %>
-      <article class="product-card" id="product-<%= product.slug || product.id %>" data-product-card
+      <article class="product-card product-card--image-led" id="product-<%= product.slug || product.id %>" data-product-card
                data-id="<%= product.id %>"
+               data-slug="<%= product.slug || product.id %>"
                data-name="<%= product.name %>"
                data-price="<%= product.price %>"
                data-image="<%= product.imageUrl %>">
-        <div class="product-card-media">
-          <img src="<%= product.imageUrl %>" alt="<%= product.name %>" loading="lazy" />
-        </div>
-        <div class="product-card-body">
+        <img
+          class="product-card-img"
+          src="<%= product.imageUrl %>"
+          alt="<%= product.name %>"
+          loading="lazy"
+        />
+        <div class="product-card-overlay">
           <span class="product-card-category"><%= product.category %></span>
           <h2 class="product-card-name"><%= product.name %></h2>
           <% if (product.description) { %><p class="product-card-desc"><%= product.description %></p><% } %>
           <span class="product-card-price"><%= parseFloat(product.price).toLocaleString("en-US", { style: "currency", currency: "EUR" }) %></span>
+          <a class="product-card-detail-link" href="/aftercare-shop/<%= product.slug || product.id %>">View details</a>
           <div class="product-card-actions">
             <div class="qty-stepper">
               <button type="button" data-qty-dec aria-label="Decrease quantity">&minus;</button>
@@ -99,7 +167,7 @@
             price: parseFloat(card.dataset.price),
             imageUrl: card.dataset.image,
             quantity: clampQty(),
-            details: { productId: Number(card.dataset.id) },
+            details: { productId: Number(card.dataset.id), slug: card.dataset.slug },
           }),
         });
         if (!response.ok) throw new Error("cart request failed");
@@ -120,7 +188,7 @@
       setTimeout(() => {
         target.scrollIntoView({ behavior: "smooth", block: "center" });
         target.style.outline = "3px solid var(--accent)";
-        target.style.borderRadius = "14px";
+        target.style.borderRadius = "8px";
         setTimeout(() => { target.style.outline = ""; }, 1800);
       }, 100);
     }

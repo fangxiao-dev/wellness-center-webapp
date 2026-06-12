@@ -1,3 +1,17 @@
+<%
+  const summary = (typeof visitSummary !== "undefined" && visitSummary) ? visitSummary : {};
+  const location = summary.location || summary.center || {};
+  const weather = summary.weather || {};
+  const address = location.address || summary.address || "Address will load shortly.";
+  const openingNote = location.openingNote || summary.openingNote || "Opening details will load shortly.";
+  const arrivalTip = location.arrivalTip || summary.arrivalTip || summary.tip || "Arrival guidance will load shortly.";
+  const weatherSummary = weather.summary || summary.weatherSummary || "Weather guidance will load shortly.";
+  const weatherLabel = weather.provider
+    ? `${weatherSummary} Source: ${weather.provider}.`
+    : weatherSummary;
+  const hasMapsKey = typeof mapsApiKey !== "undefined" && mapsApiKey;
+%>
+
 <section class="page-shell page-header">
   <p class="eyebrow">Visit preparation</p>
   <h1>Visit Context</h1>
@@ -5,6 +19,27 @@
 </section>
 
 <section class="page-shell two-column">
-  <section id="visit-summary" class="panel"></section>
-  <div id="map" class="map-panel"></div>
+  <section id="visit-summary" class="panel">
+    <p class="eyebrow">Location</p>
+    <h2><%= location.name || "Serenity Wellness Center" %></h2>
+    <p><strong>Address:</strong> <%= address %></p>
+    <p><strong>Opening note:</strong> <%= openingNote %></p>
+    <p><strong>Arrival tip:</strong> <%= arrivalTip %></p>
+    <p><strong>Weather:</strong> <%= weatherLabel %></p>
+  </section>
+
+  <div
+    id="map"
+    class="map-panel<%= hasMapsKey ? "" : " map-panel--fallback" %>"
+    aria-label="Serenity Wellness Center map"
+  >
+    <% if (hasMapsKey) { %>
+      <p>Interactive map loading for <%= address %>.</p>
+    <% } else { %>
+      <h2>Map unavailable</h2>
+      <p>Google Maps is not configured for this environment.</p>
+      <p><strong>Address:</strong> <%= address %></p>
+      <p><strong>Arrival tip:</strong> <%= arrivalTip %></p>
+    <% } %>
+  </div>
 </section>

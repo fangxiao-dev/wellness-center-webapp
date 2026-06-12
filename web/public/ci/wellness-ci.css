@@ -400,7 +400,7 @@ video {
   font-weight: 700;
 }
 
-/* Card variant: product (4:3 contained image with padding, e.g. merch products) */
+/* Card variant: product (4:3 contained image with padding, e.g. aftercare products) */
 .card--product {
   --card-image-aspect: 4 / 3;
 }

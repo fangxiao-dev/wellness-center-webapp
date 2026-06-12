@@ -1,6 +1,6 @@
 const express = require("express");
 const mysql = require("mysql2/promise");
-const { normalizeObjectKey, toPublicProductImageUrl } = require("./asset-paths");
+const { normalizeAftercareObjectKey, toPublicProductImageUrl } = require("./asset-paths");
 
 const app = express();
 const port = process.env.PORT || 4104;
@@ -79,7 +79,7 @@ app.get("/products/:productId", async (req, res) => {
 app.get(/^\/assets\/(.+)$/, async (req, res) => {
   let objectKey;
   try {
-    objectKey = normalizeObjectKey(req.params[0]);
+    objectKey = normalizeAftercareObjectKey(req.params[0]);
   } catch (_error) {
     return sendError(res, 400, "invalid asset key");
   }
