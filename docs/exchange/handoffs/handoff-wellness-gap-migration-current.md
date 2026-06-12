@@ -2,23 +2,24 @@
 
 ## Handoff Mode
 - Rolling current handoff; this is the only continuation entrypoint.
-- Created after Wave 1 integration and live-key gate on 2026-06-12.
+- Refreshed after protected checkpoint commit on 2026-06-12.
 
 ## Current Objective
-- Wellness gap migration local issue drafts are implemented and verified in the dedicated implementation worktree.
-- Wave 1, Wave 2, and Wave 3 issue drafts are complete through Issue 09.
-- Next session should not continue implementation by default; it should preserve the local dirty checkpoint and ask the owner for the next integration action: checkpoint commit, branch/main integration strategy, optional live-key rerun, or stop.
+- Wellness gap migration local issue drafts are implemented, verified, and protected by a local checkpoint commit.
+- Owner has authorized the next session to push local `main`, rebase the feature branch onto local `main`, verify, run live-key scenario rerun if the rebase succeeds without decision blockers, push the feature branch, open a draft PR, and comment/close GitHub issues `#2`-`#6`.
+- Next session should continue publish/rebase orchestration, not start new migration implementation.
 
 ## Fresh Workspace State
 - Implementation worktree: `D:\CodeSpace\dbe-cloud-soloproject\.worktrees\wellness-gap-migration-wave1`.
-- Main workspace / trunk checkout: `D:\CodeSpace\dbe-cloud-soloproject`; leave it untouched except for coordination unless owner says otherwise.
+- Main workspace / trunk checkout: `D:\CodeSpace\dbe-cloud-soloproject`.
 - Branch: `codex/wellness-gap-migration-wave1`.
-- HEAD: `941fbbc48d114b0b8c4f791b65905b9700a2459c` (`941fbbc docs: revise to 3 base scenes; intensity becomes a CSS effect`).
-- Dirty state from `git status --short --branch`: 39 modified/deleted tracked entries plus untracked `docs/exchange/handoffs/`, `docs/exchange/issue-drafts/`, `docs/exchange/wellness-gap-migration-orchestration-plan-20260612.md`, and `docs/exchange/wellness-gap-migration-review-gate-20260612.md`.
-- Local `main`: `5495f7080802d00242dba3457137c6110fc5adc4`; worktree branch is `0 8` vs local `main` by `git rev-list --left-right --count HEAD...main`.
+- Code checkpoint commit: `c303e44d6bd6abe558feb3c23ae8b9fd09af8007` (`c303e44 feat(wellness): complete gap migration`).
+- Fresh state immediately after code checkpoint: `git status --short --branch` printed only `## codex/wellness-gap-migration-wave1`.
+- Local `main`: `2eaddb07611d67dc21689ab31dc83fdf47db8db0`; worktree branch is `1 12` vs local `main` by `git rev-list --left-right --count HEAD...main`.
 - `origin/main`: `ccf6b33484b2ac25844ed8f823c3d6082db502c2`; worktree branch is `2 0` vs `origin/main`.
-- Main workspace status: `main...origin/main [ahead 10]` with untracked docs/exchange, docs/reports, and docs/impl-plans files. Do not delete or overwrite those.
-- No commit was made for Wave 1 because owner did not request commits; checkpoint remains local dirty worktree.
+- Main workspace status: `main...origin/main [ahead 14]`.
+- Important: local `main` is the intended rebase base and is newer than `origin/main`; owner explicitly chose "push local main first" before feature PR creation.
+- This handoff file is refreshed after `c303e44`; if a small handoff-refresh commit follows, child should trust `git log -1 --oneline` over this paragraph for exact latest HEAD.
 
 ## Completed / Not Completed
 - Completed Wave 1 local issue drafts:
@@ -35,7 +36,7 @@
   - `09-clean-browser-js-and-expand-regression-gates.md`
 - Each completed issue draft has acceptance checkboxes marked and a completion note with changed files, verification, reviewer result, and risk.
 - Not completed: none in the local Wellness gap migration issue set.
-- Explicitly not done: GitHub issue publishing, PR creation, push, merge, checkout real-payment/order scope, new func-design docs.
+- Explicitly not done yet: push local `main`, rebase feature branch, push feature branch, draft PR creation, GitHub issue comments/closes, merge, checkout real-payment/order scope, new func-design docs.
 
 ## Verified / Not Verified
 - Passed final full service test suite after Issue 09 closure:
@@ -87,15 +88,34 @@
 - No PR was created.
 - No push, merge, or issue/comment external action was performed.
 - Docker local runtime was rebuilt under project name `dbe-cloud-soloproject` and was running from the worktree-built images when this handoff was written. Re-check container state before relying on it.
+- GitHub facts from `gh`:
+  - Repo: `fangxiao-dev/wellness-center-webapp`
+  - Default branch: `main`
+  - `gh` is installed and authenticated as `fangxiao-dev`.
+  - No open PRs were found.
+  - Open issues `#2`-`#6` exist and should be commented/closed after verified publish.
 
 ## Open Issues
 - No local migration issue drafts remain open.
-- Before any commit/rebase/merge, confirm owner wants a checkpoint commit. Current worktree is dirty and locally verified.
-- Local `main` is ahead of the feature worktree branch; integration strategy needs confirmation before returning work to trunk.
-- Optional final live-key gate can be rerun if owner wants a post-cleanup live verification, but it is not required for Issue 09.
+- Rebase is still pending. Feature branch must catch up to local `main` before PR.
+- Expected overlap/conflict areas:
+  - `infrastructure/mysql/init/02_package_configurator.sql`
+  - `services/package-configurator/src/server.js`
+  - `services/package-configurator/test/package-configurator.test.js`
+  - `web/views/package-configurator.ejs`
+  - `web/views/aftercare-shop.ejs`
+  - `web/views/aftercare-product.ejs`
+  - `services/web-backend/src/server.js`
+  - `services/web-backend/test/backend-routing.test.js`
+  - exchange docs and issue drafts.
+- Rebase policy chosen by owner:
+  - Architecture/service boundaries from migration branch.
+  - Configurator UI/functionality optimizations from local `main`.
+  - Keep the aftercare product detail page while porting compatible main shop-grid UI improvements.
+  - Preserve migration asset-prefix, configurations, AI validation, visit-context, smoke, and docs closure work.
+- If a conflict requires product decisions outside that policy, stop and ask owner.
 
 ## Collaboration Contract
-- Follow the orchestration plan wave order and local issue drafts; do not publish GitHub issues.
 - Main/new session is an orchestration runner: split bounded implementation/review/verification work to subagents where useful; main session handles slicing, seaming, gate execution, checkpoint state, and handoff.
 - Before editing any issue, read the relevant issue draft, related code, and related tests.
 - Prefer test-first changes; add or update focused tests before implementation when feasible.
@@ -106,13 +126,16 @@
 - If existing user changes appear, read and preserve them; do not revert unrelated changes.
 - Preserve unrelated untracked docs/reports/session archives, especially main workspace `docs/reports/2026-06-12-wellness-solo-architecture-review.md` and `docs/exchange/session-archives/`.
 - Auto-handoff trigger: session context auto compact, or after a large quality gate when session work time exceeds 90 minutes.
+- Authorized external actions for the next session only: push local `main`, push feature branch, create draft PR, comment and close GitHub issues `#2`-`#6`. Do not merge PR and do not create new GitHub issues.
 
 ## Next Action
 - Read the handoff skill and auto-handoff rule, then verify workspace with `git status --short --branch` and `git log -1 --oneline`.
 - Continue in `D:\CodeSpace\dbe-cloud-soloproject\.worktrees\wellness-gap-migration-wave1`.
-- Do not start new migration implementation by default. The issue plan is complete locally.
-- Ask owner for the next integration action:
-  - make a local checkpoint commit,
-  - rerun optional live-key gates,
-  - decide feature-branch vs local-main integration strategy,
-  - or stop with the verified dirty worktree preserved.
+- Use subagents before mutating rebase/publish state:
+  - Have a reviewer/explorer inspect rebase risk and exact current git state.
+  - Have a reviewer inspect conflict resolution before final verification if conflicts occur.
+  - Have a reviewer inspect PR body and issue update text before GitHub writes.
+- Push local `main` to `origin/main` first.
+- Rebase `codex/wellness-gap-migration-wave1` onto local `main`, resolving expected conflicts by the owner policy above.
+- Run required full verification gate, then live-key scenario rerun from `D:\CodeSpace\dbe-cloud-soloproject\docs\reports\2026-06-12-wellness-test-scenarios-gap-report.md` if rebase succeeds without decision blockers.
+- Push feature branch with upstream, open a draft PR titled `[codex] Complete Wellness gap migration`, then comment and close GitHub issues `#2`-`#6`.
