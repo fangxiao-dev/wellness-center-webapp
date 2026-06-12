@@ -51,6 +51,7 @@
     transition: opacity 0.28s ease, filter 0.5s ease;
   }
 
+  .config-layer.active,
   .config-layer.is-visible {
     opacity: 1;
   }
@@ -856,7 +857,7 @@
 
     Array.from(state.selection.addOns).forEach((slug) => {
       const img = document.createElement("img");
-      img.className = "config-layer addon is-visible";
+      img.className = "config-layer addon active is-visible";
       img.src = getSelectedAddonImageSource(slug);
       img.alt = "";
       container.appendChild(img);
