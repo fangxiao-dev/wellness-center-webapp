@@ -37,6 +37,10 @@ function computePackagePrice({ basePrice, durationDelta, intensityDelta, addOnDe
     (Array.isArray(addOnDeltas) ? addOnDeltas : []).reduce((sum, delta) => sum + asMoney(delta), 0);
 }
 
+function baseImageKey(slug) {
+  return `package-configurator/base/${slug}.png`;
+}
+
 function joinNames(names) {
   const list = (Array.isArray(names) ? names : []).filter(Boolean);
   if (list.length === 0) return "";
@@ -62,7 +66,7 @@ function mapPackage(row) {
     description: row.description,
     basePrice: asMoney(row.base_price),
     baseMinutes: Number(row.base_minutes),
-    imageUrl: toPublicPackageImageUrl(row.minio_object),
+    imageUrl: toPublicPackageImageUrl(baseImageKey(row.slug)),
   };
 }
 
@@ -158,6 +162,10 @@ app.post("/configuration/calculate", async (req, res) => {
     return sendError(res, 400, "duration must be a positive number of minutes");
   }
 
+  if (body.addOns !== undefined && !Array.isArray(body.addOns)) {
+    return sendError(res, 400, "addOns must be an array");
+  }
+
   const addOns = Array.isArray(body.addOns) ? body.addOns : [];
 
   try {
@@ -173,7 +181,7 @@ app.post("/configuration/calculate", async (req, res) => {
     let selectedAddOns = [];
     if (addOns.length > 0) {
       selectedAddOns = await query("SELECT * FROM add_ons WHERE slug IN (?) ORDER BY id", [addOns]);
-      if (selectedAddOns.length !== new Set(addOns).size) {
+      if (selectedAddOns.length !== addOns.length) {
         return sendError(res, 404, "add-on not found");
       }
     }
@@ -249,3 +257,4 @@ module.exports = app;
 module.exports.computePackagePrice = computePackagePrice;
 module.exports.joinNames = joinNames;
 module.exports.buildConfigurationSummary = buildConfigurationSummary;
+module.exports.baseImageKey = baseImageKey;

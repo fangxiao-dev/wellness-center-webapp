@@ -4,7 +4,7 @@ const test = require("node:test");
 
 const mysql = require("mysql2/promise");
 const app = require("../src/server");
-const { computePackagePrice, buildConfigurationSummary } = app;
+const { computePackagePrice, buildConfigurationSummary, baseImageKey } = app;
 
 function listen(server) {
   return new Promise((resolve) => {
@@ -32,7 +32,6 @@ function withStubbedPool(handler) {
           description: "Relaxation-led massage package.",
           base_price: "64.00",
           base_minutes: 45,
-          minio_object: "package-configurator/stress-reset-massage.png",
         }]];
       }
       if (sql.includes("FROM durations")) {
@@ -106,6 +105,13 @@ test("computePackagePrice handles no add-ons", () => {
   assert.equal(price, 59);
 });
 
+test("baseImageKey returns the package base image object key", () => {
+  assert.equal(
+    baseImageKey("stress-reset-massage"),
+    "package-configurator/base/stress-reset-massage.png"
+  );
+});
+
 test("buildConfigurationSummary lists duration, intensity and add-ons", () => {
   const summary = buildConfigurationSummary({
     packageName: "Stress Reset Massage",
@@ -146,7 +152,7 @@ test("configuration calculate returns price, summary, and image layers for valid
         package: {
           slug: "stress-reset-massage",
           name: "Stress Reset Massage",
-          baseImageUrl: "/api/configurator/assets/package-configurator/stress-reset-massage.png",
+          baseImageUrl: "/api/configurator/assets/package-configurator/base/stress-reset-massage.png",
         },
         duration: { minutes: 60, label: "60 min" },
         intensity: { slug: "medium", label: "Medium" },
@@ -173,6 +179,36 @@ test("configuration calculate returns price, summary, and image layers for valid
   });
 });
 
+test("configuration calculate treats omitted add-ons as none selected", async () => {
+  await withStubbedPool(async () => {
+    const server = http.createServer(app);
+    const port = await listen(server);
+    try {
+      const response = await postJson(`http://127.0.0.1:${port}`, "/configuration/calculate", {
+        package: "stress-reset-massage",
+        duration: 60,
+        intensity: "medium",
+      });
+
+      assert.equal(response.status, 200);
+      assert.deepEqual(response.payload, {
+        package: {
+          slug: "stress-reset-massage",
+          name: "Stress Reset Massage",
+          baseImageUrl: "/api/configurator/assets/package-configurator/base/stress-reset-massage.png",
+        },
+        duration: { minutes: 60, label: "60 min" },
+        intensity: { slug: "medium", label: "Medium" },
+        addOns: [],
+        price: 88,
+        summary: "A 60-minute Stress Reset Massage at medium pressure.",
+      });
+    } finally {
+      await closeServer(server);
+    }
+  });
+});
+
 test("configuration calculate rejects unknown add-ons", async () => {
   await withStubbedPool(async () => {
     const server = http.createServer(app);
@@ -187,6 +223,26 @@ test("configuration calculate rejects unknown add-ons", async () => {
 
       assert.equal(response.status, 404);
       assert.deepEqual(response.payload, { error: "add-on not found" });
+    } finally {
+      await closeServer(server);
+    }
+  });
+});
+
+test("configuration calculate rejects non-array add-ons", async () => {
+  await withStubbedPool(async () => {
+    const server = http.createServer(app);
+    const port = await listen(server);
+    try {
+      const response = await postJson(`http://127.0.0.1:${port}`, "/configuration/calculate", {
+        package: "stress-reset-massage",
+        duration: 60,
+        intensity: "medium",
+        addOns: "hot-stone",
+      });
+
+      assert.equal(response.status, 400);
+      assert.deepEqual(response.payload, { error: "addOns must be an array" });
     } finally {
       await closeServer(server);
     }
