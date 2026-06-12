@@ -4,6 +4,7 @@ const {
   buildRecommendationResponse,
   coerceRecommendationPayload,
   recommendationSchema,
+  validateRecommendationContext,
 } = require("./recommendation");
 
 const app = express();
@@ -30,27 +31,38 @@ app.post("/recommend", async (req, res) => {
   }
 
   try {
-    const [packagesRes, durationsRes, intensitiesRes, addOnsRes, productsRes] = await Promise.all([
-      fetch(`${CONFIGURATOR_URL}/packages`),
-      fetch(`${CONFIGURATOR_URL}/options/durations`),
-      fetch(`${CONFIGURATOR_URL}/options/intensities`),
-      fetch(`${CONFIGURATOR_URL}/options/add-ons`),
-      fetch(`${AFTERCARE_URL}/products`),
+    const [configurationsRes, productsRes] = await Promise.all([
+      fetchJsonContext("configurations", `${CONFIGURATOR_URL}/configurations`),
+      fetchJsonContext("products", `${AFTERCARE_URL}/products`),
     ]);
-    const packages = await packagesRes.json();
-    const durations = await durationsRes.json();
-    const intensities = await intensitiesRes.json();
-    const addOns = await addOnsRes.json();
-    const products = await productsRes.json();
+    const configurations = configurationsRes;
+    const products = productsRes;
+    const validConfigurations = (Array.isArray(configurations) ? configurations : []).map((configuration) => ({
+      package: {
+        slug: configuration.package?.slug,
+        name: configuration.package?.name,
+      },
+      duration: {
+        minutes: configuration.duration?.minutes,
+        label: configuration.duration?.label,
+      },
+      intensity: {
+        slug: configuration.intensity?.slug,
+        label: configuration.intensity?.label,
+      },
+      addOns: (Array.isArray(configuration.addOns) ? configuration.addOns : []).map((addOn) => ({
+        slug: addOn.slug,
+        name: addOn.name,
+      })),
+    }));
 
     const systemPrompt = [
       "You are a massage-focused wellness consultation assistant.",
       "Return one valid wellness package recommendation and one to three aftercare products.",
-      "Use only package slugs, durations, intensities, add-on slugs, and product ids present in this context.",
-      `Packages: ${JSON.stringify(packages)}`,
-      `Durations: ${JSON.stringify(durations)}`,
-      `Intensities: ${JSON.stringify(intensities)}`,
-      `Add-ons: ${JSON.stringify(addOns)}`,
+      "The package, duration, intensity, and add-ons must match one valid package configuration from this context.",
+      "Use add-on slugs only from the selected valid configuration's addOns list.",
+      "Use only product ids present in this context.",
+      `Valid package configurations: ${JSON.stringify(validConfigurations)}`,
       `Aftercare products: ${JSON.stringify(products)}`,
     ].join("\n");
 
@@ -58,14 +70,22 @@ app.post("/recommend", async (req, res) => {
     const recommendation = await generateRecommendation(ai, systemPrompt, prompt, [
       GEMINI_MODEL,
       GEMINI_FALLBACK_MODEL,
-    ]);
+    ], { validConfigurations, products });
     res.json(buildRecommendationResponse(recommendation, products));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-async function generateRecommendation(ai, systemPrompt, userPrompt, models) {
+async function fetchJsonContext(name, url) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`context fetch failed: ${name} returned ${response.status}`);
+  }
+  return response.json();
+}
+
+async function generateRecommendation(ai, systemPrompt, userPrompt, models, context) {
   let lastError;
   for (const modelName of models) {
     try {
@@ -78,7 +98,8 @@ async function generateRecommendation(ai, systemPrompt, userPrompt, models) {
           responseSchema: recommendationSchema,
         },
       });
-      return coerceRecommendationPayload(JSON.parse(response.text));
+      const recommendation = coerceRecommendationPayload(JSON.parse(response.text));
+      return validateRecommendationContext(recommendation, context);
     } catch (error) {
       lastError = error;
     }

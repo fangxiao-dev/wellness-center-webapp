@@ -6,11 +6,11 @@ Remove old cart semantics from the cart page and make checkout copy match the We
 
 ## Acceptance criteria
 
-- [ ] Runtime cart view no longer contains `item--car`, `item--merch`, German checkout copy, or old color/size labels.
-- [ ] Package cart items use `item--package`; aftercare items use `item--aftercare`.
-- [ ] Checkout is labeled as demo review/confirmation and does not imply real payment or order persistence.
-- [ ] Cart add, update, remove, and clear behavior still works.
-- [ ] Smoke test still validates fresh-session cart persistence.
+- [x] Runtime cart view no longer contains `item--car`, `item--merch`, German checkout copy, or old color/size labels.
+- [x] Package cart items use `item--package`; aftercare items use `item--aftercare`.
+- [x] Checkout is labeled as demo review/confirmation and does not imply real payment or order persistence.
+- [x] Cart add, update, remove, and clear behavior still works.
+- [x] Smoke test still validates fresh-session cart persistence.
 
 ## Blocked by
 
@@ -28,3 +28,19 @@ npm test --prefix services/web-backend
 .\scripts\smoke-test.ps1 -SkipAi
 ```
 
+## Completion note
+
+Files changed:
+- `services/shopping-cart/test/cart-validation.test.js`
+- `services/web-backend/test/backend-routing.test.js`
+- `web/views/shopping-cart.ejs`
+- `docs/exchange/issue-drafts/wellness-gap-migration/06-retheme-cart-review-and-demo-checkout.md`
+
+Test results:
+- `npm test --prefix services/shopping-cart` passed.
+- `npm test --prefix services/web-backend` passed.
+- `.\scripts\smoke-test.ps1 -SkipAi` passed after rebuilding the running `dbe-cloud-soloproject` compose project from this worktree with `docker compose -p dbe-cloud-soloproject up -d --build`.
+
+Remaining risks:
+- Checkout remains demo-only by design; no order/payment persistence was added.
+- `.env` remains ignored and uncommitted.

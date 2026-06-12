@@ -1,8 +1,8 @@
 <%
   const homeImageBase = "/static/images";
-  const merchImageBase = "/api/aftercare/assets/aftercare-shop";
+  const aftercareImageBase = "/api/aftercare/assets/aftercare-shop";
 
-  const merchPreviewProducts = [
+  const aftercarePreviewProducts = [
     { name: "Heated Neck Wrap", variant: "Warmth", slug: "heated-neck-wrap", category: "Recovery", price: "34,90 EUR", description: "Reusable warmth for neck and shoulder recovery.", image: "heated-neck-wrap.png" },
     { name: "Ergonomic Neck Pillow", variant: "Travel", slug: "ergonomic-neck-pillow", category: "Comfort", price: "29,90 EUR", description: "Compact support for the way home after treatment.", image: "ergonomic-neck-pillow.png" },
     { name: "Lavender Aroma Oil", variant: "Calm", slug: "lavender-aroma-oil", category: "Aroma", price: "18,50 EUR", description: "A calming aroma companion for aftercare routines.", image: "lavender-aroma-oil.png" },
@@ -348,7 +348,7 @@
     font-size: 0.95rem;
   }
 
-  .merch-preview-section {
+  .aftercare-preview-section {
     min-height: 100vh;
     min-height: 100svh;
     display: flex;
@@ -357,11 +357,11 @@
     padding: clamp(32px, 5vw, 64px) 0 clamp(76px, 9vw, 124px);
   }
 
-  .merch-preview-section .page-shell {
+  .aftercare-preview-section .page-shell {
     width: min(1180px, calc(100% - 40px));
   }
 
-  .merch-preview-head {
+  .aftercare-preview-head {
     display: flex;
     align-items: end;
     justify-content: space-between;
@@ -369,17 +369,17 @@
     margin-bottom: 36px;
   }
 
-  .merch-preview-head .section-copy {
+  .aftercare-preview-head .section-copy {
     max-width: 520px;
   }
 
-  .merch-preview-actions {
+  .aftercare-preview-actions {
     display: flex;
     align-items: center;
     gap: 8px;
   }
 
-  .merch-carousel-button {
+  .aftercare-carousel-button {
     width: 44px;
     height: 44px;
     border: 1px solid rgba(17, 24, 39, 0.2);
@@ -391,13 +391,13 @@
     transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
   }
 
-  .merch-carousel-button:hover {
+  .aftercare-carousel-button:hover {
     background: var(--ink);
     color: #fff;
     transform: translateY(-2px);
   }
 
-  .merch-grid {
+  .aftercare-grid {
     display: grid;
     grid-auto-flow: column;
     grid-auto-columns: minmax(280px, calc((100% - 36px) / 3));
@@ -410,11 +410,11 @@
     scrollbar-width: thin;
   }
 
-  .merch-grid .merch-card {
+  .aftercare-grid .aftercare-card {
     scroll-snap-align: start;
   }
 
-  .merch-preview-section .merch-card {
+  .aftercare-preview-section .aftercare-card {
     position: relative;
     display: block;
     height: clamp(260px, 32vw, 380px);
@@ -427,12 +427,12 @@
     transition: transform 0.22s ease, box-shadow 0.22s ease;
   }
 
-  .merch-preview-section .merch-card:hover {
+  .aftercare-preview-section .aftercare-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 16px 40px rgba(0, 0, 0, 0.14);
   }
 
-  .merch-preview-section .merch-card-img {
+  .aftercare-preview-section .aftercare-card-img {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -441,11 +441,11 @@
     transition: transform 0.6s ease;
   }
 
-  .merch-preview-section .merch-card:hover .merch-card-img {
+  .aftercare-preview-section .aftercare-card:hover .aftercare-card-img {
     transform: scale(1.06);
   }
 
-  .merch-preview-section .merch-card-overlay {
+  .aftercare-preview-section .aftercare-card-overlay {
     position: absolute;
     right: 0;
     bottom: 0;
@@ -456,11 +456,11 @@
     transition: padding-bottom 0.25s ease;
   }
 
-  .merch-preview-section .merch-card:hover .merch-card-overlay {
+  .aftercare-preview-section .aftercare-card:hover .aftercare-card-overlay {
     padding-bottom: 68px;
   }
 
-  .merch-preview-section .merch-card-category {
+  .aftercare-preview-section .aftercare-card-category {
     display: block;
     margin-bottom: 5px;
     color: rgba(255, 255, 255, 0.62);
@@ -470,7 +470,7 @@
     text-transform: uppercase;
   }
 
-  .merch-preview-section .merch-card-name {
+  .aftercare-preview-section .aftercare-card-name {
     display: -webkit-box;
     margin: 0 0 5px;
     overflow: hidden;
@@ -481,7 +481,7 @@
     -webkit-line-clamp: 2;
   }
 
-  .merch-preview-section .merch-card-price {
+  .aftercare-preview-section .aftercare-card-price {
     color: rgba(255, 255, 255, 0.9);
     font-size: 1rem;
     font-weight: 800;
@@ -928,21 +928,21 @@
       grid-template-columns: 1fr;
     }
 
-    .merch-preview-head {
+    .aftercare-preview-head {
       align-items: flex-start;
       flex-direction: column;
     }
 
-    .merch-preview-actions {
+    .aftercare-preview-actions {
       width: 100%;
       justify-content: space-between;
     }
 
-    .merch-grid {
+    .aftercare-grid {
       grid-auto-columns: minmax(260px, 82vw);
     }
 
-    .merch-preview-section .merch-card {
+    .aftercare-preview-section .aftercare-card {
       height: clamp(220px, 60vw, 300px);
     }
 
@@ -1091,30 +1091,30 @@
     </div>
   </section>
 
-  <section class="merch-preview-section" aria-label="Aftercare Highlights">
+  <section class="aftercare-preview-section" aria-label="Aftercare Highlights">
     <div class="page-shell">
-      <div class="merch-preview-head">
+      <div class="aftercare-preview-head">
         <div>
           <p class="section-kicker">Aftercare Highlights</p>
           <h2 class="section-title">Explore Serenity Aftercare.</h2>
           <p class="section-copy">Selected products for calm, mobility, and care. View them directly or keep browsing in the shop.</p>
         </div>
-        <div class="merch-preview-actions">
+        <div class="aftercare-preview-actions">
           <a class="btn btn-ghost" href="/aftercare-shop">Shop</a>
-          <button class="merch-carousel-button" type="button" aria-label="Previous products" data-merch-prev>&larr;</button>
-          <button class="merch-carousel-button" type="button" aria-label="Next products" data-merch-next>&rarr;</button>
+          <button class="aftercare-carousel-button" type="button" aria-label="Previous products" data-aftercare-prev>&larr;</button>
+          <button class="aftercare-carousel-button" type="button" aria-label="Next products" data-aftercare-next>&rarr;</button>
         </div>
       </div>
 
-      <span class="merch-preview-grid" aria-hidden="true"></span>
-      <div class="merch-grid merch-preview-grid" data-merch-carousel>
-        <% merchPreviewProducts.forEach(function(product) { %>
-          <a class="merch-card" href="/aftercare-shop#product-<%= product.slug %>">
-            <img class="merch-card-img" src="<%= merchImageBase %>/<%= product.image %>" alt="<%= product.name %> <%= product.variant %>" loading="lazy">
-            <div class="merch-card-overlay">
-              <span class="merch-card-category"><%= product.category %></span>
-              <h3 class="merch-card-name"><%= product.name %> <%= product.variant %></h3>
-              <span class="merch-card-price"><%= product.price %></span>
+      <span class="aftercare-preview-grid" aria-hidden="true"></span>
+      <div class="aftercare-grid aftercare-preview-grid" data-aftercare-carousel>
+        <% aftercarePreviewProducts.forEach(function(product) { %>
+          <a class="aftercare-card" href="/aftercare-shop#product-<%= product.slug %>">
+            <img class="aftercare-card-img" src="<%= aftercareImageBase %>/<%= product.image %>" alt="<%= product.name %> <%= product.variant %>" loading="lazy">
+            <div class="aftercare-card-overlay">
+              <span class="aftercare-card-category"><%= product.category %></span>
+              <h3 class="aftercare-card-name"><%= product.name %> <%= product.variant %></h3>
+              <span class="aftercare-card-price"><%= product.price %></span>
             </div>
           </a>
         <% }) %>
@@ -1167,423 +1167,33 @@
     </div>
   </section>
 
-  <section class="route-section" id="route-planner">
-    <% if (mapsApiKey) { %>
-      <div class="map-frame">
-        <div id="map"></div>
+  <section class="route-section" id="visit-context-teaser">
+    <div class="page-shell route-overlay">
+      <div class="route-copy">
+        <p class="section-kicker">Visit Context</p>
+        <h2 class="section-title">Plan your visit with location, weather, and arrival notes.</h2>
+        <p class="section-copy">The full map, address, opening note, arrival tip, and weather summary now live on the canonical visit page.</p>
+        <a class="btn btn-primary" href="/visit-context">Plan your visit</a>
       </div>
-
-      <div class="page-shell route-overlay">
-        <div class="route-copy">
-          <p class="section-kicker">Visit Context</p>
-          <h2 class="section-title" id="routeTitle">Your route to the Serenity Center.</h2>
-          <p class="section-copy">Start with your location and see distance and travel time directly on the map.</p>
-        </div>
-
-        <div class="route-layout">
-          <aside class="route-panel">
-            <form class="controls" id="routeForm">
-              <button class="btn btn-primary" id="routeBtn" type="submit" disabled>Calculate route</button>
-            </form>
-
-            <div class="route-result" id="routeResult" aria-live="polite">
-              <div class="route-metric">
-                <span>Distanz</span>
-                <strong id="resultDistance">-</strong>
-              </div>
-              <div class="route-metric">
-                <span>Reisezeit</span>
-                <strong id="resultDuration">-</strong>
-              </div>
-            </div>
-          </aside>
-        </div>
-      </div>
-
-        <script>
-          const DEFAULT_CENTER = { lat: 51.1657, lng: 10.4515 };
-          const Serenity_MAP_STYLES = [
-            { elementType: "geometry", stylers: [{ color: "#101722" }] },
-            { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
-            { elementType: "labels.text.fill", stylers: [{ color: "#8b98aa" }] },
-            { elementType: "labels.text.stroke", stylers: [{ color: "#070b10" }, { weight: 2 }] },
-            { featureType: "administrative", elementType: "geometry.stroke", stylers: [{ color: "#263243" }] },
-            { featureType: "landscape", elementType: "geometry", stylers: [{ color: "#0d141e" }] },
-            { featureType: "poi", stylers: [{ visibility: "off" }] },
-            { featureType: "road", elementType: "geometry", stylers: [{ color: "#202b3a" }] },
-            { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#080d13" }] },
-            { featureType: "road.arterial", elementType: "geometry", stylers: [{ color: "#28384d" }] },
-            { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#1c69d4" }, { lightness: -38 }, { saturation: -12 }] },
-            { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#8fc0ff" }, { lightness: -35 }] },
-            { featureType: "road.local", elementType: "labels.text.fill", stylers: [{ color: "#647184" }] },
-            { featureType: "transit", stylers: [{ visibility: "off" }] },
-            { featureType: "water", elementType: "geometry", stylers: [{ color: "#050b13" }] },
-            { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#526073" }] },
-          ];
-          const Serenity_PIN_SVG =
-            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">' +
-              '<circle cx="32" cy="32" r="28" fill="#0b0f14" stroke="#8fc0ff" stroke-width="3"/>' +
-              '<circle cx="32" cy="32" r="18" fill="#fff"/>' +
-              '<path d="M32 14a18 18 0 0 1 18 18H32z" fill="#1c69d4"/>' +
-              '<path d="M14 32a18 18 0 0 1 18-18v18z" fill="#fff"/>' +
-              '<path d="M32 32h18a18 18 0 0 1-18 18z" fill="#fff"/>' +
-              '<path d="M14 32h18v18a18 18 0 0 1-18-18z" fill="#1c69d4"/>' +
-              '<circle cx="32" cy="32" r="18" fill="none" stroke="#0b0f14" stroke-width="2"/>' +
-            '</svg>';
-          const VISIT_LOCATION_SVG =
-            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 112" aria-hidden="true">' +
-              '<rect x="14" y="10" width="44" height="92" rx="15" fill="#1c69d4" stroke="#fff" stroke-width="4"/>' +
-              '<rect x="22" y="22" width="28" height="22" rx="5" fill="#d9f0ff" opacity=".92"/>' +
-              '<rect x="22" y="66" width="28" height="22" rx="5" fill="#0b2349" opacity=".88"/>' +
-              '<path d="M17 46h8M47 46h8M17 78h8M47 78h8" stroke="#8fc0ff" stroke-width="4" stroke-linecap="round"/>' +
-              '<circle cx="23" cy="16" r="3" fill="#fff6a6"/>' +
-              '<circle cx="49" cy="16" r="3" fill="#fff6a6"/>' +
-              '<circle cx="23" cy="96" r="3" fill="#ff6b6b"/>' +
-              '<circle cx="49" cy="96" r="3" fill="#ff6b6b"/>' +
-              '<path d="M28 54h16" stroke="#07111c" stroke-width="4" stroke-linecap="round" opacity=".65"/>' +
-            '</svg>';
-
-          let map, directionsService, directionsRenderer;
-          let visitMarker, destinationMarker;
-          let animationFrame = null;
-          let destinations = [];
-          let currentLocationOrigin = null;
-
-          function svgDataUrl(svg) {
-            return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
-          }
-
-          function createVisitLocationMarker(initialPosition, targetMap) {
-            function toLatLng(position) {
-              if (position && typeof position.lat === "function") return position;
-              return new google.maps.LatLng(position.lat, position.lng);
-            }
-
-            class VisitLocationOverlay extends google.maps.OverlayView {
-              constructor(position) {
-                super();
-                this.position = toLatLng(position);
-                this.rotation = 0;
-                this.div = null;
-              }
-
-              onAdd() {
-                this.div = document.createElement("div");
-                this.div.className = "visit-location-marker hidden";
-                this.div.innerHTML = VISIT_LOCATION_SVG;
-                this.getPanes().overlayMouseTarget.appendChild(this.div);
-              }
-
-              draw() {
-                if (!this.div) return;
-                const projection = this.getProjection();
-                if (!projection) return;
-                const point = projection.fromLatLngToDivPixel(this.position);
-                this.div.style.left = point.x + "px";
-                this.div.style.top = point.y + "px";
-                this.div.style.transform = `translate(-50%, -50%) rotate(${this.rotation}deg)`;
-              }
-
-              onRemove() {
-                if (this.div) {
-                  this.div.remove();
-                  this.div = null;
-                }
-              }
-
-              setPosition(position) {
-                this.position = toLatLng(position);
-                this.draw();
-              }
-
-              setRotation(rotation) {
-                this.rotation = rotation || 0;
-                this.draw();
-              }
-
-              show() {
-                if (this.div) this.div.classList.remove("hidden");
-              }
-
-              hide() {
-                if (this.div) this.div.classList.add("hidden");
-              }
-            }
-
-            const overlay = new VisitLocationOverlay(initialPosition);
-            overlay.setMap(targetMap);
-            return overlay;
-          }
-
-          function initMap() {
-            map = new google.maps.Map(document.getElementById("map"), {
-              zoom: 5,
-              center: DEFAULT_CENTER,
-              backgroundColor: "#070b10",
-              clickableIcons: false,
-              disableDefaultUI: true,
-              gestureHandling: "cooperative",
-              styles: Serenity_MAP_STYLES,
-              zoomControl: false,
-            });
-
-            directionsService = new google.maps.DirectionsService();
-            directionsRenderer = new google.maps.DirectionsRenderer({
-              suppressMarkers: true,
-              preserveViewport: true,
-              polylineOptions: {
-                strokeColor: "#8FC0FF",
-                strokeOpacity: 0.95,
-                strokeWeight: 6,
-              },
-            });
-            directionsRenderer.setMap(map);
-
-            visitMarker = createVisitLocationMarker(DEFAULT_CENTER, map);
-            visitMarker.hide();
-
-            loadDestinations();
-          }
-
-          function selectedDestination() {
-            return destinations[0] || null;
-          }
-
-          async function loadDestinations() {
-            const routeBtn = document.getElementById("routeBtn");
-
-            try {
-              const response = await fetch("/api/visit-context/locations");
-              if (!response.ok) throw new Error("Visit locations request failed");
-              destinations = await response.json();
-
-              routeBtn.disabled = destinations.length === 0;
-              updateRouteTitle();
-            } catch (err) {
-              console.error(err);
-              routeBtn.disabled = true;
-            }
-          }
-
-          function updateRouteTitle() {
-            const destination = selectedDestination();
-            const routeTitle = document.getElementById("routeTitle");
-            if (!routeTitle) return;
-            routeTitle.textContent = destination
-              ? `Dein Ziel: ${destination.name || destination.label}`
-              : "Dein Ziel: Serenity Wellness Center";
-          }
-
-          function updateDestinationMarker(position, title) {
-            if (!position) return;
-
-            if (destinationMarker) {
-              destinationMarker.setMap(null);
-            }
-
-            destinationMarker = new google.maps.Marker({
-              position,
-              map,
-              title,
-              icon: {
-                url: svgDataUrl(Serenity_PIN_SVG),
-                scaledSize: new google.maps.Size(56, 56),
-                anchor: new google.maps.Point(28, 28),
-              },
-              zIndex: 5,
-            });
-
-            destinationMarker.addListener("click", () => {
-              const streetView = map.getStreetView();
-              streetView.setPosition(position);
-              streetView.setPov({ heading: 265, pitch: 0 });
-              streetView.setVisible(true);
-            });
-          }
-
-          function animateVisitMarker(path) {
-            if (!path || path.length < 2) return;
-            if (animationFrame) cancelAnimationFrame(animationFrame);
-
-            visitMarker.show();
-
-            const DRIVE_DURATION = 8000;
-            const ZOOM_DURATION = 1500;
-            const FINAL_ZOOM = 13;
-
-            const startZoom = map.getZoom();
-            const start = performance.now();
-
-            function easeInOutCubic(x) {
-              return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
-            }
-
-            function positionAt(progress) {
-              const idx = progress * (path.length - 1);
-              const i = Math.floor(idx);
-              const frac = idx - i;
-              const p1 = path[i];
-              const p2 = path[Math.min(i + 1, path.length - 1)];
-              return {
-                lat: p1.lat() + (p2.lat() - p1.lat()) * frac,
-                lng: p1.lng() + (p2.lng() - p1.lng()) * frac,
-                bearing: Math.atan2(p2.lng() - p1.lng(), p2.lat() - p1.lat()) * 180 / Math.PI,
-              };
-            }
-
-            function step(now) {
-              const elapsed = now - start;
-
-              if (elapsed < DRIVE_DURATION) {
-                const progress = easeInOutCubic(elapsed / DRIVE_DURATION);
-                const pos = positionAt(progress);
-                visitMarker.setPosition({ lat: pos.lat, lng: pos.lng });
-                visitMarker.setRotation(pos.bearing);
-                animationFrame = requestAnimationFrame(step);
-              } else {
-                const destination = selectedDestination();
-                visitMarker.setPosition(path[path.length - 1]);
-                animationFrame = null;
-                zoomIn(performance.now(), path[path.length - 1], destination ? destination.name : "Serenity Ziel");
-              }
-            }
-
-            function zoomIn(zoomStart, destinationPosition, destinationTitle) {
-              function zoomStep(now) {
-                const t = Math.min(1, (now - zoomStart) / ZOOM_DURATION);
-                const eased = easeInOutCubic(t);
-                map.setZoom(startZoom + eased * (FINAL_ZOOM - startZoom));
-                map.setCenter(destinationPosition);
-                if (t < 1) animationFrame = requestAnimationFrame(zoomStep);
-                else {
-                  updateDestinationMarker(destinationPosition, destinationTitle);
-                  animationFrame = null;
-                }
-              }
-              animationFrame = requestAnimationFrame(zoomStep);
-            }
-
-            animationFrame = requestAnimationFrame(step);
-          }
-
-          function requestCurrentLocation() {
-            return new Promise((resolve, reject) => {
-              if (!navigator.geolocation) {
-                reject(new Error("Geolocation is not supported by this browser."));
-                return;
-              }
-
-              navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                  resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-                },
-                () => reject(new Error("Standortzugriff wurde verweigert.")),
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-              );
-            });
-          }
-
-          async function resolveOrigin() {
-            if (currentLocationOrigin) {
-              return currentLocationOrigin;
-            }
-
-            currentLocationOrigin = await requestCurrentLocation();
-            return currentLocationOrigin;
-          }
-
-          function formatDuration(seconds) {
-            const totalMinutes = Math.max(1, Math.round(seconds / 60));
-            const hours = Math.floor(totalMinutes / 60);
-            const minutes = totalMinutes % 60;
-
-            if (!hours) return `${minutes} min`;
-            if (!minutes) return `${hours}h`;
-            return `${hours}h ${minutes} min`;
-          }
-
-          async function calculateRoute() {
-            const destination = selectedDestination();
-            const routeBtn = document.getElementById("routeBtn");
-
-            if (!destination) {
-              return;
-            }
-
-            routeBtn.disabled = true;
-            routeBtn.textContent = "Route wird berechnet";
-
-            try {
-              const origin = await resolveOrigin();
-
-              directionsService.route({
-                origin,
-                destination: destination.destination || destination.value,
-                travelMode: google.maps.TravelMode.DRIVING,
-              }, (result, status) => {
-                routeBtn.disabled = false;
-                routeBtn.textContent = "Route berechnen";
-
-                if (status === "OK") {
-                  directionsRenderer.setDirections(result);
-                  const route = result.routes[0];
-                  const leg = route.legs[0];
-
-                  document.getElementById("resultDistance").textContent = leg.distance ? leg.distance.text : "-";
-                  document.getElementById("resultDuration").textContent = leg.duration ? formatDuration(leg.duration.value) : "-";
-                  updateDestinationMarker(leg.end_location, destination.name || destination.label);
-
-                  if (route.bounds) {
-                    map.fitBounds(route.bounds, { top: 380, right: 120, bottom: 160, left: 120 });
-                    google.maps.event.addListenerOnce(map, "idle", () => animateVisitMarker(route.overview_path));
-                  } else {
-                    animateVisitMarker(route.overview_path);
-                  }
-                }
-              });
-            } catch (err) {
-              routeBtn.disabled = false;
-              routeBtn.textContent = "Route starten";
-            }
-          }
-
-          document.getElementById("routeForm").addEventListener("submit", (event) => {
-            event.preventDefault();
-            calculateRoute();
-          });
-        </script>
-        <script src="https://maps.googleapis.com/maps/api/js?key=<%= mapsApiKey %>&v=weekly&callback=initMap" async defer></script>
-      <% } else { %>
-      <div class="page-shell route-overlay">
-        <div class="route-copy">
-          <p class="section-kicker">Route</p>
-          <h2 class="section-title" id="routeTitle">Your destination: Serenity Wellness Center</h2>
-          <p class="section-copy">Use your location, enter a start address, and plan the route to Serenity Center directly on the map.</p>
-        </div>
-        <div class="no-key">
-          <h3>API key required</h3>
-          <p>Please configure <code>GOOGLE_MAPS_API_KEY</code> in your environment.</p>
-        </div>
-      </div>
-    <% } %>
+    </div>
   </section>
 </main>
 
 <script>
   (function () {
     const experience = document.querySelector('.experience-section');
-    const merchCarousel = document.querySelector('[data-merch-carousel]');
-    const merchPrev = document.querySelector('[data-merch-prev]');
-    const merchNext = document.querySelector('[data-merch-next]');
-    const merchAutoScrollDelay = 5000;
-    const merchAutoScrollCount = 5;
+    const aftercareCarousel = document.querySelector('[data-aftercare-carousel]');
+    const aftercarePrev = document.querySelector('[data-aftercare-prev]');
+    const aftercareNext = document.querySelector('[data-aftercare-next]');
+    const aftercareAutoScrollDelay = 5000;
+    const aftercareAutoScrollCount = 5;
     let snapping = false;
-    let merchAutoScrollTimer = 0;
+    let aftercareAutoScrollTimer = 0;
 
     function setupInfiniteAftercareCarousel() {
-      if (!merchCarousel) return;
+      if (!aftercareCarousel) return;
 
-      const originalCards = Array.from(merchCarousel.children);
+      const originalCards = Array.from(aftercareCarousel.children);
       if (originalCards.length < 2) return;
 
       const beforeCards = document.createDocumentFragment();
@@ -1596,15 +1206,15 @@
         [beforeClone, afterClone].forEach(function (clone) {
           clone.setAttribute('aria-hidden', 'true');
           clone.tabIndex = -1;
-          clone.dataset.merchClone = 'true';
+          clone.dataset.aftercareClone = 'true';
         });
 
         beforeCards.appendChild(beforeClone);
         afterCards.appendChild(afterClone);
       });
 
-      merchCarousel.insertBefore(beforeCards, merchCarousel.firstChild);
-      merchCarousel.appendChild(afterCards);
+      aftercareCarousel.insertBefore(beforeCards, aftercareCarousel.firstChild);
+      aftercareCarousel.appendChild(afterCards);
 
       let originalStart = 0;
       let setWidth = 0;
@@ -1612,19 +1222,19 @@
       let isJumping = false;
 
       function measureCarousel() {
-        const cards = merchCarousel.children;
+        const cards = aftercareCarousel.children;
         const firstOriginal = cards[originalCards.length];
         const firstAfterOriginals = cards[originalCards.length * 2];
 
         if (!firstOriginal || !firstAfterOriginals) return;
 
-        originalStart = firstOriginal.offsetLeft - merchCarousel.offsetLeft;
+        originalStart = firstOriginal.offsetLeft - aftercareCarousel.offsetLeft;
         setWidth = firstAfterOriginals.offsetLeft - firstOriginal.offsetLeft;
       }
 
       function jumpTo(left) {
         isJumping = true;
-        merchCarousel.scrollTo({ left, behavior: 'auto' });
+        aftercareCarousel.scrollTo({ left, behavior: 'auto' });
         requestAnimationFrame(function () {
           isJumping = false;
         });
@@ -1634,7 +1244,7 @@
         scrollFrame = 0;
         if (isJumping || !setWidth) return;
 
-        const left = merchCarousel.scrollLeft;
+        const left = aftercareCarousel.scrollLeft;
         const loopStart = originalStart - setWidth;
         const loopEnd = originalStart + setWidth;
 
@@ -1652,56 +1262,56 @@
 
       measureCarousel();
       jumpTo(originalStart);
-      merchCarousel.addEventListener('scroll', scheduleNormalize, { passive: true });
+      aftercareCarousel.addEventListener('scroll', scheduleNormalize, { passive: true });
 
       window.addEventListener('resize', function () {
-        const progress = setWidth ? (merchCarousel.scrollLeft - originalStart) / setWidth : 0;
+        const progress = setWidth ? (aftercareCarousel.scrollLeft - originalStart) / setWidth : 0;
         measureCarousel();
         jumpTo(originalStart + ((progress % 1 + 1) % 1) * setWidth);
       });
     }
 
     function getAftercareCardStep() {
-      if (!merchCarousel) return 280;
+      if (!aftercareCarousel) return 280;
 
-      const firstCard = merchCarousel.querySelector('.merch-card');
-      if (!firstCard) return Math.max(280, merchCarousel.clientWidth * 0.82);
+      const firstCard = aftercareCarousel.querySelector('.aftercare-card');
+      if (!firstCard) return Math.max(280, aftercareCarousel.clientWidth * 0.82);
 
-      const styles = window.getComputedStyle(merchCarousel);
+      const styles = window.getComputedStyle(aftercareCarousel);
       const gap = Number.parseFloat(styles.columnGap || styles.gap) || 0;
 
       return firstCard.getBoundingClientRect().width + gap;
     }
 
     function scrollAftercareCarousel(direction, itemCount) {
-      if (!merchCarousel) return;
-      merchCarousel.scrollBy({
+      if (!aftercareCarousel) return;
+      aftercareCarousel.scrollBy({
         left: direction * getAftercareCardStep() * (itemCount || 1),
         behavior: 'smooth',
       });
     }
 
     function startAftercareAutoScroll() {
-      if (!merchCarousel) return;
+      if (!aftercareCarousel) return;
 
-      window.clearInterval(merchAutoScrollTimer);
-      merchAutoScrollTimer = window.setInterval(function () {
-        scrollAftercareCarousel(1, merchAutoScrollCount);
-      }, merchAutoScrollDelay);
+      window.clearInterval(aftercareAutoScrollTimer);
+      aftercareAutoScrollTimer = window.setInterval(function () {
+        scrollAftercareCarousel(1, aftercareAutoScrollCount);
+      }, aftercareAutoScrollDelay);
     }
 
     setupInfiniteAftercareCarousel();
     startAftercareAutoScroll();
 
-    if (merchPrev) {
-      merchPrev.addEventListener('click', function () {
+    if (aftercarePrev) {
+      aftercarePrev.addEventListener('click', function () {
         scrollAftercareCarousel(-1);
         startAftercareAutoScroll();
       });
     }
 
-    if (merchNext) {
-      merchNext.addEventListener('click', function () {
+    if (aftercareNext) {
+      aftercareNext.addEventListener('click', function () {
         scrollAftercareCarousel(1);
         startAftercareAutoScroll();
       });

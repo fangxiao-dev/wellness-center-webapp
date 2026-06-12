@@ -64,11 +64,9 @@
     transform-origin: center;
   }
 
-  .item--car .item-media {
-    --image-position: 32% center;
-    --image-zoom: 1.25;
-    --image-x: 12%;
-    --image-y: 7%;
+  .item--package .item-media {
+    --image-position: center;
+    --image-zoom: 1;
   }
 
   .item-info { flex: 1; }
@@ -165,23 +163,17 @@
   }
   .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
 
-  .payment-options { display: flex; flex-direction: column; gap: 10px; }
-  .payment-option {
-    display: flex; align-items: center; gap: 14px; padding: 14px 18px;
-    border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer;
-    transition: border-color 0.2s, background 0.2s;
+  .demo-note {
+    color: var(--muted);
+    margin: 0;
   }
-  .payment-option:has(input:checked) { border-color: var(--accent); background: rgba(28, 105, 212, 0.04); }
-  .payment-option input { accent-color: var(--accent); }
-  .payment-option-label { font-weight: 600; font-size: 0.92rem; }
-  .payment-option-sub { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
 
-  .order-summary-card {
+  .review-summary-card {
     background: var(--panel); border-radius: var(--radius);
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05); padding: 24px 28px; margin-bottom: 24px;
     border: 1px solid var(--line);
   }
-  .order-summary-card h3 { font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin: 0 0 16px; }
+  .review-summary-card h3 { font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin: 0 0 16px; }
   .summary-line {
     display: flex; justify-content: space-between; align-items: center;
     padding: 9px 0; border-bottom: 1px solid rgba(0,0,0,0.05);
@@ -223,7 +215,6 @@
   }
   .confirmation-card h2 { font-size: 2rem; font-weight: 800; letter-spacing: -0.03em; margin: 0 0 14px; }
   .confirmation-card .conf-sub { color: var(--muted); font-size: 1rem; margin: 0 0 6px; }
-  .conf-order-nr { font-size: 0.88rem; font-weight: 700; color: var(--accent); margin-top: 8px; }
   .confirmation-actions { margin-top: 40px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
   @media (max-width: 600px) {
@@ -239,108 +230,46 @@
     <div class="cart-toolbar">
       <div>
         <p class="section-kicker">Cart</p>
-        <h2 class="section-title">Ihre Auswahl.</h2>
+        <h2 class="section-title">Your wellness selections.</h2>
       </div>
-      <button class="btn btn-ghost" id="clearCartBtn">Cart leeren</button>
+      <button class="btn btn-ghost" id="clearCartBtn">Clear cart</button>
     </div>
     <div id="cartContent">
-      <div class="loading">Wird geladen...</div>
+      <div class="loading">Loading...</div>
     </div>
   </div>
 
-  <!-- Checkout -->
+  <!-- Demo review -->
   <div class="checkout-view" id="checkoutView">
     <div class="cart-toolbar">
       <div>
-        <p class="section-kicker">Checkout</p>
-        <h2 class="section-title">Ihre Bestellung.</h2>
+        <p class="section-kicker">Demo review</p>
+        <h2 class="section-title">Review your wellness selections.</h2>
       </div>
-      <button class="btn-back" onclick="showCart()">← Zurück</button>
+      <button class="btn-back" onclick="showCart()">Back</button>
     </div>
 
     <div class="step-bar">
-      <div class="step active" id="step1"><span class="step-num">1</span> Lieferadresse</div>
+      <div class="step active" id="step1"><span class="step-num">1</span> Review</div>
       <div class="step-line"></div>
-      <div class="step" id="step2"><span class="step-num">2</span> Zahlung</div>
+      <div class="step" id="step2"><span class="step-num">2</span> Confirm</div>
       <div class="step-line"></div>
-      <div class="step" id="step3"><span class="step-num">3</span> Bestätigung</div>
+      <div class="step" id="step3"><span class="step-num">3</span> Done</div>
     </div>
 
     <div class="form-card">
-      <h2>Lieferadresse</h2>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Vorname</label>
-          <input type="text" id="firstName" autocomplete="given-name" />
-        </div>
-        <div class="form-group">
-          <label>Nachname</label>
-          <input type="text" id="lastName" autocomplete="family-name" />
-        </div>
-      </div>
-      <div class="form-group">
-        <label>E-Mail-Adresse</label>
-        <input type="email" id="emailField" autocomplete="email" />
-      </div>
-      <div class="form-group">
-        <label>Straße und Hausnummer</label>
-        <input type="text" id="street" autocomplete="street-address" />
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Postleitzahl</label>
-          <input type="text" id="zip" autocomplete="postal-code" />
-        </div>
-        <div class="form-group">
-          <label>Stadt</label>
-          <input type="text" id="city" autocomplete="address-level2" />
-        </div>
-      </div>
-      <div class="form-group">
-        <label>Land</label>
-        <select id="country" autocomplete="country">
-          <option value="DE" selected>Deutschland</option>
-          <option value="AT">Österreich</option>
-          <option value="CH">Schweiz</option>
-        </select>
-      </div>
+      <h2>Demo confirmation only</h2>
+      <p class="demo-note">No payment or order is created. This page only confirms the Redis-backed cart snapshot for the course demo.</p>
     </div>
 
-    <div class="form-card">
-      <h2>Zahlungsart</h2>
-      <div class="payment-options">
-        <label class="payment-option">
-          <input type="radio" name="payment" value="credit" checked />
-          <div>
-            <div class="payment-option-label">Kreditkarte</div>
-            <div class="payment-option-sub">Visa, Mastercard, American Express</div>
-          </div>
-        </label>
-        <label class="payment-option">
-          <input type="radio" name="payment" value="paypal" />
-          <div>
-            <div class="payment-option-label">PayPal</div>
-            <div class="payment-option-sub">Sicher bezahlen über PayPal</div>
-          </div>
-        </label>
-        <label class="payment-option">
-          <input type="radio" name="payment" value="invoice" />
-          <div>
-            <div class="payment-option-label">Rechnung</div>
-            <div class="payment-option-sub">Zahlung innerhalb von 14 Tagen</div>
-          </div>
-        </label>
-      </div>
-    </div>
-
-    <div class="order-summary-card">
-      <h3>Ihre Bestellung</h3>
+    <div class="review-summary-card">
+      <h3>Cart snapshot</h3>
       <div id="checkoutSummaryLines"></div>
     </div>
 
     <div class="checkout-actions">
-      <button class="btn-back" onclick="showCart()">Zurück</button>
-      <button class="btn btn-primary" id="placeOrderBtn" onclick="placeOrder()">Bestellung aufgeben</button>
+      <button class="btn-back" onclick="showCart()">Back</button>
+      <button class="btn btn-primary" id="confirmDemoBtn" onclick="confirmDemoReview()">Confirm demo review</button>
     </div>
   </div>
 
@@ -348,12 +277,11 @@
   <div class="confirmation-view" id="confirmationView">
     <div class="confirmation-card">
       <div class="confirm-icon"></div>
-      <h2>Vielen Dank!</h2>
-      <p class="conf-sub">Ihre Bestellung wurde erfolgreich aufgegeben.</p>
-      <p class="conf-sub" id="confEmail"></p>
+      <h2>Demo review confirmed.</h2>
+      <p class="conf-sub">The cart snapshot was reviewed and the demo cart was cleared.</p>
       <div class="confirmation-actions">
-        <a href="/" class="btn btn-primary">Zurück zur Startseite</a>
-        <a href="/aftercare-shop" class="btn btn-ghost">Weiter einkaufen</a>
+        <a href="/" class="btn btn-primary">Return home</a>
+        <a href="/aftercare-shop" class="btn btn-ghost">Continue browsing</a>
       </div>
     </div>
   </div>
@@ -362,15 +290,7 @@
 
 <script>
   function normalizeText(text) {
-    if (!text) return text;
-    return text
-      .replaceAll("WeiÃŸ", "Weiß")
-      .replaceAll("GrÃ¼n", "Grün")
-      .replaceAll("MaÃŸ", "Maß")
-      .replaceAll("OberflÃ¤che", "Oberfläche")
-      .replaceAll("HÃ¼lle", "Hülle")
-      .replaceAll("StoÃŸ", "Stoß")
-      .replaceAll("MaÃŸstab", "Maßstab");
+    return text || "";
   }
 
   function normalizeImageUrl(url) {
@@ -389,8 +309,8 @@
       if (!items || !items.length) {
         container.innerHTML = `
           <div class="empty-state">
-            <p>Ihr Cart ist zurzeit noch leer.</p>
-            <a href="/aftercare-shop" class="btn btn-primary">Jetzt entdecken</a>
+            <p>Your cart is currently empty.</p>
+            <a href="/aftercare-shop" class="btn btn-primary">Browse aftercare</a>
           </div>`;
         return;
       }
@@ -399,7 +319,7 @@
 
       items.forEach(item => {
         const itemEl = document.createElement("div");
-        itemEl.className = item.type === "package" ? "item item--car" : "item item--merch";
+        itemEl.className = item.type === "package" ? "item item--package" : "item item--aftercare";
         itemEl.id = `item-${item.id}`;
 
         if (item.imageUrl) {
@@ -429,20 +349,6 @@
         itemNameEl.className = "item-name";
         itemNameEl.textContent = normalizeText(item.name);
         itemInfoEl.appendChild(itemNameEl);
-
-        if (item.details?.color) {
-          const itemVariantEl = document.createElement("div");
-          itemVariantEl.className = "item-variant";
-          itemVariantEl.textContent = `Farbe: ${normalizeText(item.details.color)}`;
-          itemInfoEl.appendChild(itemVariantEl);
-        }
-
-        if (item.details?.size) {
-          const itemSizeEl = document.createElement("div");
-          itemSizeEl.className = "item-variant";
-          itemSizeEl.textContent = `Größe: ${normalizeText(item.details.size)}`;
-          itemInfoEl.appendChild(itemSizeEl);
-        }
 
         const qtyControlsEl = document.createElement("div");
         qtyControlsEl.className = "qty-controls";
@@ -480,7 +386,7 @@
         const removeBtn = document.createElement("button");
         removeBtn.className = "remove-btn";
         removeBtn.dataset.id = String(item.id);
-        removeBtn.textContent = "Entfernen";
+        removeBtn.textContent = "Remove";
         itemRightEl.appendChild(removeBtn);
 
         itemEl.appendChild(itemRightEl);
@@ -494,19 +400,19 @@
 
       const totalLabelEl = document.createElement("div");
       totalLabelEl.className = "total-label";
-      totalLabelEl.textContent = "Gesamtsumme";
+      totalLabelEl.textContent = "Demo total";
       summaryInfoEl.appendChild(totalLabelEl);
 
       const summarySubtextEl = document.createElement("div");
       summarySubtextEl.className = "summary-subtext";
-      summarySubtextEl.textContent = "Inkl. MwSt. zzgl. Versand";
+      summarySubtextEl.textContent = "Review only. No payment or order is created.";
       summaryInfoEl.appendChild(summarySubtextEl);
 
       summaryEl.appendChild(summaryInfoEl);
 
       const totalValueEl = document.createElement("div");
       totalValueEl.className = "total-value";
-      totalValueEl.textContent = total.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
+      totalValueEl.textContent = total.toLocaleString("en-US", { style: "currency", currency: "EUR" });
       summaryEl.appendChild(totalValueEl);
 
       container.appendChild(summaryEl);
@@ -516,7 +422,7 @@
 
       const checkoutBtn = document.createElement("button");
       checkoutBtn.className = "btn btn-primary";
-      checkoutBtn.textContent = "Zur Kasse gehen";
+      checkoutBtn.textContent = "Review demo cart";
       checkoutBtn.addEventListener("click", showCheckout);
       checkoutActionEl.appendChild(checkoutBtn);
 
@@ -550,19 +456,19 @@
         });
       });
     } catch (err) {
-      container.innerHTML = '<div class="empty-state"><p>Fehler beim Laden des Carts.</p></div>';
+      container.innerHTML = '<div class="empty-state"><p>Cart could not be loaded.</p></div>';
     }
   }
 
   loadCart();
 
   document.getElementById("clearCartBtn").addEventListener("click", async () => {
-    if (!confirm("Cart wirklich leeren?")) return;
+    if (!confirm("Clear cart?")) return;
     await fetch("/api/cart", { method: "DELETE" });
     loadCart();
   });
 
-  // ── Checkout flow ─────────────────────────────────────────────────
+  // Demo review flow
 
   let cartSnapshot = null;
 
@@ -595,7 +501,7 @@
 
         const price = document.createElement("span");
         price.className = "summary-line-price";
-        price.textContent = (item.price * item.quantity).toLocaleString("de-DE", { style: "currency", currency: "EUR" });
+        price.textContent = (item.price * item.quantity).toLocaleString("en-US", { style: "currency", currency: "EUR" });
 
         line.appendChild(name);
         line.appendChild(price);
@@ -607,11 +513,11 @@
 
       const totalName = document.createElement("span");
       totalName.className = "summary-line-name";
-      totalName.textContent = "Gesamtsumme";
+      totalName.textContent = "Demo total";
 
       const totalPrice = document.createElement("span");
       totalPrice.className = "summary-line-price";
-      totalPrice.textContent = total.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
+      totalPrice.textContent = total.toLocaleString("en-US", { style: "currency", currency: "EUR" });
 
       totalLine.appendChild(totalName);
       totalLine.appendChild(totalPrice);
@@ -624,26 +530,10 @@
     } catch {}
   }
 
-  async function placeOrder() {
-    const firstName = document.getElementById("firstName").value.trim();
-    const lastName  = document.getElementById("lastName").value.trim();
-    const email     = document.getElementById("emailField").value.trim();
-    const street    = document.getElementById("street").value.trim();
-    const zip       = document.getElementById("zip").value.trim();
-    const city      = document.getElementById("city").value.trim();
-
-    if (!firstName || !lastName || !email || !street || !zip || !city) {
-      const inputs = ["firstName","lastName","emailField","street","zip","city"];
-      inputs.forEach(id => {
-        const el = document.getElementById(id);
-        el.style.borderColor = el.value.trim() ? "" : "#ef4444";
-      });
-      return;
-    }
-
-    const btn = document.getElementById("placeOrderBtn");
+  async function confirmDemoReview() {
+    const btn = document.getElementById("confirmDemoBtn");
     btn.disabled = true;
-    btn.textContent = "Wird verarbeitet …";
+    btn.textContent = "Confirming...";
 
     try {
       const res = await fetch("/api/cart", { method: "DELETE" });
@@ -652,9 +542,6 @@
         throw new Error(`Failed to clear cart: ${res.status}`);
       }
 
-      document.getElementById("confEmail").textContent =
-        `Eine Bestätigung wird an ${email} gesendet.`;
-
       document.getElementById("step2").classList.add("done");
       document.getElementById("step3").classList.add("active", "done");
       document.getElementById("checkoutView").classList.remove("active");
@@ -662,8 +549,8 @@
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       btn.disabled = false;
-      btn.textContent = "Jetzt kostenpflichtig bestellen";
-      alert("Die Bestellung konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut.");
+      btn.textContent = "Confirm demo review";
+      alert("The demo review could not be confirmed. Please try again.");
     }
   }
 </script>

@@ -103,9 +103,13 @@ test("serves static assets locally and proxies dynamic requests to backend", asy
   const frontend = await startFrontend(`http://127.0.0.1:${backendPort}`);
 
   try {
-    const staticResponse = await fetch(`${frontend.baseUrl}/static/styles.css`);
+    const staticResponse = await fetch(`${frontend.baseUrl}/static/ci/wellness-ci.css`);
     assert.equal(staticResponse.status, 200);
     assert.match(await staticResponse.text(), /:root/);
+
+    const appScriptResponse = await fetch(`${frontend.baseUrl}/static/app.js`);
+    assert.equal(appScriptResponse.status, 200);
+    assert.match(await appScriptResponse.text(), /initVisitContext/);
 
     const staticVideoResponse = await fetch(`${frontend.baseUrl}/static/images/home-video.mp4`, {
       method: "HEAD",

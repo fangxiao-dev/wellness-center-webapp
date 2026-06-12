@@ -72,7 +72,7 @@ function closeServer(server) {
   return new Promise((resolve) => server.close(resolve));
 }
 
-async function startBackend(apiGatewayUrl) {
+async function startBackend(apiGatewayUrl, extraEnv = {}) {
   const portProbe = http.createServer((_req, res) => res.end());
   const port = await listen(portProbe);
   await new Promise((resolve) => portProbe.close(resolve));
@@ -83,6 +83,7 @@ async function startBackend(apiGatewayUrl) {
       PORT: String(port),
       API_GATEWAY_URL: apiGatewayUrl,
       REPO_ROOT: path.resolve(process.cwd(), "..", ".."),
+      ...extraEnv,
     },
     stdio: ["ignore", "ignore", "pipe"],
   });
@@ -127,6 +128,30 @@ test("health identifies the web backend", async () => {
   }
 });
 
+test("shopping cart page uses wellness item classes and demo checkout copy", async () => {
+  const apiGateway = http.createServer((_req, res) => {
+    res.writeHead(404).end();
+  });
+  const apiGatewayPort = await listen(apiGateway);
+  const backend = await startBackend(`http://127.0.0.1:${apiGatewayPort}`);
+
+  try {
+    const response = await fetch(`${backend.baseUrl}/shopping-cart`);
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(html, /item--package/);
+    assert.match(html, /item--aftercare/);
+    assert.match(html, /Demo review/);
+    assert.match(html, /No payment or order is created/);
+    assert.doesNotMatch(html, /item--car|item--shop/);
+    assert.doesNotMatch(html, /Farbe:|Größe:|Kreditkarte|Zahlung|Bestellung aufgeben|Ihre Bestellung/);
+  } finally {
+    await backend.stop();
+    await closeServer(apiGateway);
+  }
+});
+
 test("aftercare listing SSR fetches products through the API gateway", async () => {
   const requests = [];
   const apiGateway = http.createServer((req, res) => {
@@ -161,9 +186,81 @@ test("aftercare listing SSR fetches products through the API gateway", async () 
     assert.match(html, /Heated Neck Wrap/);
     assert.match(html, /class="aftercare-shop-layout"/);
     assert.match(html, /class="product-grid"/);
-    assert.match(html, /id="product-heated-neck-wrap"/);
-    assert.doesNotMatch(html, /href="\/aftercare-shop\/heated-neck-wrap"/);
+    assert.match(html, /class="product-card product-card--image-led"/);
+    assert.match(html, /class="product-card-img"\s+src="\/api\/aftercare\/assets\/aftercare-shop\/heated-neck-wrap\.png"/);
+    assert.match(html, /class="product-card-overlay"/);
+    assert.match(html, /href="\/aftercare-shop\/heated-neck-wrap"/);
+    assert.match(html, /data-image="\/api\/aftercare\/assets\/aftercare-shop\/heated-neck-wrap\.png"/);
+    assert.match(html, /data-slug="heated-neck-wrap"/);
+    assert.match(html, /data-add/);
     assert.deepEqual(requests, ["/api/aftercare/products"]);
+  } finally {
+    await backend.stop();
+    await closeServer(apiGateway);
+  }
+});
+
+test("aftercare product detail SSR fetches the product through the API gateway", async () => {
+  const requests = [];
+  const apiGateway = http.createServer((req, res) => {
+    requests.push(req.url);
+
+    if (req.url === "/api/aftercare/products/heated-neck-wrap") {
+      res.setHeader("content-type", "application/json");
+      res.end(JSON.stringify({
+        id: 1,
+        slug: "heated-neck-wrap",
+        name: "Heated Neck Wrap",
+        category: "heat-care",
+        price: 34.9,
+        imageUrl: "/api/aftercare/assets/aftercare-shop/heated-neck-wrap.png",
+        description: "Reusable warm wrap for shoulder and neck relaxation after a massage session.",
+        usageNote: "Use at home for short warmth intervals.",
+      }));
+      return;
+    }
+
+    res.writeHead(404).end(JSON.stringify({ error: "not found" }));
+  });
+  const apiGatewayPort = await listen(apiGateway);
+  const backend = await startBackend(`http://127.0.0.1:${apiGatewayPort}`);
+
+  try {
+    const response = await fetch(`${backend.baseUrl}/aftercare-shop/heated-neck-wrap`);
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(html, /Heated Neck Wrap/);
+    assert.match(html, /class="aftercare-product-layout"/);
+    assert.match(html, /data-product-detail/);
+    assert.match(html, /src="\/api\/aftercare\/assets\/aftercare-shop\/heated-neck-wrap\.png"/);
+    assert.match(html, /data-image="\/api\/aftercare\/assets\/aftercare-shop\/heated-neck-wrap\.png"/);
+    assert.match(html, /data-slug="heated-neck-wrap"/);
+    assert.match(html, /data-add/);
+    assert.deepEqual(requests, ["/api/aftercare/products/heated-neck-wrap"]);
+  } finally {
+    await backend.stop();
+    await closeServer(apiGateway);
+  }
+});
+
+test("aftercare product detail returns a clear 404 for missing products", async () => {
+  const requests = [];
+  const apiGateway = http.createServer((req, res) => {
+    requests.push(req.url);
+    res.writeHead(404, { "content-type": "application/json" });
+    res.end(JSON.stringify({ error: "product not found" }));
+  });
+  const apiGatewayPort = await listen(apiGateway);
+  const backend = await startBackend(`http://127.0.0.1:${apiGatewayPort}`);
+
+  try {
+    const response = await fetch(`${backend.baseUrl}/aftercare-shop/not-a-product`);
+    const body = await response.text();
+
+    assert.equal(response.status, 404);
+    assert.match(body, /Aftercare product not found/);
+    assert.deepEqual(requests, ["/api/aftercare/products/not-a-product"]);
   } finally {
     await backend.stop();
     await closeServer(apiGateway);
@@ -309,8 +406,211 @@ test("package configurator route safely serializes script-breaking initial selec
   }
 });
 
-test("visit context route includes browser script for visit summary behavior", async () => {
+test("visit context route SSR fetches and renders the canonical visit summary", async () => {
+  const requests = [];
+  const apiGateway = http.createServer((req, res) => {
+    requests.push(req.url);
+
+    if (req.url === "/api/visit-context/visit-summary") {
+      res.setHeader("content-type", "application/json");
+      res.end(JSON.stringify({
+        location: {
+          name: "Serenity Wellness Center",
+          address: "Konrad-Zuse-Strasse 5, 71034 Boeblingen, Germany",
+          latitude: 48.6847,
+          longitude: 9.0086,
+          openingNote: "Open today for massage appointments from 09:00 to 20:00.",
+          arrivalTip: "Arrive 10 minutes early and bring comfortable clothing.",
+        },
+        weather: {
+          condition: "mild",
+          temperatureC: 19,
+          summary: "Mild weather is suitable for a calm visit.",
+        },
+      }));
+      return;
+    }
+
+    res.writeHead(404).end(JSON.stringify({ error: "not found" }));
+  });
+  const apiGatewayPort = await listen(apiGateway);
+  const backend = await startBackend(`http://127.0.0.1:${apiGatewayPort}`);
+
+  try {
+    const response = await fetch(`${backend.baseUrl}/visit-context`);
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(html, /id="visit-summary"/);
+    assert.match(html, /id="map"/);
+    assert.match(html, /src="\/static\/app\.js"/);
+    assert.match(html, /Serenity Wellness Center/);
+    assert.match(html, /Konrad-Zuse-Strasse 5, 71034 Boeblingen, Germany/);
+    assert.match(html, /Open today for massage appointments/);
+    assert.match(html, /Arrive 10 minutes early/);
+    assert.match(html, /Mild weather is suitable for a calm visit/);
+    assert.deepEqual(requests, ["/api/visit-context/visit-summary"]);
+  } finally {
+    await backend.stop();
+    await closeServer(apiGateway);
+  }
+});
+
+test("visit context missing maps key renders address and arrival fallback text", async () => {
+  const apiGateway = http.createServer((req, res) => {
+    if (req.url === "/api/visit-context/visit-summary") {
+      res.setHeader("content-type", "application/json");
+      res.end(JSON.stringify({
+        location: {
+          name: "Serenity Wellness Center",
+          address: "Konrad-Zuse-Strasse 5, 71034 Boeblingen, Germany",
+          latitude: 48.6847,
+          longitude: 9.0086,
+          openingNote: "Open today for massage appointments.",
+          arrivalTip: "Arrive 10 minutes early and bring comfortable clothing.",
+        },
+        weather: {
+          summary: "Bring a light layer after warmth-focused treatments.",
+        },
+      }));
+      return;
+    }
+
+    res.writeHead(404).end();
+  });
+  const apiGatewayPort = await listen(apiGateway);
+  const backend = await startBackend(`http://127.0.0.1:${apiGatewayPort}`, {
+    SERENITY_MAPS_KEY: "",
+    GOOGLE_MAPS_API_KEY: "replace_me",
+  });
+
+  try {
+    const response = await fetch(`${backend.baseUrl}/visit-context`);
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(html, /Map unavailable/);
+    assert.match(html, /Konrad-Zuse-Strasse 5, 71034 Boeblingen, Germany/);
+    assert.match(html, /Arrive 10 minutes early and bring comfortable clothing/);
+    assert.match(html, /window\.SERENITY_MAPS_KEY = ""/);
+    assert.doesNotMatch(html, /replace_me/);
+    assert.doesNotMatch(html, /maps\.googleapis\.com/);
+  } finally {
+    await backend.stop();
+    await closeServer(apiGateway);
+  }
+});
+
+test("visit context injects only the SERENITY maps key for browser map loading", async () => {
+  const apiGateway = http.createServer((req, res) => {
+    if (req.url === "/api/visit-context/visit-summary") {
+      res.setHeader("content-type", "application/json");
+      res.end(JSON.stringify({
+        location: {
+          name: "Serenity Wellness Center",
+          address: "Konrad-Zuse-Strasse 5, 71034 Boeblingen, Germany",
+          latitude: 48.6847,
+          longitude: 9.0086,
+          openingNote: "Open today.",
+          arrivalTip: "Arrive early.",
+        },
+        weather: { summary: "Mild weather." },
+      }));
+      return;
+    }
+
+    res.writeHead(404).end();
+  });
+  const apiGatewayPort = await listen(apiGateway);
+  const backend = await startBackend(`http://127.0.0.1:${apiGatewayPort}`, {
+    SERENITY_MAPS_KEY: "serenity-maps-key",
+    GOOGLE_MAPS_API_KEY: "legacy-google-key",
+  });
+
+  try {
+    const response = await fetch(`${backend.baseUrl}/visit-context`);
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(html, /window\.SERENITY_MAPS_KEY = "serenity-maps-key"/);
+    assert.doesNotMatch(html, /legacy-google-key/);
+  } finally {
+    await backend.stop();
+    await closeServer(apiGateway);
+  }
+});
+
+test("visit context falls back to same-name Google Maps key for local migration", async () => {
+  const apiGateway = http.createServer((req, res) => {
+    if (req.url === "/api/visit-context/visit-summary") {
+      res.setHeader("content-type", "application/json");
+      res.end(JSON.stringify({
+        location: {
+          name: "Serenity Wellness Center",
+          address: "Konrad-Zuse-Strasse 5, 71034 Boeblingen, Germany",
+          latitude: 48.6847,
+          longitude: 9.0086,
+          openingNote: "Open today.",
+          arrivalTip: "Arrive early.",
+        },
+        weather: { summary: "Mild weather." },
+      }));
+      return;
+    }
+
+    res.writeHead(404).end();
+  });
+  const apiGatewayPort = await listen(apiGateway);
+  const backend = await startBackend(`http://127.0.0.1:${apiGatewayPort}`, {
+    SERENITY_MAPS_KEY: "replace_me",
+    GOOGLE_MAPS_API_KEY: "google-maps-key",
+  });
+
+  try {
+    const response = await fetch(`${backend.baseUrl}/visit-context`);
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(html, /window\.SERENITY_MAPS_KEY = "google-maps-key"/);
+  } finally {
+    await backend.stop();
+    await closeServer(apiGateway);
+  }
+});
+
+test("home page links to canonical visit context without owning the rich map", async () => {
   const apiGateway = http.createServer((_req, res) => {
+    res.writeHead(404).end();
+  });
+  const apiGatewayPort = await listen(apiGateway);
+  const backend = await startBackend(`http://127.0.0.1:${apiGatewayPort}`, {
+    SERENITY_MAPS_KEY: "serenity-maps-key",
+  });
+
+  try {
+    const response = await fetch(`${backend.baseUrl}/`);
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(html, /href="\/visit-context"/);
+    assert.match(html, /Plan your visit/);
+    assert.doesNotMatch(html, /id="route-planner"/);
+    assert.doesNotMatch(html, /maps\.googleapis\.com/);
+    assert.doesNotMatch(html, /\/api\/visit-context\/locations/);
+  } finally {
+    await backend.stop();
+    await closeServer(apiGateway);
+  }
+});
+
+test("visit context route includes browser script for visit summary behavior", async () => {
+  const apiGateway = http.createServer((req, res) => {
+    if (req.url === "/api/visit-context/visit-summary") {
+      res.setHeader("content-type", "application/json");
+      res.end(JSON.stringify({ location: {}, weather: {} }));
+      return;
+    }
+
     res.writeHead(404).end();
   });
   const apiGatewayPort = await listen(apiGateway);

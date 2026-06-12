@@ -177,6 +177,12 @@ async function fetchJsonResponse(pathname) {
   return { response, payload };
 }
 
+function getSerenityMapsKey() {
+  return [process.env.SERENITY_MAPS_KEY, process.env.GOOGLE_MAPS_API_KEY]
+    .map((key) => (key && key !== "replace_me" ? key : ""))
+    .find(Boolean) || "";
+}
+
 app.all(/^\/api(?:\/.*)?$/, forwardToApiGateway);
 
 app.get("/health", (_req, res) => {
@@ -188,7 +194,7 @@ app.get(["/", "/index.html"], (_req, res) => {
     title: "Serenity Wellness Center",
     activePage: "home",
     navVariant: "transparent",
-    mapsApiKey: process.env.GOOGLE_MAPS_API_KEY || "",
+    mapsApiKey: "",
   });
 });
 
@@ -217,11 +223,34 @@ app.get("/aftercare-shop", async (_req, res) => {
     const products = await fetchJson("/api/aftercare/products", []);
     renderPage(res, "aftercare-shop", {
       title: "Aftercare Shop | Serenity Wellness Center",
-      activePage: "merch",
+      activePage: "aftercare",
       products,
     });
   } catch (err) {
     res.status(502).send("aftercare-shop service unavailable: " + err.message);
+  }
+});
+
+app.get("/aftercare-shop/:productId", async (req, res) => {
+  try {
+    const productId = encodeURIComponent(req.params.productId);
+    const { response, payload } = await fetchJsonResponse(`/api/aftercare/products/${productId}`);
+
+    if (response.status === 404) {
+      return res.status(404).send("Aftercare product not found.");
+    }
+
+    if (!response.ok) {
+      return res.status(502).send("aftercare-shop service unavailable: " + (payload.error || response.statusText));
+    }
+
+    return renderPage(res, "aftercare-product", {
+      title: `${payload.name} | Aftercare | Serenity Wellness Center`,
+      activePage: "aftercare",
+      product: payload,
+    });
+  } catch (err) {
+    return res.status(502).send("aftercare-shop service unavailable: " + err.message);
   }
 });
 
@@ -232,12 +261,22 @@ app.get("/shopping-cart", (_req, res) => {
   });
 });
 
-app.get("/visit-context", (_req, res) => {
-  renderPage(res, "visit-context", {
-    title: "Visit Context | Serenity Wellness Center",
-    activePage: "visit",
-    mapsApiKey: process.env.GOOGLE_MAPS_API_KEY || "",
-  });
+app.get("/visit-context", async (_req, res) => {
+  try {
+    const visitSummary = await fetchJson("/api/visit-context/visit-summary", {
+      location: {},
+      weather: {},
+    });
+
+    renderPage(res, "visit-context", {
+      title: "Visit Context | Serenity Wellness Center",
+      activePage: "visit",
+      mapsApiKey: getSerenityMapsKey(),
+      visitSummary,
+    });
+  } catch (err) {
+    res.status(502).send("visit-context service unavailable: " + err.message);
+  }
 });
 
 app.get("/impressum", (_req, res) => {

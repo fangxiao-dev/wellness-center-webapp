@@ -42,9 +42,10 @@ function coerceRecommendationPayload(payload) {
   if (!packageRecommendation || typeof packageRecommendation !== "object") {
     throw new Error("Gemini packageRecommendation is invalid");
   }
+  const duration = coerceIntegralDuration(packageRecommendation.duration);
   if (
     typeof packageRecommendation.package !== "string" ||
-    !Number.isInteger(packageRecommendation.duration) ||
+    duration === null ||
     typeof packageRecommendation.intensity !== "string" ||
     !Array.isArray(packageRecommendation.addOns)
   ) {
@@ -71,12 +72,15 @@ function coerceRecommendationPayload(payload) {
         : "Supports your visit goals.",
     });
   }
+  if (normalizedAftercareItems.length < 1 || normalizedAftercareItems.length > 3) {
+    throw new Error("Gemini aftercareItems must contain one to three products");
+  }
 
   return {
     text: payload.text.trim(),
     packageRecommendation: {
       package: packageRecommendation.package.trim(),
-      duration: packageRecommendation.duration,
+      duration,
       intensity: packageRecommendation.intensity.trim(),
       addOns: packageRecommendation.addOns
         .filter((addOn) => typeof addOn === "string" && addOn.trim())
@@ -87,6 +91,13 @@ function coerceRecommendationPayload(payload) {
     },
     aftercareItems: normalizedAftercareItems,
   };
+}
+
+function coerceIntegralDuration(value) {
+  if (Number.isInteger(value)) return value;
+  if (typeof value !== "string" || !value.trim()) return null;
+  const number = Number(value);
+  return Number.isFinite(number) && Number.isInteger(number) ? number : null;
 }
 
 function buildPackageLink(packageRecommendation) {
@@ -117,8 +128,29 @@ function buildRecommendationResponse(recommendation, products = []) {
   };
 }
 
+function validateRecommendationContext(recommendation, { validConfigurations = [], products = [] } = {}) {
+  const packageRecommendation = recommendation.packageRecommendation;
+  const matchingConfiguration = validConfigurations.find((configuration) => (
+    configuration.package?.slug === packageRecommendation.package &&
+    configuration.duration?.minutes === packageRecommendation.duration &&
+    configuration.intensity?.slug === packageRecommendation.intensity
+  ));
+  const allowedAddOns = new Set((matchingConfiguration?.addOns || []).map((addOn) => addOn.slug));
+  if (!matchingConfiguration || packageRecommendation.addOns.some((addOn) => !allowedAddOns.has(addOn))) {
+    throw new Error("Gemini packageRecommendation is not in valid configurations");
+  }
+
+  const productIds = new Set(products.map((product) => product.id));
+  if (recommendation.aftercareItems.some((item) => !productIds.has(item.id))) {
+    throw new Error("Gemini aftercareItems contain unknown product id");
+  }
+
+  return recommendation;
+}
+
 module.exports = {
   buildRecommendationResponse,
   coerceRecommendationPayload,
   recommendationSchema,
+  validateRecommendationContext,
 };

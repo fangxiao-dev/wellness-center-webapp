@@ -126,8 +126,8 @@ test("home page preserves presentation structure with local hero video backgroun
     assert.match(html, /class="hero-overlay"/);
     assert.match(html, /class="package-showcase package-stage-showcase"/);
     assert.match(html, /class="package-stage-grid"/);
-    assert.match(html, /class="merch-preview-grid"/);
-    assert.doesNotMatch(html, /\/api\/merch\//);
+    assert.match(html, /class="aftercare-preview-grid"/);
+    assert.doesNotMatch(html, /\/api\/shop\//);
     assert.doesNotMatch(html, /Bayerische|Motoren|Werke/);
   } finally {
     await backend.stop();

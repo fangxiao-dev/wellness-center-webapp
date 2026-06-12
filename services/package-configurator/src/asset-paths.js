@@ -13,11 +13,20 @@ function normalizeObjectKey(key) {
   return segments.map(encodeURIComponent).join("/");
 }
 
+function normalizePackageObjectKey(key) {
+  const objectKey = normalizeObjectKey(key);
+  if (!objectKey.startsWith("package-configurator/")) {
+    throw new Error("invalid object key");
+  }
+  return objectKey;
+}
+
 function toPublicPackageImageUrl(key) {
-  return `/api/configurator/assets/${normalizeObjectKey(key)}`;
+  return `/api/configurator/assets/${normalizePackageObjectKey(key)}`;
 }
 
 module.exports = {
   normalizeObjectKey,
+  normalizePackageObjectKey,
   toPublicPackageImageUrl,
 };
