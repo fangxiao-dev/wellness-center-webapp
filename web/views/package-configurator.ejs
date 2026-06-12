@@ -48,7 +48,7 @@
     object-position: center center;
     display: block;
     opacity: 0;
-    transition: opacity 0.28s ease;
+    transition: opacity 0.28s ease, filter 0.5s ease;
   }
 
   .config-layer.is-visible {
@@ -61,8 +61,84 @@
     pointer-events: none;
   }
 
-  .config-layer.addon {
+  .config-grade,
+  .config-glow,
+  .candle-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .config-grade {
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 0.5s ease, background 0.5s ease;
+  }
+
+  .config-glow {
     z-index: 2;
+    transition: background 0.4s ease;
+  }
+
+  .config-layer.addon {
+    z-index: 3;
+  }
+
+  .candle-layer {
+    z-index: 4;
+  }
+
+  .candle-layer img {
+    position: absolute;
+    top: 15%;
+    width: auto;
+    height: 16%;
+  }
+
+  .phase-rail {
+    position: fixed;
+    left: 50%;
+    bottom: 74px;
+    z-index: 8;
+    display: flex;
+    gap: 8px;
+    max-width: calc(100% - 40px);
+    padding: 8px 12px;
+    border-radius: 12px;
+    background: rgba(11, 18, 32, 0.56);
+    transform: translateX(-50%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .phase-seg {
+    display: flex;
+    width: 96px;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .phase-bar {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.28);
+    transition: background 0.3s ease;
+  }
+
+  .phase-seg.lit .phase-bar {
+    background: #3a9079;
+  }
+
+  .phase-label {
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    line-height: 1.1;
+    text-align: center;
+    text-transform: uppercase;
   }
 
   .config-placeholder {
@@ -422,15 +498,45 @@
     .config-caption {
       bottom: 18px;
     }
+
+    .phase-rail {
+      bottom: 62px;
+      gap: 6px;
+    }
+
+    .phase-seg {
+      width: 82px;
+    }
+
+    .phase-label {
+      font-size: 0.58rem;
+    }
   }
 </style>
 
 <div class="configurator-shell" id="configurator-app">
   <div class="config-stage" aria-hidden="true">
     <img class="config-layer base" id="baseLayer" src="" alt="" />
+    <div class="config-grade" id="grade"></div>
+    <div class="config-glow" id="glow"></div>
     <div id="addonLayers"></div>
+    <div class="candle-layer" id="candles"></div>
   </div>
   <div class="config-placeholder" id="placeholder">Loading preview...</div>
+  <div class="phase-rail" id="phaseRail" aria-hidden="true">
+    <div class="phase-seg" data-phase="1">
+      <span class="phase-bar"></span>
+      <span class="phase-label">Warm-up</span>
+    </div>
+    <div class="phase-seg" data-phase="2">
+      <span class="phase-bar"></span>
+      <span class="phase-label">Deep work</span>
+    </div>
+    <div class="phase-seg" data-phase="3">
+      <span class="phase-bar"></span>
+      <span class="phase-label">Cool-down</span>
+    </div>
+  </div>
   <div class="config-caption" id="caption"></div>
 
   <div class="summary-panel" aria-live="polite">
@@ -534,6 +640,82 @@
   function makeDeltaLabel(value, includedText) {
     const amount = Number(value || 0);
     return amount > 0 ? `+${formatPrice(amount)}` : includedText;
+  }
+
+  const CANDLE_URL = "/api/configurator/assets/package-configurator/props/candle.png";
+
+  const DURATION_CHANNELS = {
+    45: {
+      filter: "brightness(1.05) saturate(1.0)",
+      overlay: "transparent",
+      overlayOpacity: 0,
+      phases: [2],
+      candleCount: 1
+    },
+    60: {
+      filter: "saturate(1.06) brightness(0.99)",
+      overlay: "linear-gradient(180deg, rgba(245, 205, 140, 0.10), rgba(245, 190, 120, 0.18))",
+      overlayOpacity: 1,
+      phases: [1, 2],
+      candleCount: 2
+    },
+    90: {
+      filter: "saturate(1.05) brightness(0.90) contrast(1.04)",
+      overlay: "linear-gradient(180deg, rgba(235, 175, 95, 0.16), rgba(120, 70, 30, 0.22)), radial-gradient(120% 120% at 50% 50%, transparent 55%, rgba(25, 15, 5, 0.30))",
+      overlayOpacity: 1,
+      phases: [1, 2, 3],
+      candleCount: 3
+    }
+  };
+
+  const GLOW_CENTERS = {
+    "neck-shoulder-relief": "52% 32%",
+    "stress-reset-massage": "50% 45%",
+    "warm-recovery-massage": "48% 52%"
+  };
+
+  const INTENSITY_GLOWS = {
+    gentle: (center) => `radial-gradient(circle 220px at ${center}, rgba(245,205,150,.16), transparent)`,
+    medium: (center) => `radial-gradient(circle 180px at ${center}, rgba(245,195,130,.26), transparent)`,
+    deep: (center) => `radial-gradient(circle 140px at ${center}, rgba(240,170,100,.34), transparent), radial-gradient(circle 90px at ${center}, rgba(60,30,10,.18), transparent)`
+  };
+
+  function applyDurationVisuals(minutes) {
+    const channel = DURATION_CHANNELS[Number(minutes)] || DURATION_CHANNELS[45];
+    const base = document.getElementById("baseLayer");
+    const grade = document.getElementById("grade");
+
+    base.style.filter = channel.filter;
+    grade.style.background = channel.overlay;
+    grade.style.opacity = String(channel.overlayOpacity);
+    renderPhaseRail(channel.phases);
+    renderCandles(channel.candleCount);
+  }
+
+  function applyIntensityVisuals(packageSlug, intensitySlug) {
+    const center = GLOW_CENTERS[packageSlug] || "50% 42%";
+    const glow = INTENSITY_GLOWS[intensitySlug];
+    document.getElementById("glow").style.background = glow ? glow(center) : "transparent";
+  }
+
+  function renderPhaseRail(activePhases) {
+    const active = new Set(activePhases.map(Number));
+    document.querySelectorAll("#phaseRail .phase-seg").forEach((segment) => {
+      segment.classList.toggle("lit", active.has(Number(segment.dataset.phase)));
+    });
+  }
+
+  function renderCandles(count) {
+    const container = document.getElementById("candles");
+    clearChildren(container);
+
+    for (let index = 0; index < count; index += 1) {
+      const img = document.createElement("img");
+      img.src = CANDLE_URL;
+      img.alt = "";
+      img.style.left = `${6 + index * 5}%`;
+      container.appendChild(img);
+    }
   }
 
   function renderOptionButton(container, label, delta, isActive, onClick) {
@@ -734,6 +916,8 @@
       : "None";
     document.getElementById("price").textContent = formatPrice(cfg.price);
     caption.textContent = `${cfg.duration.label} · ${cfg.intensity.label}`;
+    applyDurationVisuals(cfg.duration.minutes);
+    applyIntensityVisuals(cfg.package.slug, cfg.intensity.slug);
     addButton.disabled = false;
   }
 
