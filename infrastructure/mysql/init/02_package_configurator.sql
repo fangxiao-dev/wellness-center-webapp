@@ -18,7 +18,8 @@ CREATE TABLE packages (
   goal VARCHAR(255) NOT NULL,
   description VARCHAR(500) NOT NULL,
   base_price DECIMAL(10,2) NOT NULL,
-  base_minutes INT NOT NULL
+  base_minutes INT NOT NULL,
+  minio_object VARCHAR(255) NOT NULL
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE durations (
@@ -77,11 +78,11 @@ CREATE TABLE configuration_addons (
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 INSERT INTO packages
-  (id, slug, name, goal, description, base_price, base_minutes)
+  (id, slug, name, goal, description, base_price, base_minutes, minio_object)
 VALUES
-  (1, 'neck-shoulder-relief', 'Neck & Shoulder Relief', 'release neck and shoulder tension', 'Focused massage package for desk fatigue, shoulder tightness, and upper back relief.', 59.00, 45),
-  (2, 'stress-reset-massage', 'Stress Reset Massage', 'calm down and reset after stress', 'Relaxation-led massage package with slower rhythm and calming add-ons.', 64.00, 45),
-  (3, 'warm-recovery-massage', 'Warm Recovery Massage', 'restore warmth and gentle mobility', 'Warmth-focused massage package for cold days and general body recovery.', 69.00, 45);
+  (1, 'neck-shoulder-relief', 'Neck & Shoulder Relief', 'release neck and shoulder tension', 'Focused massage package for desk fatigue, shoulder tightness, and upper back relief.', 59.00, 45, 'package-configurator/neck-shoulder-relief.png'),
+  (2, 'stress-reset-massage', 'Stress Reset Massage', 'calm down and reset after stress', 'Relaxation-led massage package with slower rhythm and calming add-ons.', 64.00, 45, 'package-configurator/stress-reset-massage.png'),
+  (3, 'warm-recovery-massage', 'Warm Recovery Massage', 'restore warmth and gentle mobility', 'Warmth-focused massage package for cold days and general body recovery.', 69.00, 45, 'package-configurator/warm-recovery-massage.png');
 
 INSERT INTO durations
   (id, minutes, label, price_delta)
