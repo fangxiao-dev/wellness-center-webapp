@@ -161,71 +161,9 @@ test("aftercare listing SSR fetches products through the API gateway", async () 
     assert.match(html, /Heated Neck Wrap/);
     assert.match(html, /class="aftercare-shop-layout"/);
     assert.match(html, /class="product-grid"/);
+    assert.match(html, /id="product-heated-neck-wrap"/);
+    assert.doesNotMatch(html, /href="\/aftercare-shop\/heated-neck-wrap"/);
     assert.deepEqual(requests, ["/api/aftercare/products"]);
-  } finally {
-    await backend.stop();
-    await closeServer(apiGateway);
-  }
-});
-
-test("aftercare product detail SSR fetches the product through the API gateway", async () => {
-  const requests = [];
-  const apiGateway = http.createServer((req, res) => {
-    requests.push(req.url);
-
-    if (req.url === "/api/aftercare/products/heated-neck-wrap") {
-      res.setHeader("content-type", "application/json");
-      res.end(JSON.stringify({
-        id: 1,
-        slug: "heated-neck-wrap",
-        name: "Heated Neck Wrap",
-        category: "heat-care",
-        price: 34.9,
-        imageUrl: "/api/aftercare/assets/aftercare-shop/heated-neck-wrap.png",
-        description: "Reusable warm wrap for shoulder and neck relaxation after a massage session.",
-        usageNote: "Use at home for short warmth intervals.",
-      }));
-      return;
-    }
-
-    res.writeHead(404).end(JSON.stringify({ error: "not found" }));
-  });
-  const apiGatewayPort = await listen(apiGateway);
-  const backend = await startBackend(`http://127.0.0.1:${apiGatewayPort}`);
-
-  try {
-    const response = await fetch(`${backend.baseUrl}/aftercare-shop/heated-neck-wrap`);
-    const html = await response.text();
-
-    assert.equal(response.status, 200);
-    assert.match(html, /Heated Neck Wrap/);
-    assert.match(html, /class="aftercare-product-layout"/);
-    assert.match(html, /data-product-detail/);
-    assert.match(html, /data-add/);
-    assert.deepEqual(requests, ["/api/aftercare/products/heated-neck-wrap"]);
-  } finally {
-    await backend.stop();
-    await closeServer(apiGateway);
-  }
-});
-
-test("aftercare product detail returns a clear 404 for missing products", async () => {
-  const requests = [];
-  const apiGateway = http.createServer((req, res) => {
-    requests.push(req.url);
-    res.writeHead(404, { "content-type": "application/json" });
-    res.end(JSON.stringify({ error: "product not found" }));
-  });
-  const apiGatewayPort = await listen(apiGateway);
-  const backend = await startBackend(`http://127.0.0.1:${apiGatewayPort}`);
-
-  try {
-    const response = await fetch(`${backend.baseUrl}/aftercare-shop/not-a-product`);
-    const body = await response.text();
-
-    assert.equal(response.status, 404);
-    assert.match(body, /Aftercare product not found/);
-    assert.deepEqual(requests, ["/api/aftercare/products/not-a-product"]);
   } finally {
     await backend.stop();
     await closeServer(apiGateway);

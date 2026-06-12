@@ -225,29 +225,6 @@ app.get("/aftercare-shop", async (_req, res) => {
   }
 });
 
-app.get("/aftercare-shop/:productId", async (req, res) => {
-  try {
-    const productId = encodeURIComponent(req.params.productId);
-    const { response, payload } = await fetchJsonResponse(`/api/aftercare/products/${productId}`);
-
-    if (response.status === 404) {
-      return res.status(404).send("Aftercare product not found.");
-    }
-
-    if (!response.ok) {
-      return res.status(502).send("aftercare-shop service unavailable: " + (payload.error || response.statusText));
-    }
-
-    return renderPage(res, "aftercare-product", {
-      title: `${payload.name} | Aftercare | Serenity Wellness Center`,
-      activePage: "merch",
-      product: payload,
-    });
-  } catch (err) {
-    return res.status(502).send("aftercare-shop service unavailable: " + err.message);
-  }
-});
-
 app.get("/shopping-cart", (_req, res) => {
   renderPage(res, "shopping-cart", {
     title: "Cart | Serenity Wellness Center",
